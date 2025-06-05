@@ -5,6 +5,7 @@ export interface Transaction {
   amount: number;
   description: string;
   category: string;
+  cardName: string;
   isClassified: boolean;
 }
 

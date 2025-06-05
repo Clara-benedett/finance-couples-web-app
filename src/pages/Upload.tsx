@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -9,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { parseFile } from "@/utils/fileParser";
 import { transactionStore } from "@/store/transactionStore";
 import { Transaction } from "@/types/transaction";
+import CardNameDialog from "@/components/CardNameDialog";
 
 interface UploadedFile {
   file: File;
@@ -16,33 +16,30 @@ interface UploadedFile {
   progress: number;
   error?: string;
   transactionCount?: number;
+  cardName?: string;
 }
 
 const Upload = () => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [showCardNameDialog, setShowCardNameDialog] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
-  const handleFileUpload = async (files: FileList | null) => {
+  const handleFileSelection = (files: FileList | null) => {
     if (!files) return;
 
-    const newFiles: UploadedFile[] = Array.from(files)
-      .filter(file => {
-        const extension = file.name.split('.').pop()?.toLowerCase();
-        return ['csv', 'xlsx', 'xls'].includes(extension || '');
-      })
-      .map(file => ({
-        file,
-        status: 'uploading' as const,
-        progress: 0
-      }));
+    const validFiles = Array.from(files).filter(file => {
+      const extension = file.name.split('.').pop()?.toLowerCase();
+      return ['csv', 'xlsx', 'xls'].includes(extension || '');
+    });
 
-    if (newFiles.length === 0) {
+    if (validFiles.length === 0) {
       toast({
         title: "Invalid file format",
         description: "Please upload CSV or Excel files only.",
@@ -50,6 +47,29 @@ const Upload = () => {
       });
       return;
     }
+
+    setPendingFiles(validFiles);
+    setShowCardNameDialog(true);
+  };
+
+  const handleCardNameConfirm = async (cardName: string) => {
+    setShowCardNameDialog(false);
+    await processFiles(pendingFiles, cardName);
+    setPendingFiles([]);
+  };
+
+  const handleCardNameCancel = () => {
+    setShowCardNameDialog(false);
+    setPendingFiles([]);
+  };
+
+  const processFiles = async (files: File[], cardName: string) => {
+    const newFiles: UploadedFile[] = files.map(file => ({
+      file,
+      status: 'uploading' as const,
+      progress: 0,
+      cardName
+    }));
 
     setUploadedFiles(prev => [...prev, ...newFiles]);
     setIsProcessing(true);
@@ -74,13 +94,14 @@ const Upload = () => {
         // Parse the file
         const parsedTransactions = await parseFile(fileUpload.file);
         
-        // Convert to Transaction objects
+        // Convert to Transaction objects with card name
         const transactions: Transaction[] = parsedTransactions.map(pt => ({
           id: generateId(),
           date: pt.date,
           amount: pt.amount,
           description: pt.description,
           category: pt.category || 'UNCLASSIFIED',
+          cardName: cardName,
           isClassified: false
         }));
 
@@ -98,7 +119,7 @@ const Upload = () => {
 
         toast({
           title: "File uploaded successfully",
-          description: `${transactions.length} transactions imported from ${fileUpload.file.name}`,
+          description: `${transactions.length} transactions imported from ${cardName} (${fileUpload.file.name})`,
         });
 
       } catch (error) {
@@ -135,7 +156,7 @@ const Upload = () => {
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    handleFileUpload(e.dataTransfer.files);
+    handleFileSelection(e.dataTransfer.files);
   };
 
   const handleChooseFiles = () => {
@@ -185,7 +206,7 @@ const Upload = () => {
               type="file"
               multiple
               accept=".csv,.xlsx,.xls"
-              onChange={(e) => handleFileUpload(e.target.files)}
+              onChange={(e) => handleFileSelection(e.target.files)}
               className="hidden"
               disabled={isProcessing}
             />
@@ -260,7 +281,12 @@ const Upload = () => {
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center">
                         <FileIcon className="w-5 h-5 text-gray-600 mr-3" />
-                        <span className="font-medium text-gray-900">{fileUpload.file.name}</span>
+                        <div>
+                          <span className="font-medium text-gray-900">{fileUpload.file.name}</span>
+                          {fileUpload.cardName && (
+                            <div className="text-sm text-blue-600">Card: {fileUpload.cardName}</div>
+                          )}
+                        </div>
                       </div>
                       <div className="flex items-center">
                         {fileUpload.status === 'success' && (
@@ -319,6 +345,13 @@ const Upload = () => {
           </CardContent>
         </Card>
       )}
+
+      <CardNameDialog
+        isOpen={showCardNameDialog}
+        onConfirm={handleCardNameConfirm}
+        onCancel={handleCardNameCancel}
+        fileNames={pendingFiles.map(f => f.name)}
+      />
     </div>
   );
 };
