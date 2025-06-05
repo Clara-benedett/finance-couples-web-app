@@ -108,26 +108,28 @@ const TransactionCategorizer = ({
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-              <Input
-                placeholder="Search transactions..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={selectAllVisible}>
-                Select All
-              </Button>
-              <Button variant="outline" size="sm" onClick={clearSelection}>
-                Clear
-              </Button>
-              <span className="text-sm text-gray-500">
-                {selectedTransactions.size} selected
-              </span>
+            <div className="flex items-center gap-4 flex-1">
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={selectAllVisible}>
+                  Select All
+                </Button>
+                <Button variant="outline" size="sm" onClick={clearSelection}>
+                  Clear
+                </Button>
+                <span className="text-sm text-gray-500">
+                  {selectedTransactions.size} selected
+                </span>
+              </div>
+              
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Search transactions..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
           </div>
 
