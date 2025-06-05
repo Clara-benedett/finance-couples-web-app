@@ -87,7 +87,7 @@ const Dashboard = () => {
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-8 text-white">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold mb-2">Welcome to CoupleFinance</h1>
+            <h1 className="text-3xl font-bold mb-2">Welcome to Couply</h1>
             <p className="text-blue-100 mb-2">
               Track, categorize, and split your expenses seamlessly as a couple
             </p>
