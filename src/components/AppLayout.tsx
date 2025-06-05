@@ -13,9 +13,9 @@ export function AppLayout() {
           <SidebarTrigger className="mr-4 hover:bg-gray-100" />
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">CF</span>
+              <span className="text-white font-bold text-sm">C</span>
             </div>
-            <h1 className="text-xl font-bold text-gray-900">CoupleFinance</h1>
+            <h1 className="text-xl font-bold text-gray-900">Couply</h1>
           </div>
           <div className="ml-auto flex items-center space-x-4">
             <span className="text-sm text-gray-600">Welcome back!</span>
