@@ -5,12 +5,13 @@ import { ParsedTransaction } from '@/types/transaction';
 
 // Common column name variations
 const COLUMN_MAPPINGS = {
-  date: ['date', 'data', 'fecha', 'datum', 'transaction date', 'trans date', 'transactiondate'],
-  amount: ['amount', 'valor', 'value', 'price', 'precio', 'montant', 'betrag', 'debit', 'debito', 'credit', 'credito', 'cost', 'costo'],
-  description: ['description', 'descricao', 'descripcion', 'merchant', 'vendor', 'payee', 'memo', 'details', 'detalles']
+  date: ['date', 'data', 'fecha', 'datum', 'transaction date', 'trans date', 'transactiondate', 'posting date', 'settlement date'],
+  amount: ['amount', 'valor', 'value', 'price', 'precio', 'montant', 'betrag', 'debit', 'debito', 'credit', 'credito', 'cost', 'costo', 'total', 'sum', 'balance'],
+  description: ['description', 'descricao', 'descripcion', 'merchant', 'vendor', 'payee', 'memo', 'details', 'detalles', 'reference', 'transaction details', 'narrative']
 };
 
 function normalizeColumnName(name: string): string {
+  if (!name || typeof name !== 'string') return '';
   return name.toLowerCase().trim().replace(/[^a-z0-9]/g, '');
 }
 
@@ -25,9 +26,48 @@ function findColumnIndex(headers: string[], columnTypes: string[]): number {
   return -1;
 }
 
+function findDataStartRow(data: any[]): { startRow: number, headers: string[] } {
+  console.log('Scanning for data start row in', data.length, 'rows');
+  
+  for (let i = 0; i < Math.min(data.length, 20); i++) { // Check first 20 rows max
+    const row = data[i];
+    if (!row) continue;
+    
+    const rowValues = Array.isArray(row) ? row : Object.values(row);
+    const potentialHeaders = rowValues.map(val => String(val || '').trim()).filter(val => val);
+    
+    if (potentialHeaders.length < 2) continue; // Need at least 2 columns
+    
+    console.log(`Row ${i} potential headers:`, potentialHeaders);
+    
+    // Check if this row contains recognizable column names
+    const dateIndex = findColumnIndex(potentialHeaders, COLUMN_MAPPINGS.date);
+    const amountIndex = findColumnIndex(potentialHeaders, COLUMN_MAPPINGS.amount);
+    const descIndex = findColumnIndex(potentialHeaders, COLUMN_MAPPINGS.description);
+    
+    const foundColumns = [dateIndex, amountIndex, descIndex].filter(idx => idx !== -1).length;
+    
+    console.log(`Row ${i} found ${foundColumns} recognizable columns:`, { dateIndex, amountIndex, descIndex });
+    
+    // If we found at least 2 of the 3 required columns, this is likely our header row
+    if (foundColumns >= 2) {
+      console.log(`Found data start at row ${i}`);
+      return { startRow: i, headers: potentialHeaders };
+    }
+  }
+  
+  // Fallback to first row if no clear headers found
+  console.log('No clear header row found, using first row');
+  const firstRow = data[0];
+  const headers = Array.isArray(firstRow) ? firstRow : Object.keys(firstRow);
+  return { startRow: 0, headers: headers.map(h => String(h)) };
+}
+
 function parseDate(dateString: string): string {
   // Handle various date formats
-  const cleanDate = dateString.trim();
+  const cleanDate = String(dateString || '').trim();
+  
+  if (!cleanDate) return new Date().toISOString().split('T')[0];
   
   // Try different date formats
   const formats = [
@@ -48,7 +88,6 @@ function parseDate(dateString: string): string {
       }
       
       // For other formats, assume MM/DD/YYYY (US format)
-      // In a real app, you'd want to make this configurable
       const year = part3;
       const month = part1.padStart(2, '0');
       const day = part2.padStart(2, '0');
@@ -68,7 +107,7 @@ function parseDate(dateString: string): string {
 
 function parseAmount(amountString: string): number {
   // Remove currency symbols and normalize
-  const cleaned = amountString.toString()
+  const cleaned = String(amountString || '')
     .replace(/[$€£¥₹₽]/g, '')
     .replace(/[,\s]/g, '')
     .trim();
@@ -80,12 +119,20 @@ function parseAmount(amountString: string): number {
 export async function parseCSV(file: File): Promise<ParsedTransaction[]> {
   return new Promise((resolve, reject) => {
     Papa.parse(file, {
-      header: true,
+      header: false, // Parse as array to handle dynamic header detection
       skipEmptyLines: true,
       complete: (results) => {
         try {
-          const data = results.data as any[];
-          const headers = Object.keys(data[0] || {});
+          const data = results.data as any[][];
+          
+          if (data.length === 0) {
+            reject(new Error('CSV file is empty'));
+            return;
+          }
+          
+          console.log('CSV data loaded, total rows:', data.length);
+          
+          const { startRow, headers } = findDataStartRow(data);
           
           console.log('CSV Headers found:', headers);
           console.log('Looking for columns:', COLUMN_MAPPINGS);
@@ -101,16 +148,19 @@ export async function parseCSV(file: File): Promise<ParsedTransaction[]> {
             return;
           }
 
-          const transactions: ParsedTransaction[] = data.map(row => {
-            const rowValues = Object.values(row) as string[];
+          // Skip the header row and process data
+          const dataRows = data.slice(startRow + 1);
+          
+          const transactions: ParsedTransaction[] = dataRows.map(row => {
             return {
-              date: parseDate(rowValues[dateIndex]),
-              amount: parseAmount(rowValues[amountIndex]),
-              description: rowValues[descIndex] || 'Unknown',
+              date: parseDate(row[dateIndex]),
+              amount: parseAmount(row[amountIndex]),
+              description: String(row[descIndex] || 'Unknown'),
               category: 'UNCLASSIFIED'
             };
           }).filter(t => t.amount > 0);
 
+          console.log('Parsed transactions:', transactions.length);
           resolve(transactions);
         } catch (error) {
           reject(new Error('Failed to parse CSV file'));
@@ -132,14 +182,17 @@ export async function parseExcel(file: File): Promise<ParsedTransaction[]> {
         const data = new Uint8Array(e.target?.result as ArrayBuffer);
         const workbook = XLSX.read(data, { type: 'array' });
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][];
 
         if (jsonData.length === 0) {
           reject(new Error('Excel file is empty'));
           return;
         }
 
-        const headers = Object.keys(jsonData[0] as any);
+        console.log('Excel data loaded, total rows:', jsonData.length);
+        
+        const { startRow, headers } = findDataStartRow(jsonData);
+        
         console.log('Excel Headers found:', headers);
         console.log('Looking for columns:', COLUMN_MAPPINGS);
         
@@ -154,16 +207,19 @@ export async function parseExcel(file: File): Promise<ParsedTransaction[]> {
           return;
         }
 
-        const transactions: ParsedTransaction[] = jsonData.map(row => {
-          const rowValues = Object.values(row as any) as string[];
+        // Skip the header row and process data
+        const dataRows = jsonData.slice(startRow + 1);
+        
+        const transactions: ParsedTransaction[] = dataRows.map(row => {
           return {
-            date: parseDate(rowValues[dateIndex]),
-            amount: parseAmount(rowValues[amountIndex]),
-            description: rowValues[descIndex] || 'Unknown',
+            date: parseDate(row[dateIndex]),
+            amount: parseAmount(row[amountIndex]),
+            description: String(row[descIndex] || 'Unknown'),
             category: 'UNCLASSIFIED'
           };
         }).filter(t => t.amount > 0);
 
+        console.log('Parsed transactions:', transactions.length);
         resolve(transactions);
       } catch (error) {
         reject(new Error('Failed to parse Excel file'));
