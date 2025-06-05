@@ -9,6 +9,9 @@ import { parseFile } from "@/utils/fileParser";
 import { transactionStore } from "@/store/transactionStore";
 import { Transaction } from "@/types/transaction";
 import CardNameDialog from "@/components/CardNameDialog";
+import CategorySetup from "@/components/CategorySetup";
+import { CategoryNames } from "@/utils/categoryNames";
+import { Settings, User, Share } from "lucide-react";
 
 interface UploadedFile {
   file: File;
@@ -25,6 +28,8 @@ const Upload = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [showCardNameDialog, setShowCardNameDialog] = useState(false);
+  const [showCategorySetup, setShowCategorySetup] = useState(true);
+  const [categoryNames, setCategoryNames] = useState<CategoryNames | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -61,6 +66,15 @@ const Upload = () => {
   const handleCardNameCancel = () => {
     setShowCardNameDialog(false);
     setPendingFiles([]);
+  };
+
+  const handleCategorySetupComplete = (names: CategoryNames) => {
+    setCategoryNames(names);
+    setShowCategorySetup(false);
+  };
+
+  const handleEditCategories = () => {
+    setShowCategorySetup(true);
   };
 
   const processFiles = async (files: File[], cardName: string) => {
@@ -171,15 +185,70 @@ const Upload = () => {
   const successfulUploads = uploadedFiles.filter(f => f.status === 'success');
   const totalTransactions = successfulUploads.reduce((sum, f) => sum + (f.transactionCount || 0), 0);
 
+  // Show category setup first if not completed
+  if (showCategorySetup) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Upload Expense Files</h1>
+          <p className="text-gray-600">
+            First, let's set up your expense categories
+          </p>
+        </div>
+        
+        <CategorySetup 
+          onComplete={handleCategorySetupComplete}
+          isEditing={categoryNames !== null}
+          onCancel={categoryNames ? () => setShowCategorySetup(false) : undefined}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Upload Expenses</h1>
-        <p className="text-gray-600">
-          Upload your credit card statements and receipts to automatically categorize expenses
-        </p>
+      {/* Header with Edit Categories button */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Upload Expense Files</h1>
+          <p className="text-gray-600">
+            Upload CSV or Excel files containing your expense data
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={handleEditCategories}
+          className="flex items-center gap-2"
+        >
+          <Settings className="w-4 h-4" />
+          Edit Categories
+        </Button>
       </div>
+
+      {/* Category Names Display */}
+      {categoryNames && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-blue-900">Categories:</span>
+              <div className="flex items-center gap-4 text-sm text-blue-700">
+                <span className="flex items-center gap-1">
+                  <User className="w-3 h-3" />
+                  {categoryNames.person1}
+                </span>
+                <span className="flex items-center gap-1">
+                  <User className="w-3 h-3" />
+                  {categoryNames.person2}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Share className="w-3 h-3" />
+                  {categoryNames.shared}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Upload Area */}
       <Card className={`border-2 border-dashed transition-colors ${

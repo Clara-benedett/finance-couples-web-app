@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,8 +6,9 @@ import { Users, User, ShoppingCart, CheckCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { transactionStore } from "@/store/transactionStore";
 import { Transaction } from "@/types/transaction";
+import { getCategoryNames, getCategoryDisplayName } from "@/utils/categoryNames";
 
-type ExpenseCategory = "shared" | "personal";
+type ExpenseCategory = "personal" | "shared";
 
 const Categorize = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -22,6 +22,8 @@ const Categorize = () => {
     const unsubscribe = transactionStore.subscribe(updateTransactions);
     return unsubscribe;
   }, []);
+
+  const categoryNames = getCategoryNames();
 
   const updateTransactionCategory = (id: string, category: ExpenseCategory) => {
     transactionStore.updateTransaction(id, { 
@@ -38,15 +40,17 @@ const Categorize = () => {
     if (transaction.isClassified && transaction.category !== 'UNCLASSIFIED') {
       const category = transaction.category as ExpenseCategory;
       const Icon = getCategoryIcon(category);
+      const displayName = getCategoryDisplayName(category);
+      
       return (
         <Badge variant={category === "shared" ? "default" : "secondary"} className="flex items-center">
           <Icon className="w-3 h-3 mr-1" />
-          {category === "shared" ? "Shared" : "Personal"}
+          {displayName}
         </Badge>
       );
     }
     
-    return <Badge variant="outline">Uncategorized</Badge>;
+    return <Badge variant="outline">Unclassified</Badge>;
   };
 
   const unclassifiedTransactions = transactions.filter(t => !t.isClassified || t.category === 'UNCLASSIFIED');
@@ -131,7 +135,15 @@ const Categorize = () => {
                   </div>
                   <div>
                     <h3 className="font-medium text-gray-900">{transaction.description}</h3>
-                    <p className="text-sm text-gray-500">{transaction.date}</p>
+                    <div className="flex items-center gap-2 text-sm text-gray-500">
+                      <span>{transaction.date}</span>
+                      {transaction.cardName && (
+                        <>
+                          <span>•</span>
+                          <span>{transaction.cardName}</span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
@@ -145,20 +157,20 @@ const Categorize = () => {
                     <Select
                       onValueChange={(value: ExpenseCategory) => updateTransactionCategory(transaction.id, value)}
                     >
-                      <SelectTrigger className="w-32">
+                      <SelectTrigger className="w-36">
                         <SelectValue placeholder="Category" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="shared">
-                          <div className="flex items-center">
-                            <Users className="w-4 h-4 mr-2" />
-                            Shared
-                          </div>
-                        </SelectItem>
                         <SelectItem value="personal">
                           <div className="flex items-center">
                             <User className="w-4 h-4 mr-2" />
-                            Personal
+                            {categoryNames.person1}
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="shared">
+                          <div className="flex items-center">
+                            <Users className="w-4 h-4 mr-2" />
+                            {categoryNames.shared}
                           </div>
                         </SelectItem>
                       </SelectContent>
