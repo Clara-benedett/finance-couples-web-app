@@ -38,6 +38,8 @@ export const getCategoryDisplayName = (category: string): string => {
   switch (category) {
     case 'personal':
       return names.person1;
+    case 'person2':
+      return names.person2;
     case 'shared':
       return names.shared;
     default:

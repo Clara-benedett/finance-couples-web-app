@@ -1,17 +1,20 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, User, ShoppingCart, CheckCircle } from "lucide-react";
+
 import { useState, useEffect } from "react";
 import { transactionStore } from "@/store/transactionStore";
 import { Transaction } from "@/types/transaction";
-import { getCategoryNames, getCategoryDisplayName } from "@/utils/categoryNames";
+import { getCategoryNames } from "@/utils/categoryNames";
+import TransactionCategorizer from "@/components/TransactionCategorizer";
+import CategorySetup from "@/components/CategorySetup";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ShoppingCart, Settings } from "lucide-react";
 
-type ExpenseCategory = "personal" | "shared";
+type CategoryType = "person1" | "person2" | "shared" | "UNCLASSIFIED";
 
 const Categorize = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [showCategoryEdit, setShowCategoryEdit] = useState(false);
+  const [categoryNames, setCategoryNames] = useState(getCategoryNames());
 
   useEffect(() => {
     const updateTransactions = () => {
@@ -23,41 +26,31 @@ const Categorize = () => {
     return unsubscribe;
   }, []);
 
-  const categoryNames = getCategoryNames();
+  const handleUpdateTransaction = (id: string, category: CategoryType) => {
+    // Map the category types to the transaction store format
+    const categoryMap: Record<CategoryType, string> = {
+      person1: 'personal',
+      person2: 'person2',
+      shared: 'shared',
+      UNCLASSIFIED: 'UNCLASSIFIED'
+    };
 
-  const updateTransactionCategory = (id: string, category: ExpenseCategory) => {
     transactionStore.updateTransaction(id, { 
-      category,
-      isClassified: true 
+      category: categoryMap[category],
+      isClassified: category !== 'UNCLASSIFIED'
     });
   };
 
-  const getCategoryIcon = (category: ExpenseCategory) => {
-    return category === "shared" ? Users : User;
+  const handleBulkUpdate = (ids: string[], category: CategoryType) => {
+    ids.forEach(id => handleUpdateTransaction(id, category));
   };
 
-  const getCategoryBadge = (transaction: Transaction) => {
-    if (transaction.isClassified && transaction.category !== 'UNCLASSIFIED') {
-      const category = transaction.category as ExpenseCategory;
-      const Icon = getCategoryIcon(category);
-      const displayName = getCategoryDisplayName(category);
-      
-      return (
-        <Badge variant={category === "shared" ? "default" : "secondary"} className="flex items-center">
-          <Icon className="w-3 h-3 mr-1" />
-          {displayName}
-        </Badge>
-      );
-    }
-    
-    return <Badge variant="outline">Unclassified</Badge>;
+  const handleCategoryUpdate = (names: any) => {
+    setCategoryNames(names);
+    setShowCategoryEdit(false);
   };
 
-  const unclassifiedTransactions = transactions.filter(t => !t.isClassified || t.category === 'UNCLASSIFIED');
-  const classifiedCount = transactions.filter(t => t.isClassified && t.category !== 'UNCLASSIFIED').length;
-  const totalCount = transactions.length;
-
-  if (totalCount === 0) {
+  if (transactions.length === 0) {
     return (
       <div className="space-y-6">
         <div>
@@ -85,117 +78,42 @@ const Categorize = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Categorize Expenses</h1>
-        <p className="text-gray-600">
-          Review and categorize your expenses as shared or personal
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Categorize Expenses</h1>
+          <p className="text-gray-600">
+            Review and categorize your expenses using your custom categories
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={() => setShowCategoryEdit(true)}
+          className="flex items-center gap-2"
+        >
+          <Settings className="w-4 h-4" />
+          Edit Categories
+        </Button>
       </div>
 
-      {/* Progress */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-medium text-gray-900">Progress</h3>
-              <p className="text-gray-500">
-                {classifiedCount} of {totalCount} expenses categorized
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-blue-600">
-                {totalCount > 0 ? Math.round((classifiedCount / totalCount) * 100) : 0}%
-              </div>
-              <div className="w-24 bg-gray-200 rounded-full h-2 mt-2">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: totalCount > 0 ? `${(classifiedCount / totalCount) * 100}%` : '0%' }}
-                />
-              </div>
-            </div>
+      {/* Category Edit Modal */}
+      {showCategoryEdit && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="max-w-2xl w-full">
+            <CategorySetup
+              onComplete={handleCategoryUpdate}
+              isEditing={true}
+              onCancel={() => setShowCategoryEdit(false)}
+            />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      )}
 
-      {/* Expenses List */}
-      <div className="space-y-4">
-        {unclassifiedTransactions.length > 0 && (
-          <h2 className="text-xl font-semibold text-gray-900">
-            Pending Review ({unclassifiedTransactions.length})
-          </h2>
-        )}
-        
-        {unclassifiedTransactions.map((transaction) => (
-          <Card key={transaction.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
-                    <ShoppingCart className="w-5 h-5 text-gray-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">{transaction.description}</h3>
-                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                      <span>{transaction.date}</span>
-                      {transaction.cardName && (
-                        <>
-                          <span>•</span>
-                          <span>{transaction.cardName}</span>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <div className="font-medium text-gray-900">${transaction.amount.toFixed(2)}</div>
-                    {getCategoryBadge(transaction)}
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Select
-                      onValueChange={(value: ExpenseCategory) => updateTransactionCategory(transaction.id, value)}
-                    >
-                      <SelectTrigger className="w-36">
-                        <SelectValue placeholder="Category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="personal">
-                          <div className="flex items-center">
-                            <User className="w-4 h-4 mr-2" />
-                            {categoryNames.person1}
-                          </div>
-                        </SelectItem>
-                        <SelectItem value="shared">
-                          <div className="flex items-center">
-                            <Users className="w-4 h-4 mr-2" />
-                            {categoryNames.shared}
-                          </div>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-
-        {unclassifiedTransactions.length === 0 && totalCount > 0 && (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-8 h-8 text-green-600" />
-              </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">All Caught Up!</h3>
-              <p className="text-gray-500">
-                All your expenses have been categorized. Great job!
-              </p>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      {/* Transaction Categorizer */}
+      <TransactionCategorizer
+        transactions={transactions}
+        onUpdateTransaction={handleUpdateTransaction}
+        onBulkUpdate={handleBulkUpdate}
+      />
     </div>
   );
 };

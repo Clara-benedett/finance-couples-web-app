@@ -57,7 +57,7 @@ const CategorySetup = ({ onComplete, isEditing = false, onCancel }: CategorySetu
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Settings className="w-5 h-5 text-blue-600" />
-          Category Setup
+          Setup Categories
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -69,7 +69,7 @@ const CategorySetup = ({ onComplete, isEditing = false, onCancel }: CategorySetu
           <div className="space-y-2">
             <Label htmlFor="person1" className="flex items-center gap-2">
               <User className="w-4 h-4" />
-              Person 1 Name
+              Your Name
             </Label>
             <Input
               id="person1"
@@ -82,7 +82,7 @@ const CategorySetup = ({ onComplete, isEditing = false, onCancel }: CategorySetu
           <div className="space-y-2">
             <Label htmlFor="person2" className="flex items-center gap-2">
               <User className="w-4 h-4" />
-              Person 2 Name
+              Partner's Name
             </Label>
             <Input
               id="person2"
@@ -95,7 +95,7 @@ const CategorySetup = ({ onComplete, isEditing = false, onCancel }: CategorySetu
           <div className="space-y-2">
             <Label htmlFor="shared" className="flex items-center gap-2">
               <Share className="w-4 h-4" />
-              Shared Expenses
+              Shared Expenses Name
             </Label>
             <Input
               id="shared"
