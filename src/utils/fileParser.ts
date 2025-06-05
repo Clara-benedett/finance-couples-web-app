@@ -5,9 +5,9 @@ import { ParsedTransaction } from '@/types/transaction';
 
 // Common column name variations
 const COLUMN_MAPPINGS = {
-  date: ['date', 'data', 'fecha', 'datum', 'transaction date', 'trans date'],
-  amount: ['amount', 'valor', 'value', 'price', 'precio', 'montant', 'betrag'],
-  description: ['description', 'descricao', 'descripcion', 'merchant', 'vendor', 'payee', 'memo']
+  date: ['date', 'data', 'fecha', 'datum', 'transaction date', 'trans date', 'transactiondate'],
+  amount: ['amount', 'valor', 'value', 'price', 'precio', 'montant', 'betrag', 'debit', 'debito', 'credit', 'credito', 'cost', 'costo'],
+  description: ['description', 'descricao', 'descripcion', 'merchant', 'vendor', 'payee', 'memo', 'details', 'detalles']
 };
 
 function normalizeColumnName(name: string): string {
@@ -16,9 +16,10 @@ function normalizeColumnName(name: string): string {
 
 function findColumnIndex(headers: string[], columnTypes: string[]): number {
   const normalizedHeaders = headers.map(h => normalizeColumnName(h));
+  const normalizedColumnTypes = columnTypes.map(t => normalizeColumnName(t));
   
-  for (const type of columnTypes) {
-    const index = normalizedHeaders.findIndex(h => h.includes(type));
+  for (const type of normalizedColumnTypes) {
+    const index = normalizedHeaders.findIndex(h => h.includes(type) || type.includes(h));
     if (index !== -1) return index;
   }
   return -1;
@@ -86,12 +87,17 @@ export async function parseCSV(file: File): Promise<ParsedTransaction[]> {
           const data = results.data as any[];
           const headers = Object.keys(data[0] || {});
           
+          console.log('CSV Headers found:', headers);
+          console.log('Looking for columns:', COLUMN_MAPPINGS);
+          
           const dateIndex = findColumnIndex(headers, COLUMN_MAPPINGS.date);
           const amountIndex = findColumnIndex(headers, COLUMN_MAPPINGS.amount);
           const descIndex = findColumnIndex(headers, COLUMN_MAPPINGS.description);
 
+          console.log('Column indices found:', { dateIndex, amountIndex, descIndex });
+
           if (dateIndex === -1 || amountIndex === -1 || descIndex === -1) {
-            reject(new Error('Required columns not found. Please ensure your CSV has Date, Amount, and Description columns.'));
+            reject(new Error(`Required columns not found. Found headers: ${headers.join(', ')}. Please ensure your CSV has Date, Amount, and Description columns.`));
             return;
           }
 
@@ -134,12 +140,17 @@ export async function parseExcel(file: File): Promise<ParsedTransaction[]> {
         }
 
         const headers = Object.keys(jsonData[0] as any);
+        console.log('Excel Headers found:', headers);
+        console.log('Looking for columns:', COLUMN_MAPPINGS);
+        
         const dateIndex = findColumnIndex(headers, COLUMN_MAPPINGS.date);
         const amountIndex = findColumnIndex(headers, COLUMN_MAPPINGS.amount);
         const descIndex = findColumnIndex(headers, COLUMN_MAPPINGS.description);
 
+        console.log('Column indices found:', { dateIndex, amountIndex, descIndex });
+
         if (dateIndex === -1 || amountIndex === -1 || descIndex === -1) {
-          reject(new Error('Required columns not found. Please ensure your Excel file has Date, Amount, and Description columns.'));
+          reject(new Error(`Required columns not found. Found headers: ${headers.join(', ')}. Please ensure your Excel file has Date, Amount, and Description columns.`));
           return;
         }
 

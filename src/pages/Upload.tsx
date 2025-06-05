@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Upload as UploadIcon, FileText, CheckCircle, AlertCircle, File } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { parseFile } from "@/utils/fileParser";
@@ -24,6 +24,7 @@ const Upload = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -137,6 +138,10 @@ const Upload = () => {
     handleFileUpload(e.dataTransfer.files);
   };
 
+  const handleChooseFiles = () => {
+    fileInputRef.current?.click();
+  };
+
   const getFileIcon = (fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase();
     return extension === 'csv' ? FileText : File;
@@ -176,23 +181,22 @@ const Upload = () => {
               Support for CSV and Excel files (.csv, .xlsx, .xls) up to 10MB each
             </p>
             <input
+              ref={fileInputRef}
               type="file"
               multiple
               accept=".csv,.xlsx,.xls"
               onChange={(e) => handleFileUpload(e.target.files)}
               className="hidden"
-              id="file-upload"
               disabled={isProcessing}
             />
-            <label htmlFor="file-upload">
-              <Button 
-                className="bg-blue-600 hover:bg-blue-700 cursor-pointer"
-                disabled={isProcessing}
-              >
-                <UploadIcon className="w-4 h-4 mr-2" />
-                Choose Files
-              </Button>
-            </label>
+            <Button 
+              onClick={handleChooseFiles}
+              className="bg-blue-600 hover:bg-blue-700"
+              disabled={isProcessing}
+            >
+              <UploadIcon className="w-4 h-4 mr-2" />
+              Choose Files
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -231,7 +235,7 @@ const Upload = () => {
           <CardContent>
             <ul className="space-y-2 text-sm">
               <li><strong>Date:</strong> Date, Data, Transaction Date</li>
-              <li><strong>Amount:</strong> Amount, Valor, Value, Price</li>
+              <li><strong>Amount:</strong> Amount, Valor, Value, Price, Debit</li>
               <li><strong>Description:</strong> Description, Descrição, Merchant</li>
             </ul>
           </CardContent>
