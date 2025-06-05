@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,13 +29,19 @@ const ProportionSettingsComponent = ({ proportions, onUpdate, onClose }: Proport
 
   const handleInputChange = (field: keyof ProportionSettings, value: string) => {
     const numValue = Math.max(0, Math.min(100, parseInt(value) || 0));
-    const otherField = field === 'person1Percentage' ? 'person2Percentage' : 'person1Percentage';
     const otherValue = 100 - numValue;
     
-    setLocalProportions({
-      [field]: numValue,
-      [otherField]: otherValue,
-    } as ProportionSettings);
+    if (field === 'person1Percentage') {
+      setLocalProportions({
+        person1Percentage: numValue,
+        person2Percentage: otherValue,
+      });
+    } else {
+      setLocalProportions({
+        person1Percentage: otherValue,
+        person2Percentage: numValue,
+      });
+    }
   };
 
   const handleSave = () => {
