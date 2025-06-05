@@ -1,6 +1,6 @@
 
 import { NavLink, useLocation } from "react-router-dom";
-import { Upload, LayoutDashboard, Category, History } from "lucide-react";
+import { Upload, LayoutDashboard, FolderOpen, History } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -16,14 +16,15 @@ import {
 const navigationItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Upload", url: "/upload", icon: Upload },
-  { title: "Categorize", url: "/categorize", icon: Category },
+  { title: "Categorize", url: "/categorize", icon: FolderOpen },
   { title: "History", url: "/history", icon: History },
 ];
 
 export function AppSidebar() {
-  const { collapsed } = useSidebar();
+  const { state } = useSidebar();
   const location = useLocation();
   const currentPath = location.pathname;
+  const collapsed = state === "collapsed";
 
   const isActive = (path: string) => {
     if (path === "/") {
@@ -40,7 +41,7 @@ export function AppSidebar() {
   return (
     <Sidebar
       className={`${collapsed ? "w-16" : "w-64"} bg-white border-r border-gray-200`}
-      collapsible
+      collapsible="icon"
     >
       <SidebarContent className="pt-6">
         <SidebarGroup>
