@@ -3,85 +3,40 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, User, ShoppingCart, Car, Home, Coffee } from "lucide-react";
-import { useState } from "react";
+import { Users, User, ShoppingCart, CheckCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { transactionStore } from "@/store/transactionStore";
+import { Transaction } from "@/types/transaction";
 
 type ExpenseCategory = "shared" | "personal";
 
-interface Expense {
-  id: number;
-  description: string;
-  amount: number;
-  date: string;
-  category: ExpenseCategory | null;
-  suggestedCategory: ExpenseCategory;
-}
-
 const Categorize = () => {
-  const [expenses, setExpenses] = useState<Expense[]>([
-    {
-      id: 1,
-      description: "Whole Foods Market",
-      amount: 127.50,
-      date: "2024-01-15",
-      category: null,
-      suggestedCategory: "shared"
-    },
-    {
-      id: 2,
-      description: "Starbucks Coffee",
-      amount: 12.75,
-      date: "2024-01-15",
-      category: null,
-      suggestedCategory: "personal"
-    },
-    {
-      id: 3,
-      description: "Netflix Subscription",
-      amount: 15.99,
-      date: "2024-01-14",
-      category: null,
-      suggestedCategory: "shared"
-    },
-    {
-      id: 4,
-      description: "Gas Station",
-      amount: 45.20,
-      date: "2024-01-14",
-      category: null,
-      suggestedCategory: "personal"
-    },
-    {
-      id: 5,
-      description: "Target Store",
-      amount: 89.99,
-      date: "2024-01-13",
-      category: null,
-      suggestedCategory: "shared"
-    }
-  ]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  const updateExpenseCategory = (id: number, category: ExpenseCategory) => {
-    setExpenses(prev => 
-      prev.map(expense => 
-        expense.id === id ? { ...expense, category } : expense
-      )
-    );
-  };
+  useEffect(() => {
+    const updateTransactions = () => {
+      setTransactions(transactionStore.getTransactions());
+    };
 
-  const acceptSuggestion = (id: number) => {
-    const expense = expenses.find(e => e.id === id);
-    if (expense) {
-      updateExpenseCategory(id, expense.suggestedCategory);
-    }
+    updateTransactions();
+    const unsubscribe = transactionStore.subscribe(updateTransactions);
+    return unsubscribe;
+  }, []);
+
+  const updateTransactionCategory = (id: string, category: ExpenseCategory) => {
+    transactionStore.updateTransaction(id, { 
+      category,
+      isClassified: true 
+    });
   };
 
   const getCategoryIcon = (category: ExpenseCategory) => {
     return category === "shared" ? Users : User;
   };
 
-  const getCategoryBadge = (category: ExpenseCategory | null, suggested?: ExpenseCategory) => {
-    if (category) {
+  const getCategoryBadge = (transaction: Transaction) => {
+    if (transaction.isClassified && transaction.category !== 'UNCLASSIFIED') {
+      const category = transaction.category as ExpenseCategory;
       const Icon = getCategoryIcon(category);
       return (
         <Badge variant={category === "shared" ? "default" : "secondary"} className="flex items-center">
@@ -91,21 +46,37 @@ const Categorize = () => {
       );
     }
     
-    if (suggested) {
-      const Icon = getCategoryIcon(suggested);
-      return (
-        <Badge variant="outline" className="flex items-center border-dashed">
-          <Icon className="w-3 h-3 mr-1" />
-          Suggested: {suggested === "shared" ? "Shared" : "Personal"}
-        </Badge>
-      );
-    }
-    
     return <Badge variant="outline">Uncategorized</Badge>;
   };
 
-  const uncategorizedExpenses = expenses.filter(e => !e.category);
-  const categorizedCount = expenses.filter(e => e.category).length;
+  const unclassifiedTransactions = transactions.filter(t => !t.isClassified || t.category === 'UNCLASSIFIED');
+  const classifiedCount = transactions.filter(t => t.isClassified && t.category !== 'UNCLASSIFIED').length;
+  const totalCount = transactions.length;
+
+  if (totalCount === 0) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Categorize Expenses</h1>
+          <p className="text-gray-600">
+            No transactions to categorize. Please upload some expense data first.
+          </p>
+        </div>
+
+        <Card>
+          <CardContent className="p-8 text-center">
+            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <ShoppingCart className="w-8 h-8 text-blue-600" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Transactions Found</h3>
+            <p className="text-gray-500">
+              Upload your expense files to start categorizing transactions.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -124,17 +95,17 @@ const Categorize = () => {
             <div>
               <h3 className="text-lg font-medium text-gray-900">Progress</h3>
               <p className="text-gray-500">
-                {categorizedCount} of {expenses.length} expenses categorized
+                {classifiedCount} of {totalCount} expenses categorized
               </p>
             </div>
             <div className="text-right">
               <div className="text-2xl font-bold text-blue-600">
-                {Math.round((categorizedCount / expenses.length) * 100)}%
+                {totalCount > 0 ? Math.round((classifiedCount / totalCount) * 100) : 0}%
               </div>
               <div className="w-24 bg-gray-200 rounded-full h-2 mt-2">
                 <div 
                   className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${(categorizedCount / expenses.length) * 100}%` }}
+                  style={{ width: totalCount > 0 ? `${(classifiedCount / totalCount) * 100}%` : '0%' }}
                 />
               </div>
             </div>
@@ -144,14 +115,14 @@ const Categorize = () => {
 
       {/* Expenses List */}
       <div className="space-y-4">
-        {uncategorizedExpenses.length > 0 && (
+        {unclassifiedTransactions.length > 0 && (
           <h2 className="text-xl font-semibold text-gray-900">
-            Pending Review ({uncategorizedExpenses.length})
+            Pending Review ({unclassifiedTransactions.length})
           </h2>
         )}
         
-        {uncategorizedExpenses.map((expense) => (
-          <Card key={expense.id} className="hover:shadow-md transition-shadow">
+        {unclassifiedTransactions.map((transaction) => (
+          <Card key={transaction.id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
@@ -159,20 +130,20 @@ const Categorize = () => {
                     <ShoppingCart className="w-5 h-5 text-gray-600" />
                   </div>
                   <div>
-                    <h3 className="font-medium text-gray-900">{expense.description}</h3>
-                    <p className="text-sm text-gray-500">{expense.date}</p>
+                    <h3 className="font-medium text-gray-900">{transaction.description}</h3>
+                    <p className="text-sm text-gray-500">{transaction.date}</p>
                   </div>
                 </div>
                 
                 <div className="flex items-center space-x-4">
                   <div className="text-right">
-                    <div className="font-medium text-gray-900">${expense.amount.toFixed(2)}</div>
-                    {getCategoryBadge(expense.category, expense.suggestedCategory)}
+                    <div className="font-medium text-gray-900">${transaction.amount.toFixed(2)}</div>
+                    {getCategoryBadge(transaction)}
                   </div>
                   
                   <div className="flex items-center space-x-2">
                     <Select
-                      onValueChange={(value: ExpenseCategory) => updateExpenseCategory(expense.id, value)}
+                      onValueChange={(value: ExpenseCategory) => updateTransactionCategory(transaction.id, value)}
                     >
                       <SelectTrigger className="w-32">
                         <SelectValue placeholder="Category" />
@@ -192,15 +163,6 @@ const Categorize = () => {
                         </SelectItem>
                       </SelectContent>
                     </Select>
-                    
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => acceptSuggestion(expense.id)}
-                      className="whitespace-nowrap"
-                    >
-                      Accept Suggestion
-                    </Button>
                   </div>
                 </div>
               </div>
@@ -208,11 +170,11 @@ const Categorize = () => {
           </Card>
         ))}
 
-        {uncategorizedExpenses.length === 0 && (
+        {unclassifiedTransactions.length === 0 && totalCount > 0 && (
           <Card>
             <CardContent className="p-8 text-center">
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-green-600" />
+                <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">All Caught Up!</h3>
               <p className="text-gray-500">
