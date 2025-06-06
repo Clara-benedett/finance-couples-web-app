@@ -29,8 +29,8 @@ const Categorize = () => {
   const handleUpdateTransaction = (id: string, category: CategoryType) => {
     // Map the category types to the transaction store format
     const categoryMap: Record<CategoryType, string> = {
-      person1: 'personal',
-      person2: 'person2',
+      person1: 'person1',
+      person2: 'person2', 
       shared: 'shared',
       UNCLASSIFIED: 'UNCLASSIFIED'
     };

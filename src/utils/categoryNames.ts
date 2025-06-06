@@ -36,7 +36,7 @@ export const getCategoryDisplayName = (category: string): string => {
   const names = getCategoryNames();
   
   switch (category) {
-    case 'personal':
+    case 'person1':
       return names.person1;
     case 'person2':
       return names.person2;
