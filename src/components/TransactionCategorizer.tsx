@@ -109,7 +109,7 @@ const TransactionCategorizer = ({
   };
 
   const getCategoryButtonClass = (category: CategoryType, currentCategory: string, isForBulk = false) => {
-    const baseClass = "relative overflow-hidden transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg active:scale-95 min-w-[100px] touch-manipulation";
+    const baseClass = "relative overflow-hidden transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg active:scale-95 min-w-[100px] touch-manipulation rounded-full";
     const isSelected = currentCategory === category;
     
     if (isSelected) {
