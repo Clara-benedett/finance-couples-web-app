@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Search, Filter, CheckSquare, Square, Info, X, Zap, Check, Robot } from "lucide-react";
+import { Search, Filter, CheckSquare, Square, Info, X, Zap, Check, Bot } from "lucide-react";
 import { Transaction } from "@/types/transaction";
 import { getCategoryNames } from "@/utils/categoryNames";
 import { categorizationRulesEngine } from "@/utils/categorizationRules";
@@ -366,7 +367,7 @@ const TransactionCategorizer = ({
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Robot className="w-5 h-5 text-blue-600" />
+                  <Bot className="w-5 h-5 text-blue-600" />
                   <span className="text-sm text-gray-700">
                     Always categorize <strong>{showRuleConfirmation.merchantName}</strong> as <strong>{showRuleConfirmation.categoryDisplayName}</strong>?
                   </span>
@@ -432,7 +433,7 @@ const TransactionCategorizer = ({
                                     onClick={() => handleCreateRule(transaction.description, ruleEligibility.category, ruleEligibility.categoryDisplayName)}
                                     className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 animate-fade-in"
                                   >
-                                    <Robot className="w-3 h-3 mr-1" />
+                                    <Bot className="w-3 h-3 mr-1" />
                                     Auto-rule
                                   </Button>
                                 </TooltipTrigger>
