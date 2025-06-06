@@ -1,10 +1,11 @@
+
 import { useState, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Search, Filter, CheckSquare, Square, Info, X, Zap } from "lucide-react";
+import { Search, Filter, CheckSquare, Square, Info, X, Zap, Check } from "lucide-react";
 import { Transaction } from "@/types/transaction";
 import { getCategoryNames } from "@/utils/categoryNames";
 
@@ -107,17 +108,72 @@ const TransactionCategorizer = ({
     setSearchTerm('');
   };
 
-  const getCategoryBadge = (category: string) => {
+  const getCategoryButtonClass = (category: CategoryType, currentCategory: string, isForBulk = false) => {
+    const baseClass = "relative overflow-hidden transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg active:scale-95 min-w-[100px] touch-manipulation";
+    const isSelected = currentCategory === category;
+    
+    if (isSelected) {
+      // Selected state - solid with glow
+      switch (category) {
+        case 'person1':
+          return `${baseClass} bg-blue-600 text-white border-2 border-blue-600 shadow-blue-200 shadow-lg hover:bg-blue-700 hover:shadow-blue-300`;
+        case 'person2':
+          return `${baseClass} bg-green-600 text-white border-2 border-green-600 shadow-green-200 shadow-lg hover:bg-green-700 hover:shadow-green-300`;
+        case 'shared':
+          return `${baseClass} bg-purple-600 text-white border-2 border-purple-600 shadow-purple-200 shadow-lg hover:bg-purple-700 hover:shadow-purple-300`;
+        case 'UNCLASSIFIED':
+          return `${baseClass} bg-gray-600 text-white border-2 border-gray-600 shadow-gray-200 shadow-lg hover:bg-gray-700 hover:shadow-gray-300`;
+      }
+    } else {
+      // Unselected state - outline with opacity
+      switch (category) {
+        case 'person1':
+          return `${baseClass} bg-transparent text-blue-600 border-2 border-blue-300 opacity-50 hover:opacity-100 hover:bg-blue-50 hover:border-blue-500 hover:shadow-blue-200`;
+        case 'person2':
+          return `${baseClass} bg-transparent text-green-600 border-2 border-green-300 opacity-50 hover:opacity-100 hover:bg-green-50 hover:border-green-500 hover:shadow-green-200`;
+        case 'shared':
+          return `${baseClass} bg-transparent text-purple-600 border-2 border-purple-300 opacity-50 hover:opacity-100 hover:bg-purple-50 hover:border-purple-500 hover:shadow-purple-200`;
+        case 'UNCLASSIFIED':
+          return `${baseClass} bg-transparent text-gray-600 border-2 border-gray-300 opacity-50 hover:opacity-100 hover:bg-gray-50 hover:border-gray-500 hover:shadow-gray-200`;
+      }
+    }
+    
+    return baseClass;
+  };
+
+  const renderCategoryButton = (category: CategoryType, currentCategory: string, onClick: () => void, isForBulk = false) => {
+    const isSelected = currentCategory === category;
+    const buttonClass = getCategoryButtonClass(category, currentCategory, isForBulk);
+    
+    let label = '';
     switch (category) {
       case 'person1':
-        return <Badge className="bg-blue-100 text-blue-800 border-blue-200">{categoryNames.person1}</Badge>;
+        label = categoryNames.person1;
+        break;
       case 'person2':
-        return <Badge className="bg-green-100 text-green-800 border-green-200">{categoryNames.person2}</Badge>;
+        label = categoryNames.person2;
+        break;
       case 'shared':
-        return <Badge className="bg-purple-100 text-purple-800 border-purple-200">{categoryNames.shared}</Badge>;
-      default:
-        return <Badge variant="outline" className="text-gray-600">Unclassified</Badge>;
+        label = categoryNames.shared;
+        break;
+      case 'UNCLASSIFIED':
+        label = 'Unclassified';
+        break;
     }
+
+    return (
+      <button
+        key={category}
+        onClick={onClick}
+        className={buttonClass}
+        style={{ minHeight: '40px' }}
+      >
+        <div className="flex items-center justify-center gap-2 px-4 py-2">
+          {isSelected && <Check className="w-4 h-4" />}
+          <span className="font-medium">{label}</span>
+        </div>
+      </button>
+    );
   };
 
   const categorizedCount = transactions.filter(t => t.category !== 'UNCLASSIFIED').length;
@@ -193,36 +249,14 @@ const TransactionCategorizer = ({
 
             {/* Bulk Action Buttons */}
             {selectedTransactions.size > 0 && (
-              <div className="flex gap-2 flex-wrap">
-                <span className="text-sm text-gray-600 self-center mr-2">Categorize selected as:</span>
-                <Button
-                  size="sm"
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
-                  onClick={() => handleBulkCategoryClick('person1')}
-                >
-                  {categoryNames.person1}
-                </Button>
-                <Button
-                  size="sm"
-                  className="bg-green-500 hover:bg-green-600 text-white"
-                  onClick={() => handleBulkCategoryClick('person2')}
-                >
-                  {categoryNames.person2}
-                </Button>
-                <Button
-                  size="sm"
-                  className="bg-purple-500 hover:bg-purple-600 text-white"
-                  onClick={() => handleBulkCategoryClick('shared')}
-                >
-                  {categoryNames.shared}
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleBulkCategoryClick('UNCLASSIFIED')}
-                >
-                  Unclassified
-                </Button>
+              <div className="flex gap-3 flex-wrap items-center">
+                <span className="text-sm text-gray-600 mr-2">Categorize selected as:</span>
+                <div className="flex gap-2">
+                  {renderCategoryButton('person1', 'UNCLASSIFIED', () => handleBulkCategoryClick('person1'), true)}
+                  {renderCategoryButton('person2', 'UNCLASSIFIED', () => handleBulkCategoryClick('person2'), true)}
+                  {renderCategoryButton('shared', 'UNCLASSIFIED', () => handleBulkCategoryClick('shared'), true)}
+                  {renderCategoryButton('UNCLASSIFIED', 'UNCLASSIFIED', () => handleBulkCategoryClick('UNCLASSIFIED'), true)}
+                </div>
               </div>
             )}
           </div>
@@ -323,43 +357,15 @@ const TransactionCategorizer = ({
                         )}
                       </div>
                     </div>
-                    
-                    <div className="ml-4 text-right">
-                      {getCategoryBadge(transaction.category)}
-                    </div>
                   </div>
                 </div>
 
-                {/* Category Buttons */}
+                {/* Category Buttons - Consistent Order */}
                 <div className="flex gap-2 ml-4">
-                  <Button
-                    size="sm"
-                    className="bg-blue-500 hover:bg-blue-600 text-white"
-                    onClick={() => handleCategoryClick(transaction.id, 'person1')}
-                  >
-                    {categoryNames.person1}
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="bg-green-500 hover:bg-green-600 text-white"
-                    onClick={() => handleCategoryClick(transaction.id, 'person2')}
-                  >
-                    {categoryNames.person2}
-                  </Button>
-                  <Button
-                    size="sm"
-                    className="bg-purple-500 hover:bg-purple-600 text-white"
-                    onClick={() => handleCategoryClick(transaction.id, 'shared')}
-                  >
-                    {categoryNames.shared}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleCategoryClick(transaction.id, 'UNCLASSIFIED')}
-                  >
-                    Unclassified
-                  </Button>
+                  {renderCategoryButton('person1', transaction.category, () => handleCategoryClick(transaction.id, 'person1'))}
+                  {renderCategoryButton('person2', transaction.category, () => handleCategoryClick(transaction.id, 'person2'))}
+                  {renderCategoryButton('shared', transaction.category, () => handleCategoryClick(transaction.id, 'shared'))}
+                  {renderCategoryButton('UNCLASSIFIED', transaction.category, () => handleCategoryClick(transaction.id, 'UNCLASSIFIED'))}
                 </div>
               </div>
             </CardContent>
