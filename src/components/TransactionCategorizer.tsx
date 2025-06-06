@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -266,7 +265,9 @@ const TransactionCategorizer = ({
                         </h3>
                         {/* Zap icon for auto-categorized transactions */}
                         {transaction.autoAppliedRule && (
-                          <Zap className="w-4 h-4 text-yellow-500" title="Auto-categorized using rule" />
+                          <span title="Auto-categorized using rule">
+                            <Zap className="w-4 h-4 text-yellow-500" />
+                          </span>
                         )}
                         {/* Hover card for additional details */}
                         {(transaction.transactionType || transaction.referenceNumber) && (
