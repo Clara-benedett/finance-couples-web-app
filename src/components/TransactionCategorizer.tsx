@@ -82,7 +82,6 @@ const TransactionCategorizer = ({
     );
   }, [transactions, searchTerm]);
 
-  // Check if a merchant is eligible for rule creation
   const getMerchantRuleEligibility = (merchantName: string) => {
     const normalizedMerchant = merchantName.toUpperCase().trim();
     
@@ -130,10 +129,13 @@ const TransactionCategorizer = ({
     }
   };
 
-  const handleCreateRule = (event: React.MouseEvent, merchantName: string, category: CategoryType, categoryDisplayName: string) => {
+  const handleCreateRuleClick = (event: React.MouseEvent, merchantName: string, category: CategoryType, categoryDisplayName: string) => {
     event.preventDefault();
     event.stopPropagation();
     
+    console.log('Auto-rule button clicked for:', merchantName, category, categoryDisplayName);
+    
+    // Directly set the confirmation dialog - this should override any other logic
     setShowRuleConfirmation({
       merchantName,
       category,
@@ -143,6 +145,8 @@ const TransactionCategorizer = ({
 
   const handleConfirmRule = () => {
     if (!showRuleConfirmation) return;
+    
+    console.log('Confirming rule creation for:', showRuleConfirmation);
     
     const categoryMap: Record<CategoryType, string> = {
       person1: 'person1',
@@ -183,6 +187,7 @@ const TransactionCategorizer = ({
   };
 
   const handleCancelRule = () => {
+    console.log('Canceling rule creation');
     setShowRuleConfirmation(null);
   };
 
@@ -427,14 +432,14 @@ const TransactionCategorizer = ({
                               {transaction.description}
                             </h3>
                             
-                            {/* Subtle Auto-rule Button */}
+                            {/* Auto-rule Button */}
                             {ruleEligibility && (
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    onClick={(e) => handleCreateRule(e, transaction.description, ruleEligibility.category, ruleEligibility.categoryDisplayName)}
+                                    onClick={(e) => handleCreateRuleClick(e, transaction.description, ruleEligibility.category, ruleEligibility.categoryDisplayName)}
                                     className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 animate-fade-in"
                                   >
                                     <Bot className="w-3 h-3 mr-1" />
