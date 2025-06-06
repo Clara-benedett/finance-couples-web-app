@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -152,78 +153,81 @@ const TransactionCategorizer = ({
       {/* Search and Selection Controls */}
       <Card>
         <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-6 items-start">
-            {/* Search Section */}
-            <div className="flex-1 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search transactions..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-10"
-                />
-                {searchTerm && (
-                  <button
-                    onClick={clearSearch}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
+          <div className="flex flex-col gap-4">
+            {/* Top row: Selection controls on left, Search on right */}
+            <div className="flex items-center justify-between">
+              {/* Selection Controls - Left side, aligned with checkboxes */}
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={selectAllVisible}>
+                    Select All
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={clearSelection}>
+                    Clear Selection
+                  </Button>
+                </div>
+                <span className="text-sm text-gray-500">
+                  {selectedTransactions.size} selected
+                </span>
+              </div>
+              
+              {/* Search - Right side */}
+              <div className="w-80">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search transactions..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-10"
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={clearSearch}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
-            
-            {/* Selection Controls Section */}
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={selectAllVisible}>
-                  Select All
-                </Button>
-                <Button variant="outline" size="sm" onClick={clearSelection}>
-                  Clear Selection
-                </Button>
-              </div>
-              <span className="text-sm text-gray-500">
-                {selectedTransactions.size} selected
-              </span>
-            </div>
-          </div>
 
-          {/* Bulk Action Buttons */}
-          {selectedTransactions.size > 0 && (
-            <div className="mt-4 flex gap-2 flex-wrap">
-              <span className="text-sm text-gray-600 self-center mr-2">Categorize selected as:</span>
-              <Button
-                size="sm"
-                className="bg-blue-500 hover:bg-blue-600 text-white"
-                onClick={() => handleBulkCategoryClick('person1')}
-              >
-                {categoryNames.person1}
-              </Button>
-              <Button
-                size="sm"
-                className="bg-green-500 hover:bg-green-600 text-white"
-                onClick={() => handleBulkCategoryClick('person2')}
-              >
-                {categoryNames.person2}
-              </Button>
-              <Button
-                size="sm"
-                className="bg-purple-500 hover:bg-purple-600 text-white"
-                onClick={() => handleBulkCategoryClick('shared')}
-              >
-                {categoryNames.shared}
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => handleBulkCategoryClick('UNCLASSIFIED')}
-              >
-                Unclassified
-              </Button>
-            </div>
-          )}
+            {/* Bulk Action Buttons */}
+            {selectedTransactions.size > 0 && (
+              <div className="flex gap-2 flex-wrap">
+                <span className="text-sm text-gray-600 self-center mr-2">Categorize selected as:</span>
+                <Button
+                  size="sm"
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                  onClick={() => handleBulkCategoryClick('person1')}
+                >
+                  {categoryNames.person1}
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-green-500 hover:bg-green-600 text-white"
+                  onClick={() => handleBulkCategoryClick('person2')}
+                >
+                  {categoryNames.person2}
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-purple-500 hover:bg-purple-600 text-white"
+                  onClick={() => handleBulkCategoryClick('shared')}
+                >
+                  {categoryNames.shared}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleBulkCategoryClick('UNCLASSIFIED')}
+                >
+                  Unclassified
+                </Button>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
