@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Search, Filter, CheckSquare, Square, Info, X, Zap, Check, Clipboard } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Search, Filter, CheckSquare, Square, Info, X, Zap, Check, Robot } from "lucide-react";
 import { Transaction } from "@/types/transaction";
 import { getCategoryNames } from "@/utils/categoryNames";
 import { categorizationRulesEngine } from "@/utils/categorizationRules";
@@ -276,248 +277,266 @@ const TransactionCategorizer = ({
   const progressPercentage = totalCount > 0 ? Math.round((categorizedCount / totalCount) * 100) : 0;
 
   return (
-    <div className="space-y-6">
-      {/* Progress Header */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="text-lg font-medium text-gray-900">Categorization Progress</h3>
-              <p className="text-gray-500">
-                {categorizedCount} of {totalCount} transactions categorized
-              </p>
-            </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold text-blue-600">{progressPercentage}%</div>
-              <div className="w-24 bg-gray-200 rounded-full h-2 mt-2">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${progressPercentage}%` }}
-                />
+    <TooltipProvider>
+      <div className="space-y-6">
+        {/* Progress Header */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-medium text-gray-900">Categorization Progress</h3>
+                <p className="text-gray-500">
+                  {categorizedCount} of {totalCount} transactions categorized
+                </p>
               </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Search and Selection Controls */}
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col gap-4">
-            {/* Search bar */}
-            <div className="w-96">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  placeholder="Search transactions..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10 pr-10"
-                />
-                {searchTerm && (
-                  <button
-                    onClick={clearSearch}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Selection Controls */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={selectAllVisible}>
-                    Select All
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={clearSelection}>
-                    Clear Selection
-                  </Button>
+              <div className="text-right">
+                <div className="text-2xl font-bold text-blue-600">{progressPercentage}%</div>
+                <div className="w-24 bg-gray-200 rounded-full h-2 mt-2">
+                  <div 
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${progressPercentage}%` }}
+                  />
                 </div>
-                <span className="text-sm text-gray-500">
-                  {selectedTransactions.size} selected
-                </span>
-              </div>
-            </div>
-
-            {/* Bulk Action Buttons */}
-            {selectedTransactions.size > 0 && (
-              <div className="flex gap-3 flex-wrap items-center">
-                <span className="text-sm text-gray-600 mr-2">Categorize selected as:</span>
-                <div className="flex gap-2">
-                  {renderCategoryButton('person1', 'UNCLASSIFIED', () => handleBulkCategoryClick('person1'), true)}
-                  {renderCategoryButton('person2', 'UNCLASSIFIED', () => handleBulkCategoryClick('person2'), true)}
-                  {renderCategoryButton('shared', 'UNCLASSIFIED', () => handleBulkCategoryClick('shared'), true)}
-                  {renderCategoryButton('UNCLASSIFIED', 'UNCLASSIFIED', () => handleBulkCategoryClick('UNCLASSIFIED'), true)}
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Rule Confirmation Dialog */}
-      {showRuleConfirmation && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Clipboard className="w-5 h-5 text-blue-600" />
-                <span className="text-sm text-gray-700">
-                  Always categorize <strong>{showRuleConfirmation.merchantName}</strong> as <strong>{showRuleConfirmation.categoryDisplayName}</strong>?
-                </span>
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" onClick={handleConfirmRule}>
-                  Yes
-                </Button>
-                <Button size="sm" variant="outline" onClick={handleCancelRule}>
-                  Cancel
-                </Button>
               </div>
             </div>
           </CardContent>
         </Card>
-      )}
 
-      {/* Transactions List */}
-      <div className="space-y-3">
-        {filteredTransactions.map((transaction) => {
-          const ruleEligibility = getMerchantRuleEligibility(transaction.description);
-          
-          return (
-            <Card key={transaction.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
-                <div className="flex items-center gap-4">
-                  {/* Selection Checkbox */}
-                  <button
-                    onClick={() => toggleTransactionSelection(transaction.id)}
-                    className="text-gray-400 hover:text-gray-600"
-                  >
-                    {selectedTransactions.has(transaction.id) ? (
-                      <CheckSquare className="w-5 h-5 text-blue-600" />
-                    ) : (
-                      <Square className="w-5 h-5" />
-                    )}
-                  </button>
-
-                  {/* MCC Emoji */}
-                  {transaction.mccCode && (
-                    <div className="text-xl" title={`MCC: ${transaction.mccCode}`}>
-                      {getMCCEmoji(transaction.mccCode)}
-                    </div>
+        {/* Search and Selection Controls */}
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex flex-col gap-4">
+              {/* Search bar */}
+              <div className="w-96">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search transactions..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-10 pr-10"
+                  />
+                  {searchTerm && (
+                    <button
+                      onClick={clearSearch}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
                   )}
+                </div>
+              </div>
 
-                  {/* Transaction Details */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-medium text-gray-900 truncate">
-                            {transaction.description}
-                          </h3>
-                          {/* Zap icon for auto-categorized transactions */}
-                          {transaction.autoAppliedRule && (
-                            <span title="Auto-categorized using rule">
-                              <Zap className="w-4 h-4 text-yellow-500" />
-                            </span>
-                          )}
-                          {/* Hover card for additional details */}
-                          {(transaction.transactionType || transaction.referenceNumber) && (
-                            <HoverCard>
-                              <HoverCardTrigger asChild>
-                                <button className="text-gray-400 hover:text-gray-600">
-                                  <Info className="w-4 h-4" />
-                                </button>
-                              </HoverCardTrigger>
-                              <HoverCardContent className="w-80 bg-white border shadow-lg">
-                                <div className="space-y-2">
-                                  {transaction.transactionType && (
-                                    <div>
-                                      <span className="font-medium text-gray-700">Type: </span>
-                                      <span className="text-gray-600">{transaction.transactionType}</span>
-                                    </div>
-                                  )}
-                                  {transaction.referenceNumber && (
-                                    <div>
-                                      <span className="font-medium text-gray-700">Reference: </span>
-                                      <span className="text-gray-600">{transaction.referenceNumber}</span>
-                                    </div>
-                                  )}
-                                  {transaction.mccCode && (
-                                    <div>
-                                      <span className="font-medium text-gray-700">MCC Code: </span>
-                                      <span className="text-gray-600">{transaction.mccCode}</span>
-                                    </div>
-                                  )}
-                                  {transaction.autoAppliedRule && (
-                                    <div>
-                                      <span className="font-medium text-gray-700">Auto-categorized: </span>
-                                      <span className="text-yellow-600">Yes</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </HoverCardContent>
-                            </HoverCard>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-3 text-sm text-gray-500 mt-1 flex-wrap">
-                          <span>{transaction.date}</span>
-                          <span>•</span>
-                          <span className="font-medium">{transaction.cardName}</span>
-                          <span>•</span>
-                          <span className="font-semibold text-gray-900">
-                            ${transaction.amount.toFixed(2)}
-                          </span>
-                          {transaction.location && (
-                            <>
-                              <span>•</span>
-                              <span className="text-blue-600">{transaction.location}</span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-                    </div>
+              {/* Selection Controls */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={selectAllVisible}>
+                      Select All
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={clearSelection}>
+                      Clear Selection
+                    </Button>
                   </div>
+                  <span className="text-sm text-gray-500">
+                    {selectedTransactions.size} selected
+                  </span>
+                </div>
+              </div>
 
-                  {/* Category Buttons - Consistent Order */}
-                  <div className="flex gap-2 ml-4">
-                    {renderCategoryButton('person1', transaction.category, () => handleCategoryClick(transaction.id, 'person1'))}
-                    {renderCategoryButton('person2', transaction.category, () => handleCategoryClick(transaction.id, 'person2'))}
-                    {renderCategoryButton('shared', transaction.category, () => handleCategoryClick(transaction.id, 'shared'))}
-                    {renderCategoryButton('UNCLASSIFIED', transaction.category, () => handleCategoryClick(transaction.id, 'UNCLASSIFIED'))}
-                    
-                    {/* Rule Creation Button */}
-                    {ruleEligibility && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleCreateRule(transaction.description, ruleEligibility.category, ruleEligibility.categoryDisplayName)}
-                        className="ml-2 flex items-center gap-1 text-xs px-2 py-1 h-8"
-                        title={`Create rule for ${transaction.description} (categorized ${ruleEligibility.count} times)`}
-                      >
-                        <Clipboard className="w-3 h-3" />
-                        Create rule
-                      </Button>
-                    )}
+              {/* Bulk Action Buttons */}
+              {selectedTransactions.size > 0 && (
+                <div className="flex gap-3 flex-wrap items-center">
+                  <span className="text-sm text-gray-600 mr-2">Categorize selected as:</span>
+                  <div className="flex gap-2">
+                    {renderCategoryButton('person1', 'UNCLASSIFIED', () => handleBulkCategoryClick('person1'), true)}
+                    {renderCategoryButton('person2', 'UNCLASSIFIED', () => handleBulkCategoryClick('person2'), true)}
+                    {renderCategoryButton('shared', 'UNCLASSIFIED', () => handleBulkCategoryClick('shared'), true)}
+                    {renderCategoryButton('UNCLASSIFIED', 'UNCLASSIFIED', () => handleBulkCategoryClick('UNCLASSIFIED'), true)}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-        {filteredTransactions.length === 0 && searchTerm && (
-          <Card>
-            <CardContent className="p-8 text-center">
-              <div className="text-gray-500">No transactions match your search.</div>
+        {/* Rule Confirmation Dialog */}
+        {showRuleConfirmation && (
+          <Card className="border-blue-200 bg-blue-50 animate-fade-in">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Robot className="w-5 h-5 text-blue-600" />
+                  <span className="text-sm text-gray-700">
+                    Always categorize <strong>{showRuleConfirmation.merchantName}</strong> as <strong>{showRuleConfirmation.categoryDisplayName}</strong>?
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleConfirmRule} className="bg-green-600 hover:bg-green-700">
+                    <Check className="w-3 h-3 mr-1" />
+                    Yes
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleCancelRule}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}
+
+        {/* Transactions List */}
+        <div className="space-y-3">
+          {filteredTransactions.map((transaction) => {
+            const ruleEligibility = getMerchantRuleEligibility(transaction.description);
+            
+            return (
+              <Card key={transaction.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-4">
+                    {/* Selection Checkbox */}
+                    <button
+                      onClick={() => toggleTransactionSelection(transaction.id)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      {selectedTransactions.has(transaction.id) ? (
+                        <CheckSquare className="w-5 h-5 text-blue-600" />
+                      ) : (
+                        <Square className="w-5 h-5" />
+                      )}
+                    </button>
+
+                    {/* MCC Emoji */}
+                    {transaction.mccCode && (
+                      <div className="text-xl" title={`MCC: ${transaction.mccCode}`}>
+                        {getMCCEmoji(transaction.mccCode)}
+                      </div>
+                    )}
+
+                    {/* Transaction Details */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-medium text-gray-900 truncate">
+                              {transaction.description}
+                            </h3>
+                            
+                            {/* Subtle Auto-rule Button */}
+                            {ruleEligibility && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleCreateRule(transaction.description, ruleEligibility.category, ruleEligibility.categoryDisplayName)}
+                                    className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 animate-fade-in"
+                                  >
+                                    <Robot className="w-3 h-3 mr-1" />
+                                    Auto-rule
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Create rule to auto-categorize {transaction.description}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                            
+                            {/* Zap icon for auto-categorized transactions */}
+                            {transaction.autoAppliedRule && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span>
+                                    <Zap className="w-4 h-4 text-yellow-500" />
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Auto-categorized using rule</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
+                            
+                            {/* Hover card for additional details */}
+                            {(transaction.transactionType || transaction.referenceNumber) && (
+                              <HoverCard>
+                                <HoverCardTrigger asChild>
+                                  <button className="text-gray-400 hover:text-gray-600">
+                                    <Info className="w-4 h-4" />
+                                  </button>
+                                </HoverCardTrigger>
+                                <HoverCardContent className="w-80 bg-white border shadow-lg">
+                                  <div className="space-y-2">
+                                    {transaction.transactionType && (
+                                      <div>
+                                        <span className="font-medium text-gray-700">Type: </span>
+                                        <span className="text-gray-600">{transaction.transactionType}</span>
+                                      </div>
+                                    )}
+                                    {transaction.referenceNumber && (
+                                      <div>
+                                        <span className="font-medium text-gray-700">Reference: </span>
+                                        <span className="text-gray-600">{transaction.referenceNumber}</span>
+                                      </div>
+                                    )}
+                                    {transaction.mccCode && (
+                                      <div>
+                                        <span className="font-medium text-gray-700">MCC Code: </span>
+                                        <span className="text-gray-600">{transaction.mccCode}</span>
+                                      </div>
+                                    )}
+                                    {transaction.autoAppliedRule && (
+                                      <div>
+                                        <span className="font-medium text-gray-700">Auto-categorized: </span>
+                                        <span className="text-yellow-600">Yes</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                </HoverCardContent>
+                              </HoverCard>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-3 text-sm text-gray-500 mt-1 flex-wrap">
+                            <span>{transaction.date}</span>
+                            <span>•</span>
+                            <span className="font-medium">{transaction.cardName}</span>
+                            <span>•</span>
+                            <span className="font-semibold text-gray-900">
+                              ${transaction.amount.toFixed(2)}
+                            </span>
+                            {transaction.location && (
+                              <>
+                                <span>•</span>
+                                <span className="text-blue-600">{transaction.location}</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Category Buttons - Consistent Order */}
+                    <div className="flex gap-2 ml-4">
+                      {renderCategoryButton('person1', transaction.category, () => handleCategoryClick(transaction.id, 'person1'))}
+                      {renderCategoryButton('person2', transaction.category, () => handleCategoryClick(transaction.id, 'person2'))}
+                      {renderCategoryButton('shared', transaction.category, () => handleCategoryClick(transaction.id, 'shared'))}
+                      {renderCategoryButton('UNCLASSIFIED', transaction.category, () => handleCategoryClick(transaction.id, 'UNCLASSIFIED'))}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+
+          {filteredTransactions.length === 0 && searchTerm && (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <div className="text-gray-500">No transactions match your search.</div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
 
