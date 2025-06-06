@@ -20,7 +20,8 @@ const TestScenarios = () => {
         amount: 50,
         category: 'person1',
         cardName: 'Person1 Card',
-        paidBy: 'person1'
+        paidBy: 'person1',
+        isClassified: true
       },
       {
         id: 'test-2',
@@ -29,7 +30,8 @@ const TestScenarios = () => {
         amount: 15,
         category: 'person1',
         cardName: 'Person1 Card',
-        paidBy: 'person1'
+        paidBy: 'person1',
+        isClassified: true
       },
       
       // Person2's personal expenses
@@ -40,7 +42,8 @@ const TestScenarios = () => {
         amount: 25,
         category: 'person2',
         cardName: 'Person2 Card',
-        paidBy: 'person2'
+        paidBy: 'person2',
+        isClassified: true
       },
       {
         id: 'test-4',
@@ -49,7 +52,8 @@ const TestScenarios = () => {
         amount: 30,
         category: 'person2',
         cardName: 'Person2 Card',
-        paidBy: 'person2'
+        paidBy: 'person2',
+        isClassified: true
       },
       
       // Shared expenses - some paid by person1, some by person2
@@ -60,7 +64,8 @@ const TestScenarios = () => {
         amount: 100,
         category: 'shared',
         cardName: 'Person1 Card',
-        paidBy: 'person1'
+        paidBy: 'person1',
+        isClassified: true
       },
       {
         id: 'test-6',
@@ -69,7 +74,8 @@ const TestScenarios = () => {
         amount: 80,
         category: 'shared',
         cardName: 'Person2 Card',
-        paidBy: 'person2'
+        paidBy: 'person2',
+        isClassified: true
       },
       {
         id: 'test-7',
@@ -78,7 +84,8 @@ const TestScenarios = () => {
         amount: 120,
         category: 'shared',
         cardName: 'Person1 Card',
-        paidBy: 'person1'
+        paidBy: 'person1',
+        isClassified: true
       }
     ];
   };
@@ -88,9 +95,7 @@ const TestScenarios = () => {
     
     // Clear existing data and add sample data
     transactionStore.clearTransactions();
-    sampleData.forEach(transaction => {
-      transactionStore.addTransaction(transaction);
-    });
+    transactionStore.addTransactions(sampleData);
   };
 
   const clearTestData = () => {
