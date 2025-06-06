@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Lightning } from "lucide-react";
+import { Zap } from "lucide-react";
 
 interface RuleSuggestionDialogProps {
   isOpen: boolean;
@@ -31,7 +31,7 @@ const RuleSuggestionDialog = ({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Lightning className="w-5 h-5 text-yellow-500" />
+            <Zap className="w-5 h-5 text-yellow-500" />
             Create Auto-Categorization Rule?
           </DialogTitle>
           <DialogDescription>
@@ -48,7 +48,7 @@ const RuleSuggestionDialog = ({
             onClick={onAccept}
             className="bg-yellow-500 hover:bg-yellow-600 text-white"
           >
-            <Lightning className="w-4 h-4 mr-2" />
+            <Zap className="w-4 h-4 mr-2" />
             Yes, create rule
           </Button>
         </DialogFooter>
