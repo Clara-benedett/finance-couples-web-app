@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -153,25 +154,9 @@ const TransactionCategorizer = ({
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col gap-4">
-            {/* Top row: Selection controls on left, Search on right */}
-            <div className="flex items-center justify-between">
-              {/* Selection Controls - Left side, aligned with checkboxes */}
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={selectAllVisible}>
-                    Select All
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={clearSelection}>
-                    Clear Selection
-                  </Button>
-                </div>
-                <span className="text-sm text-gray-500">
-                  {selectedTransactions.size} selected
-                </span>
-              </div>
-              
-              {/* Search - Right side */}
-              <div className="w-80">
+            {/* Search bar - moved to top center */}
+            <div className="flex justify-center">
+              <div className="w-96">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <Input
@@ -189,6 +174,23 @@ const TransactionCategorizer = ({
                     </button>
                   )}
                 </div>
+              </div>
+            </div>
+
+            {/* Selection Controls */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={selectAllVisible}>
+                    Select All
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={clearSelection}>
+                    Clear Selection
+                  </Button>
+                </div>
+                <span className="text-sm text-gray-500">
+                  {selectedTransactions.size} selected
+                </span>
               </div>
             </div>
 
