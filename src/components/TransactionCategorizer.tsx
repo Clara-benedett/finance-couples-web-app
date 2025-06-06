@@ -17,20 +17,17 @@ interface TransactionCategorizerProps {
   transactions: Transaction[];
   onUpdateTransaction: (id: string, category: CategoryType) => void;
   onBulkUpdate: (ids: string[], category: CategoryType) => void;
+  onRequestRuleSuggestion?: (merchantName: string, category: CategoryType, categoryDisplayName: string) => void;
 }
 
 const TransactionCategorizer = ({ 
   transactions, 
   onUpdateTransaction, 
-  onBulkUpdate 
+  onBulkUpdate,
+  onRequestRuleSuggestion
 }: TransactionCategorizerProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
-  const [showRuleConfirmation, setShowRuleConfirmation] = useState<{
-    merchantName: string;
-    category: CategoryType;
-    categoryDisplayName: string;
-  } | null>(null);
   const categoryNames = getCategoryNames();
   const { toast } = useToast();
 
@@ -136,60 +133,10 @@ const TransactionCategorizer = ({
     
     console.log('Auto-rule button clicked for:', merchantName, category, categoryDisplayName);
     
-    // Show the inline confirmation dialog
-    setShowRuleConfirmation({
-      merchantName,
-      category,
-      categoryDisplayName
-    });
-  };
-
-  const handleConfirmRule = () => {
-    if (!showRuleConfirmation) return;
-    
-    console.log('Confirming rule creation for:', showRuleConfirmation);
-    
-    const categoryMap: Record<CategoryType, string> = {
-      person1: 'person1',
-      person2: 'person2', 
-      shared: 'shared',
-      UNCLASSIFIED: 'UNCLASSIFIED'
-    };
-    
-    // Create the rule
-    categorizationRulesEngine.createRule(
-      showRuleConfirmation.merchantName, 
-      categoryMap[showRuleConfirmation.category]
-    );
-    
-    // Apply to remaining unclassified transactions with same merchant
-    const unclassifiedSameMerchant = transactions.filter(t => 
-      !t.isClassified && 
-      t.description.toUpperCase().trim() === showRuleConfirmation.merchantName.toUpperCase().trim()
-    );
-    
-    unclassifiedSameMerchant.forEach(transaction => {
-      onUpdateTransaction(transaction.id, showRuleConfirmation.category);
-    });
-    
-    if (unclassifiedSameMerchant.length > 0) {
-      toast({
-        title: "Rule created!",
-        description: `Applied to ${unclassifiedSameMerchant.length} remaining ${showRuleConfirmation.merchantName} transactions`,
-      });
-    } else {
-      toast({
-        title: "Rule created!",
-        description: `Future ${showRuleConfirmation.merchantName} transactions will be auto-categorized`,
-      });
+    // Request the parent to show the rule suggestion modal
+    if (onRequestRuleSuggestion) {
+      onRequestRuleSuggestion(merchantName, category, categoryDisplayName);
     }
-    
-    setShowRuleConfirmation(null);
-  };
-
-  const handleCancelRule = () => {
-    console.log('Canceling rule creation');
-    setShowRuleConfirmation(null);
   };
 
   const toggleTransactionSelection = (transactionId: string) => {
@@ -370,46 +317,6 @@ const TransactionCategorizer = ({
             </div>
           </CardContent>
         </Card>
-
-        {/* Rule Confirmation Dialog */}
-        {showRuleConfirmation && (
-          <Card className="border-yellow-200 bg-yellow-50 animate-fade-in">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-3 flex-1">
-                  <Zap className="w-6 h-6 text-yellow-600 mt-1" />
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      Auto-categorize future transactions?
-                    </h3>
-                    <p className="text-gray-700 mb-4">
-                      Auto-categorize <strong>{showRuleConfirmation.merchantName}</strong> as <strong>{showRuleConfirmation.categoryDisplayName}</strong>? 
-                      You can always change individual transactions manually.
-                    </p>
-                    <div className="flex gap-3">
-                      <Button 
-                        onClick={handleConfirmRule}
-                        className="bg-yellow-500 hover:bg-yellow-600 text-white"
-                      >
-                        <Zap className="w-4 h-4 mr-2" />
-                        Create rule
-                      </Button>
-                      <Button variant="outline" onClick={handleCancelRule}>
-                        Not now
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={handleCancelRule}
-                  className="text-gray-400 hover:text-gray-600 ml-4"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Transactions List */}
         <div className="space-y-3">

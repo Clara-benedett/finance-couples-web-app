@@ -60,8 +60,7 @@ const Categorize = () => {
       // Track this categorization
       categorizationRulesEngine.trackCategorization(transaction.description, categoryMap[category]);
       
-      // Only suggest rule for manual categorizations (not when triggered from auto-rule button)
-      // We check if this is a manual categorization by seeing if the user has clicked a category button
+      // Only suggest rule for manual categorizations (automatic suggestion after 3+ times)
       if (categorizationRulesEngine.shouldSuggestRule(transaction.description, categoryMap[category])) {
         setRuleSuggestion({
           merchantName: transaction.description,
@@ -81,6 +80,15 @@ const Categorize = () => {
 
   const handleBulkUpdate = (ids: string[], category: CategoryType) => {
     ids.forEach(id => handleUpdateTransaction(id, category));
+  };
+
+  const handleRequestRuleSuggestion = (merchantName: string, category: CategoryType, categoryDisplayName: string) => {
+    // Show the rule suggestion modal when requested by the auto-rule button
+    setRuleSuggestion({
+      merchantName,
+      category,
+      categoryDisplayName
+    });
   };
 
   const handleAcceptRule = () => {
@@ -195,7 +203,7 @@ const Categorize = () => {
         </div>
       )}
 
-      {/* Rule Suggestion Dialog - Only for automatic suggestions, not auto-rule button clicks */}
+      {/* Rule Suggestion Dialog - Used for both automatic suggestions and auto-rule button clicks */}
       {ruleSuggestion && (
         <RuleSuggestionDialog
           isOpen={true}
@@ -211,6 +219,7 @@ const Categorize = () => {
         transactions={transactions}
         onUpdateTransaction={handleUpdateTransaction}
         onBulkUpdate={handleBulkUpdate}
+        onRequestRuleSuggestion={handleRequestRuleSuggestion}
       />
     </div>
   );
