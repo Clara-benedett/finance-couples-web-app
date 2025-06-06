@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,6 +43,11 @@ const TransactionCategorizer = ({
     const categorized = filteredTransactions.filter(t => t.category !== 'UNCLASSIFIED');
     return { uncategorizedTransactions: uncategorized, categorizedTransactions: categorized };
   }, [filteredTransactions]);
+
+  // Check against complete dataset for celebration logic
+  const allUncategorizedCount = useMemo(() => {
+    return transactions.filter(t => t.category === 'UNCLASSIFIED').length;
+  }, [transactions]);
 
   const getMerchantRuleEligibility = (merchantName: string) => {
     const normalizedMerchant = merchantName.toUpperCase().trim();
@@ -174,13 +178,26 @@ const TransactionCategorizer = ({
             </div>
           )}
 
-          {/* All Categorized Celebration */}
-          {uncategorizedTransactions.length === 0 && categorizedTransactions.length > 0 && (
+          {/* All Categorized Celebration - Only show when ALL transactions are categorized */}
+          {allUncategorizedCount === 0 && totalCount > 0 && (
             <Card className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200">
               <CardContent className="p-8 text-center">
                 <div className="text-4xl mb-4">🎉</div>
                 <h2 className="text-xl font-semibold text-green-800 mb-2">All transactions categorized!</h2>
                 <p className="text-green-700">Great job organizing your expenses!</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Filtered completion message - Show when filtered view is complete but overall work remains */}
+          {allUncategorizedCount > 0 && uncategorizedTransactions.length === 0 && searchTerm && categorizedTransactions.length > 0 && (
+            <Card className="bg-blue-50 border border-blue-200">
+              <CardContent className="p-6 text-center">
+                <div className="text-2xl mb-2">✨</div>
+                <h2 className="text-lg font-semibold text-blue-800 mb-1">All filtered transactions categorized!</h2>
+                <p className="text-blue-700">
+                  {allUncategorizedCount} more transactions need categorization (clear search to see them)
+                </p>
               </CardContent>
             </Card>
           )}
@@ -225,7 +242,7 @@ const TransactionCategorizer = ({
             </Collapsible>
           )}
 
-          {/* Empty state - no transactions */}
+          {/* Empty state - no transactions match search */}
           {filteredTransactions.length === 0 && searchTerm && (
             <Card>
               <CardContent className="p-8 text-center">
