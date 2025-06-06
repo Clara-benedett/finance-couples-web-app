@@ -11,36 +11,57 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CreditCard } from "lucide-react";
+import { getCategoryNames } from "@/utils/categoryNames";
+
+interface CardInfo {
+  name: string;
+  paidBy: 'person1' | 'person2';
+}
 
 interface CardNameDialogProps {
   isOpen: boolean;
-  onConfirm: (cardNames: string[]) => void;
+  onConfirm: (cardInfos: CardInfo[]) => void;
   onCancel: () => void;
   fileNames: string[];
 }
 
 const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDialogProps) => {
-  const [cardNames, setCardNames] = useState<string[]>([]);
+  const [cardInfos, setCardInfos] = useState<CardInfo[]>([]);
+  const categoryNames = getCategoryNames();
 
-  // Initialize card names array when dialog opens
+  // Initialize card infos array when dialog opens
   useState(() => {
     if (isOpen && fileNames.length > 0) {
-      setCardNames(new Array(fileNames.length).fill(''));
+      setCardInfos(new Array(fileNames.length).fill(null).map(() => ({
+        name: '',
+        paidBy: 'person1' as const
+      })));
     }
   });
 
   const handleCardNameChange = (index: number, value: string) => {
-    const newCardNames = [...cardNames];
-    newCardNames[index] = value;
-    setCardNames(newCardNames);
+    const newCardInfos = [...cardInfos];
+    newCardInfos[index] = { ...newCardInfos[index], name: value };
+    setCardInfos(newCardInfos);
+  };
+
+  const handlePaidByChange = (index: number, value: 'person1' | 'person2') => {
+    const newCardInfos = [...cardInfos];
+    newCardInfos[index] = { ...newCardInfos[index], paidBy: value };
+    setCardInfos(newCardInfos);
   };
 
   const handleConfirm = () => {
-    const trimmedNames = cardNames.map(name => name.trim());
-    if (trimmedNames.every(name => name.length > 0)) {
-      onConfirm(trimmedNames);
-      setCardNames([]);
+    const trimmedInfos = cardInfos.map(info => ({
+      name: info.name.trim(),
+      paidBy: info.paidBy
+    }));
+    
+    if (trimmedInfos.every(info => info.name.length > 0)) {
+      onConfirm(trimmedInfos);
+      setCardInfos([]);
     }
   };
 
@@ -51,14 +72,14 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
       if (index < fileNames.length - 1) {
         const nextInput = document.getElementById(`cardName-${index + 1}`);
         nextInput?.focus();
-      } else if (cardNames.every(name => name.trim().length > 0)) {
+      } else if (cardInfos.every(info => info.name.trim().length > 0)) {
         handleConfirm();
       }
     }
   };
 
-  const allFieldsFilled = cardNames.length === fileNames.length && 
-    cardNames.every(name => name.trim().length > 0);
+  const allFieldsFilled = cardInfos.length === fileNames.length && 
+    cardInfos.every(info => info.name.trim().length > 0);
 
   return (
     <Dialog open={isOpen} onOpenChange={onCancel}>
@@ -66,29 +87,52 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CreditCard className="w-5 h-5 text-blue-600" />
-            Card/Account Names ({fileNames.length} files)
+            Card/Account Information ({fileNames.length} files)
           </DialogTitle>
           <DialogDescription>
-            Please provide the card or account name for each file you're uploading.
+            Please provide the card/account name and who pays the bill for each file you're uploading.
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4">
+        <div className="space-y-6">
           {fileNames.map((fileName, index) => (
-            <div key={index} className="space-y-2">
+            <div key={index} className="space-y-4 p-4 border rounded-lg bg-gray-50">
               <div className="text-sm text-gray-600">
                 <strong>File {index + 1}:</strong> {fileName}
               </div>
+              
               <div className="space-y-1">
                 <Label htmlFor={`cardName-${index}`}>Card/Account Name</Label>
                 <Input
                   id={`cardName-${index}`}
-                  placeholder="e.g. Chase Sapphire, Bank of America Checking"
-                  value={cardNames[index] || ''}
+                  placeholder="e.g., Chase Sapphire, AMEX Gold, BILT Card"
+                  value={cardInfos[index]?.name || ''}
                   onChange={(e) => handleCardNameChange(index, e.target.value)}
                   onKeyPress={(e) => handleKeyPress(e, index)}
                   autoFocus={index === 0}
                 />
+              </div>
+
+              <div className="space-y-3">
+                <Label>Bill paid by <span className="text-sm text-gray-500">(who pays the bill of this card?)</span></Label>
+                <RadioGroup
+                  value={cardInfos[index]?.paidBy || 'person1'}
+                  onValueChange={(value: 'person1' | 'person2') => handlePaidByChange(index, value)}
+                  className="flex gap-6"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="person1" id={`person1-${index}`} />
+                    <Label htmlFor={`person1-${index}`} className="font-normal">
+                      {categoryNames.person1}
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="person2" id={`person2-${index}`} />
+                    <Label htmlFor={`person2-${index}`} className="font-normal">
+                      {categoryNames.person2}
+                    </Label>
+                  </div>
+                </RadioGroup>
               </div>
             </div>
           ))}

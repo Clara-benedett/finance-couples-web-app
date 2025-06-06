@@ -1,3 +1,4 @@
+
 export interface Transaction {
   id: string;
   date: string;
@@ -5,6 +6,7 @@ export interface Transaction {
   description: string;
   category: string;
   cardName: string;
+  paidBy: 'person1' | 'person2';
   isClassified: boolean;
   mccCode?: string;
   transactionType?: string;

@@ -67,9 +67,9 @@ const Upload = () => {
     setShowCardNameDialog(true);
   };
 
-  const handleCardNameConfirm = async (cardNames: string[]) => {
+  const handleCardNameConfirm = async (cardInfos: { name: string; paidBy: 'person1' | 'person2' }[]) => {
     setShowCardNameDialog(false);
-    await processFiles(pendingFiles, cardNames);
+    await processFiles(pendingFiles, cardInfos);
     setPendingFiles([]);
   };
 
@@ -87,12 +87,12 @@ const Upload = () => {
     setShowCategorySetup(true);
   };
 
-  const processFiles = async (files: File[], cardNames: string[]) => {
+  const processFiles = async (files: File[], cardInfos: { name: string; paidBy: 'person1' | 'person2' }[]) => {
     const newFiles: UploadedFile[] = files.map((file, index) => ({
       file,
       status: 'uploading' as const,
       progress: 0,
-      cardName: cardNames[index]
+      cardName: cardInfos[index].name
     }));
 
     setUploadedFiles(prev => [...prev, ...newFiles]);
@@ -101,6 +101,7 @@ const Upload = () => {
     // Process each file
     for (let i = 0; i < newFiles.length; i++) {
       const fileUpload = newFiles[i];
+      const cardInfo = cardInfos[i];
       
       try {
         // Simulate progress
@@ -118,14 +119,15 @@ const Upload = () => {
         // Parse the file with new return format
         const { transactions: parsedTransactions, detectedFields } = await parseFile(fileUpload.file);
         
-        // Convert to Transaction objects with card name
+        // Convert to Transaction objects with card name and paidBy
         const transactions: Transaction[] = parsedTransactions.map(pt => ({
           id: generateId(),
           date: pt.date,
           amount: pt.amount,
           description: pt.description,
           category: pt.category || 'UNCLASSIFIED',
-          cardName: fileUpload.cardName || 'Unknown Card',
+          cardName: cardInfo.name,
+          paidBy: cardInfo.paidBy,
           isClassified: false,
           mccCode: pt.mccCode,
           transactionType: pt.transactionType,
@@ -150,9 +152,12 @@ const Upload = () => {
           ? ` | Detected fields: ${detectedFields.join(', ')}`
           : '';
 
+        const categoryNames = getCategoryNames();
+        const paidByName = cardInfo.paidBy === 'person1' ? categoryNames.person1 : categoryNames.person2;
+
         toast({
           title: "File uploaded successfully",
-          description: `${transactions.length} transactions imported from ${fileUpload.cardName} (${fileUpload.file.name})${detectedFieldsText}`,
+          description: `${transactions.length} transactions imported from ${cardInfo.name} (paid by ${paidByName}) - ${fileUpload.file.name}${detectedFieldsText}`,
         });
 
       } catch (error) {
