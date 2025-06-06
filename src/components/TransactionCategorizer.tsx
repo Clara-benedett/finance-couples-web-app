@@ -1,10 +1,10 @@
-
 import { useState, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, CheckSquare, Square } from "lucide-react";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Search, Filter, CheckSquare, Square, Info } from "lucide-react";
 import { Transaction } from "@/types/transaction";
 import { getCategoryNames } from "@/utils/categoryNames";
 
@@ -24,6 +24,47 @@ const TransactionCategorizer = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
   const categoryNames = getCategoryNames();
+
+  const getMCCEmoji = (mccCode?: string) => {
+    if (!mccCode) return '';
+    
+    const code = mccCode.trim();
+    
+    // Fast Food
+    if (['5814'].includes(code)) return '🍔';
+    
+    // Restaurants
+    if (['5812', '5813'].includes(code)) return '🍽️';
+    
+    // Transportation (Uber, Lyft, Taxi)
+    if (['4121', '4131', '4111'].includes(code)) return '🚗';
+    
+    // Gas Stations
+    if (['5541', '5542'].includes(code)) return '⛽';
+    
+    // Grocery Stores
+    if (['5411'].includes(code)) return '🛒';
+    
+    // Department Stores
+    if (['5311', '5331'].includes(code)) return '🏪';
+    
+    // Hotels
+    if (['7011'].includes(code)) return '🏨';
+    
+    // Airlines
+    if (['4511'].includes(code)) return '✈️';
+    
+    // Pharmacies
+    if (['5912'].includes(code)) return '💊';
+    
+    // Coffee Shops
+    if (['5814'].includes(code)) return '☕';
+    
+    // ATM/Banking
+    if (['6011', '6012'].includes(code)) return '🏧';
+    
+    return '💳'; // Default for other transactions
+  };
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(transaction =>
@@ -188,14 +229,55 @@ const TransactionCategorizer = ({
                   )}
                 </button>
 
+                {/* MCC Emoji */}
+                {transaction.mccCode && (
+                  <div className="text-xl" title={`MCC: ${transaction.mccCode}`}>
+                    {getMCCEmoji(transaction.mccCode)}
+                  </div>
+                )}
+
                 {/* Transaction Details */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-medium text-gray-900 truncate">
-                        {transaction.description}
-                      </h3>
-                      <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-medium text-gray-900 truncate">
+                          {transaction.description}
+                        </h3>
+                        {/* Hover card for additional details */}
+                        {(transaction.transactionType || transaction.referenceNumber) && (
+                          <HoverCard>
+                            <HoverCardTrigger asChild>
+                              <button className="text-gray-400 hover:text-gray-600">
+                                <Info className="w-4 h-4" />
+                              </button>
+                            </HoverCardTrigger>
+                            <HoverCardContent className="w-80 bg-white border shadow-lg">
+                              <div className="space-y-2">
+                                {transaction.transactionType && (
+                                  <div>
+                                    <span className="font-medium text-gray-700">Type: </span>
+                                    <span className="text-gray-600">{transaction.transactionType}</span>
+                                  </div>
+                                )}
+                                {transaction.referenceNumber && (
+                                  <div>
+                                    <span className="font-medium text-gray-700">Reference: </span>
+                                    <span className="text-gray-600">{transaction.referenceNumber}</span>
+                                  </div>
+                                )}
+                                {transaction.mccCode && (
+                                  <div>
+                                    <span className="font-medium text-gray-700">MCC Code: </span>
+                                    <span className="text-gray-600">{transaction.mccCode}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </HoverCardContent>
+                          </HoverCard>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3 text-sm text-gray-500 mt-1 flex-wrap">
                         <span>{transaction.date}</span>
                         <span>•</span>
                         <span className="font-medium">{transaction.cardName}</span>
@@ -203,6 +285,12 @@ const TransactionCategorizer = ({
                         <span className="font-semibold text-gray-900">
                           ${transaction.amount.toFixed(2)}
                         </span>
+                        {transaction.location && (
+                          <>
+                            <span>•</span>
+                            <span className="text-blue-600">{transaction.location}</span>
+                          </>
+                        )}
                       </div>
                     </div>
                     
