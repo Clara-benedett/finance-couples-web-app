@@ -3,18 +3,22 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Upload, TrendingUp, Users, DollarSign, Settings, RefreshCw, Calendar, CreditCard, Target } from "lucide-react";
+import { Upload, TrendingUp, Users, DollarSign, Settings, RefreshCw, Calendar, CreditCard, Target, Bug } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { transactionStore } from '@/store/transactionStore';
 import { getCategoryNames } from '@/utils/categoryNames';
 import { calculateExpenses, getProportionSettings, ProportionSettings } from '@/utils/calculationEngine';
 import ProportionSettingsComponent from '@/components/ProportionSettings';
+import DebugCalculation from '@/components/DebugCalculation';
+import TestScenarios from '@/components/TestScenarios';
+import { useDebugMode } from '@/hooks/useDebugMode';
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [transactions, setTransactions] = useState(transactionStore.getTransactions());
   const [proportions, setProportions] = useState<ProportionSettings>(getProportionSettings());
   const [showProportionSettings, setShowProportionSettings] = useState(false);
+  const { isDebugMode, toggleDebugMode } = useDebugMode();
   const categoryNames = getCategoryNames();
 
   useEffect(() => {
@@ -94,9 +98,20 @@ const Dashboard = () => {
             <div className="flex items-center gap-2 text-blue-100">
               <Calendar className="w-4 h-4" />
               <span className="text-sm">Calculations for {currentMonth}</span>
+              {isDebugMode && (
+                <Badge variant="secondary" className="ml-2 text-xs">DEBUG MODE</Badge>
+              )}
             </div>
           </div>
           <div className="flex gap-2">
+            <Button 
+              onClick={toggleDebugMode}
+              variant={isDebugMode ? "secondary" : "outline"}
+              className={isDebugMode ? "bg-yellow-500 text-yellow-900 hover:bg-yellow-400" : "bg-white text-blue-600 hover:bg-gray-100"}
+            >
+              <Bug className="w-4 h-4 mr-2" />
+              Debug
+            </Button>
             <Button 
               onClick={() => setShowProportionSettings(true)}
               className="bg-white text-blue-600 hover:bg-gray-100"
@@ -114,6 +129,14 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Debug Mode Sections */}
+      {isDebugMode && (
+        <div className="space-y-6">
+          <DebugCalculation calculations={calculations} transactions={transactions} />
+          <TestScenarios />
+        </div>
+      )}
 
       {/* Individual Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

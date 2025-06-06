@@ -79,6 +79,11 @@ class TransactionStore {
     }
   }
 
+  clearTransactions() {
+    this.transactions = [];
+    this.notifyListeners();
+  }
+
   clearAllData() {
     this.transactions = [];
     localStorage.removeItem(STORAGE_KEY);
