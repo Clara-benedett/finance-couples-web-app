@@ -60,7 +60,8 @@ const Categorize = () => {
       // Track this categorization
       categorizationRulesEngine.trackCategorization(transaction.description, categoryMap[category]);
       
-      // Check if we should suggest a rule
+      // Only suggest rule for manual categorizations (not when triggered from auto-rule button)
+      // We check if this is a manual categorization by seeing if the user has clicked a category button
       if (categorizationRulesEngine.shouldSuggestRule(transaction.description, categoryMap[category])) {
         setRuleSuggestion({
           merchantName: transaction.description,
@@ -194,7 +195,7 @@ const Categorize = () => {
         </div>
       )}
 
-      {/* Rule Suggestion Dialog */}
+      {/* Rule Suggestion Dialog - Only for automatic suggestions, not auto-rule button clicks */}
       {ruleSuggestion && (
         <RuleSuggestionDialog
           isOpen={true}

@@ -119,6 +119,7 @@ const TransactionCategorizer = ({
   };
 
   const handleCategoryClick = (transactionId: string, category: CategoryType) => {
+    // Only call the parent's update function - no rule suggestion logic here
     onUpdateTransaction(transactionId, category);
   };
 
@@ -135,7 +136,7 @@ const TransactionCategorizer = ({
     
     console.log('Auto-rule button clicked for:', merchantName, category, categoryDisplayName);
     
-    // Directly set the confirmation dialog - this should override any other logic
+    // Show the inline confirmation dialog
     setShowRuleConfirmation({
       merchantName,
       category,
@@ -372,24 +373,39 @@ const TransactionCategorizer = ({
 
         {/* Rule Confirmation Dialog */}
         {showRuleConfirmation && (
-          <Card className="border-blue-200 bg-blue-50 animate-fade-in">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Bot className="w-5 h-5 text-blue-600" />
-                  <span className="text-sm text-gray-700">
-                    Always categorize <strong>{showRuleConfirmation.merchantName}</strong> as <strong>{showRuleConfirmation.categoryDisplayName}</strong>?
-                  </span>
+          <Card className="border-yellow-200 bg-yellow-50 animate-fade-in">
+            <CardContent className="p-6">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start gap-3 flex-1">
+                  <Zap className="w-6 h-6 text-yellow-600 mt-1" />
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                      Auto-categorize future transactions?
+                    </h3>
+                    <p className="text-gray-700 mb-4">
+                      Auto-categorize <strong>{showRuleConfirmation.merchantName}</strong> as <strong>{showRuleConfirmation.categoryDisplayName}</strong>? 
+                      You can always change individual transactions manually.
+                    </p>
+                    <div className="flex gap-3">
+                      <Button 
+                        onClick={handleConfirmRule}
+                        className="bg-yellow-500 hover:bg-yellow-600 text-white"
+                      >
+                        <Zap className="w-4 h-4 mr-2" />
+                        Create rule
+                      </Button>
+                      <Button variant="outline" onClick={handleCancelRule}>
+                        Not now
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button size="sm" onClick={handleConfirmRule} className="bg-green-600 hover:bg-green-700">
-                    <Check className="w-3 h-3 mr-1" />
-                    Yes
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={handleCancelRule}>
-                    Cancel
-                  </Button>
-                </div>
+                <button
+                  onClick={handleCancelRule}
+                  className="text-gray-400 hover:text-gray-600 ml-4"
+                >
+                  <X className="w-5 h-5" />
+                </button>
               </div>
             </CardContent>
           </Card>
