@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Upload, TrendingUp, Users, DollarSign, Settings, RefreshCw, Calendar } from "lucide-react";
+import { Upload, TrendingUp, Users, DollarSign, Settings, RefreshCw, Calendar, CreditCard, Target } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { transactionStore } from '@/store/transactionStore';
 import { getCategoryNames } from '@/utils/categoryNames';
@@ -133,7 +133,48 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Final Amount Section */}
+      {/* Should Pay vs Actually Paid Comparison */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card className="bg-cyan-50 border-cyan-200 border-2">
+          <CardHeader>
+            <CardTitle className="text-center text-lg text-cyan-800 flex items-center justify-center gap-2">
+              <Target className="w-5 h-5" />
+              Should Pay (Based on Expenses)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">{categoryNames.person1}:</span>
+              <span className="font-bold text-blue-600">{formatCurrency(calculations.person1ShouldPay)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">{categoryNames.person2}:</span>
+              <span className="font-bold text-green-600">{formatCurrency(calculations.person2ShouldPay)}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-indigo-50 border-indigo-200 border-2">
+          <CardHeader>
+            <CardTitle className="text-center text-lg text-indigo-800 flex items-center justify-center gap-2">
+              <CreditCard className="w-5 h-5" />
+              Actually Paid (Card Bills)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">{categoryNames.person1}:</span>
+              <span className="font-bold text-blue-600">{formatCurrency(calculations.person1ActuallyPaid)}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-600">{categoryNames.person2}:</span>
+              <span className="font-bold text-green-600">{formatCurrency(calculations.person2ActuallyPaid)}</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Final Settlement Section */}
       <Card className="bg-orange-50 border-orange-200 border-2">
         <CardHeader>
           <CardTitle className="text-center text-xl text-orange-800">
@@ -142,18 +183,29 @@ const Dashboard = () => {
         </CardHeader>
         <CardContent className="text-center space-y-4">
           <div className="text-4xl font-bold text-orange-600">
-            {formatCurrency(calculations.finalAmountOwed)}
+            {formatCurrency(calculations.finalSettlementAmount)}
           </div>
           <p className="text-lg text-orange-800">
-            {calculations.whoOwesWho === 'person1' 
+            {calculations.settlementDirection === 'person1ToPerson2'
               ? `${categoryNames.person1} owes ${categoryNames.person2}`
               : `${categoryNames.person2} owes ${categoryNames.person1}`
             }
           </p>
-          <div className="flex justify-center gap-4 text-sm text-gray-600">
-            <span>{categoryNames.person1}: {proportions.person1Percentage}% of shared</span>
-            <span>•</span>
-            <span>{categoryNames.person2}: {proportions.person2Percentage}% of shared</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600 mt-4">
+            <div className="space-y-1">
+              <div className="font-medium text-gray-700">Net Positions:</div>
+              <div className={calculations.person1NetPosition >= 0 ? "text-red-600" : "text-green-600"}>
+                {categoryNames.person1}: {calculations.person1NetPosition >= 0 ? "owes" : "owed"} {formatCurrency(Math.abs(calculations.person1NetPosition))}
+              </div>
+              <div className={calculations.person2NetPosition >= 0 ? "text-red-600" : "text-green-600"}>
+                {categoryNames.person2}: {calculations.person2NetPosition >= 0 ? "owes" : "owed"} {formatCurrency(Math.abs(calculations.person2NetPosition))}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="font-medium text-gray-700">Shared Split:</div>
+              <div>{categoryNames.person1}: {proportions.person1Percentage}% of shared</div>
+              <div>{categoryNames.person2}: {proportions.person2Percentage}% of shared</div>
+            </div>
           </div>
           <Button 
             onClick={() => window.location.reload()}
@@ -183,8 +235,8 @@ const Dashboard = () => {
             </div>
             <div className="border-t pt-2">
               <div className="flex justify-between items-center font-medium">
-                <span className="text-gray-900">{categoryNames.person1} Total:</span>
-                <span className="text-blue-600">{formatCurrency(calculations.person1TotalOwed)}</span>
+                <span className="text-gray-900">{categoryNames.person1} Should Pay:</span>
+                <span className="text-blue-600">{formatCurrency(calculations.person1ShouldPay)}</span>
               </div>
             </div>
             
@@ -199,8 +251,8 @@ const Dashboard = () => {
               </div>
               <div className="border-t pt-2">
                 <div className="flex justify-between items-center font-medium">
-                  <span className="text-gray-900">{categoryNames.person2} Total:</span>
-                  <span className="text-green-600">{formatCurrency(calculations.person2TotalOwed)}</span>
+                  <span className="text-gray-900">{categoryNames.person2} Should Pay:</span>
+                  <span className="text-green-600">{formatCurrency(calculations.person2ShouldPay)}</span>
                 </div>
               </div>
             </div>
