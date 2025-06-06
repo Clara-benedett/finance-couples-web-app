@@ -20,6 +20,7 @@ interface TransactionCardProps {
   onToggleSelection: () => void;
   onCategoryClick: (category: CategoryType) => void;
   onCreateRuleClick: (merchantName: string, category: CategoryType, categoryDisplayName: string) => void;
+  isInCategorizedSection?: boolean;
 }
 
 const TransactionCard = ({
@@ -28,7 +29,8 @@ const TransactionCard = ({
   ruleEligibility,
   onToggleSelection,
   onCategoryClick,
-  onCreateRuleClick
+  onCreateRuleClick,
+  isInCategorizedSection = false
 }: TransactionCardProps) => {
   const getMCCEmoji = (mccCode?: string) => {
     if (!mccCode) return '';
@@ -80,8 +82,12 @@ const TransactionCard = ({
     }
   };
 
+  const cardClassName = isInCategorizedSection 
+    ? "hover:shadow-sm transition-shadow bg-gray-50 opacity-90"
+    : "hover:shadow-md transition-shadow";
+
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className={cardClassName}>
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
           {/* Selection Checkbox */}
@@ -112,8 +118,8 @@ const TransactionCard = ({
                     {transaction.description}
                   </h3>
                   
-                  {/* Auto-rule Button */}
-                  {ruleEligibility && (
+                  {/* Auto-rule Button - only show for uncategorized */}
+                  {ruleEligibility && !isInCategorizedSection && (
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -209,6 +215,7 @@ const TransactionCard = ({
             <CategoryButtons
               currentCategory={transaction.category}
               onCategoryClick={onCategoryClick}
+              isDisabled={isInCategorizedSection}
             />
           </div>
         </div>

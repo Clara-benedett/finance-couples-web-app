@@ -1,7 +1,10 @@
 
 import { useState, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Transaction } from "@/types/transaction";
 import { categorizationRulesEngine } from "@/utils/categorizationRules";
 import { getCategoryNames } from "@/utils/categoryNames";
@@ -26,6 +29,7 @@ const TransactionCategorizer = ({
 }: TransactionCategorizerProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
+  const [isAlreadyCategorizedExpanded, setIsAlreadyCategorizedExpanded] = useState(false);
   const categoryNames = getCategoryNames();
 
   const filteredTransactions = useMemo(() => {
@@ -34,6 +38,12 @@ const TransactionCategorizer = ({
       transaction.cardName.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [transactions, searchTerm]);
+
+  const { uncategorizedTransactions, categorizedTransactions } = useMemo(() => {
+    const uncategorized = filteredTransactions.filter(t => t.category === 'UNCLASSIFIED');
+    const categorized = filteredTransactions.filter(t => t.category !== 'UNCLASSIFIED');
+    return { uncategorizedTransactions: uncategorized, categorizedTransactions: categorized };
+  }, [filteredTransactions]);
 
   const getMerchantRuleEligibility = (merchantName: string) => {
     const normalizedMerchant = merchantName.toUpperCase().trim();
@@ -128,28 +138,108 @@ const TransactionCategorizer = ({
           onBulkCategoryClick={handleBulkCategoryClick}
         />
 
-        {/* Transactions List */}
-        <div className="space-y-3">
-          {filteredTransactions.map((transaction) => {
-            const ruleEligibility = getMerchantRuleEligibility(transaction.description);
-            
-            return (
-              <TransactionCard
-                key={transaction.id}
-                transaction={transaction}
-                isSelected={selectedTransactions.has(transaction.id)}
-                ruleEligibility={ruleEligibility}
-                onToggleSelection={() => toggleTransactionSelection(transaction.id)}
-                onCategoryClick={(category) => handleCategoryClick(transaction.id, category)}
-                onCreateRuleClick={handleCreateRuleClick}
-              />
-            );
-          })}
+        {/* Transactions Sections */}
+        <div className="space-y-6">
+          {/* Needs Categorization Section */}
+          {uncategorizedTransactions.length > 0 && (
+            <div className="space-y-3">
+              <Card className="bg-white border-l-4 border-l-blue-500 shadow-md">
+                <CardContent className="p-4">
+                  <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    ⚡ Needs Categorization ({uncategorizedTransactions.length} remaining)
+                  </h2>
+                  <p className="text-sm text-gray-600 mt-1">
+                    These transactions need to be categorized
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <div className="space-y-3">
+                {uncategorizedTransactions.map((transaction) => {
+                  const ruleEligibility = getMerchantRuleEligibility(transaction.description);
+                  
+                  return (
+                    <TransactionCard
+                      key={transaction.id}
+                      transaction={transaction}
+                      isSelected={selectedTransactions.has(transaction.id)}
+                      ruleEligibility={ruleEligibility}
+                      onToggleSelection={() => toggleTransactionSelection(transaction.id)}
+                      onCategoryClick={(category) => handleCategoryClick(transaction.id, category)}
+                      onCreateRuleClick={handleCreateRuleClick}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
+          {/* All Categorized Celebration */}
+          {uncategorizedTransactions.length === 0 && categorizedTransactions.length > 0 && (
+            <Card className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200">
+              <CardContent className="p-8 text-center">
+                <div className="text-4xl mb-4">🎉</div>
+                <h2 className="text-xl font-semibold text-green-800 mb-2">All transactions categorized!</h2>
+                <p className="text-green-700">Great job organizing your expenses!</p>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Already Categorized Section */}
+          {categorizedTransactions.length > 0 && (
+            <Collapsible open={isAlreadyCategorizedExpanded} onOpenChange={setIsAlreadyCategorizedExpanded}>
+              <Card className="bg-gray-50 opacity-75">
+                <CardContent className="p-4">
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-between p-0 h-auto">
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-semibold text-gray-700">
+                          ✅ Already Categorized ({categorizedTransactions.length} completed)
+                        </h2>
+                      </div>
+                      {isAlreadyCategorizedExpanded ? (
+                        <ChevronUp className="w-4 h-4 text-gray-500" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-gray-500" />
+                      )}
+                    </Button>
+                  </CollapsibleTrigger>
+                </CardContent>
+              </Card>
+              
+              <CollapsibleContent className="space-y-2 mt-3">
+                {categorizedTransactions.map((transaction) => (
+                  <div key={transaction.id} className="scale-95 transform">
+                    <TransactionCard
+                      transaction={transaction}
+                      isSelected={selectedTransactions.has(transaction.id)}
+                      ruleEligibility={null}
+                      onToggleSelection={() => toggleTransactionSelection(transaction.id)}
+                      onCategoryClick={(category) => handleCategoryClick(transaction.id, category)}
+                      onCreateRuleClick={handleCreateRuleClick}
+                      isInCategorizedSection={true}
+                    />
+                  </div>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+
+          {/* Empty state - no transactions */}
           {filteredTransactions.length === 0 && searchTerm && (
             <Card>
               <CardContent className="p-8 text-center">
                 <div className="text-gray-500">No transactions match your search.</div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Empty state - no transactions at all */}
+          {filteredTransactions.length === 0 && !searchTerm && (
+            <Card className="bg-blue-50 border border-blue-200">
+              <CardContent className="p-8 text-center">
+                <h2 className="text-lg font-semibold text-blue-800 mb-2">Start categorizing your transactions</h2>
+                <p className="text-blue-700">Upload your expense data to begin organizing your finances.</p>
               </CardContent>
             </Card>
           )}
