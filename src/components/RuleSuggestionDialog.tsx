@@ -32,24 +32,24 @@ const RuleSuggestionDialog = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Zap className="w-5 h-5 text-yellow-500" />
-            Create Auto-Categorization Rule?
+            Auto-categorize future transactions?
           </DialogTitle>
           <DialogDescription>
-            You've categorized <strong>{merchantName}</strong> as <strong>{categoryName}</strong> multiple times.
-            Would you like to automatically categorize all future {merchantName} transactions as {categoryName}?
+            Auto-categorize <strong>{merchantName}</strong> as <strong>{categoryName}</strong>? 
+            You can always change individual transactions manually.
           </DialogDescription>
         </DialogHeader>
 
         <DialogFooter className="flex gap-2">
           <Button variant="outline" onClick={onDecline}>
-            No, not now
+            Not now
           </Button>
           <Button 
             onClick={onAccept}
             className="bg-yellow-500 hover:bg-yellow-600 text-white"
           >
             <Zap className="w-4 h-4 mr-2" />
-            Yes, create rule
+            Create rule
           </Button>
         </DialogFooter>
       </DialogContent>
