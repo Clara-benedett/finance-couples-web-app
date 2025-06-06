@@ -40,7 +40,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      className={`${collapsed ? "w-16" : "w-64"} bg-white border-r border-gray-200`}
+      className={`${collapsed ? "w-16" : "w-48"} bg-white border-r border-gray-200`}
       collapsible="icon"
     >
       <SidebarContent className="pt-6">

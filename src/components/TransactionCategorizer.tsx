@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -105,9 +104,11 @@ const TransactionCategorizer = ({
     const uniqueCategories = [...new Set(categories)];
     
     if (uniqueCategories.length === 1) {
-      const category = uniqueCategories[0] as CategoryType;
+      const category = uniqueCategories[0];
+      // Map string category back to CategoryType
+      const categoryType = category as CategoryType;
       return {
-        category,
+        category: categoryType,
         categoryDisplayName: category === 'person1' ? categoryNames.person1 : 
                            category === 'person2' ? categoryNames.person2 : 
                            categoryNames.shared,
