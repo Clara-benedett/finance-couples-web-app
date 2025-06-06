@@ -53,13 +53,23 @@ const Upload = () => {
       return;
     }
 
+    // Limit to 5 files maximum
+    if (validFiles.length > 5) {
+      toast({
+        title: "Too many files",
+        description: "Please upload a maximum of 5 files at once.",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setPendingFiles(validFiles);
     setShowCardNameDialog(true);
   };
 
-  const handleCardNameConfirm = async (cardName: string) => {
+  const handleCardNameConfirm = async (cardNames: string[]) => {
     setShowCardNameDialog(false);
-    await processFiles(pendingFiles, cardName);
+    await processFiles(pendingFiles, cardNames);
     setPendingFiles([]);
   };
 
@@ -77,12 +87,12 @@ const Upload = () => {
     setShowCategorySetup(true);
   };
 
-  const processFiles = async (files: File[], cardName: string) => {
-    const newFiles: UploadedFile[] = files.map(file => ({
+  const processFiles = async (files: File[], cardNames: string[]) => {
+    const newFiles: UploadedFile[] = files.map((file, index) => ({
       file,
       status: 'uploading' as const,
       progress: 0,
-      cardName
+      cardName: cardNames[index]
     }));
 
     setUploadedFiles(prev => [...prev, ...newFiles]);
@@ -115,7 +125,7 @@ const Upload = () => {
           amount: pt.amount,
           description: pt.description,
           category: pt.category || 'UNCLASSIFIED',
-          cardName: cardName,
+          cardName: fileUpload.cardName || 'Unknown Card',
           isClassified: false,
           mccCode: pt.mccCode,
           transactionType: pt.transactionType,
@@ -142,7 +152,7 @@ const Upload = () => {
 
         toast({
           title: "File uploaded successfully",
-          description: `${transactions.length} transactions imported from ${cardName} (${fileUpload.file.name})${detectedFieldsText}`,
+          description: `${transactions.length} transactions imported from ${fileUpload.cardName} (${fileUpload.file.name})${detectedFieldsText}`,
         });
 
       } catch (error) {
@@ -221,7 +231,7 @@ const Upload = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Upload Expense Files</h1>
           <p className="text-gray-600">
-            Upload CSV or Excel files containing your expense data
+            Upload up to 5 CSV or Excel files containing your expense data
           </p>
         </div>
         <Button
