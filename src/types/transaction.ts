@@ -7,6 +7,10 @@ export interface Transaction {
   category: string;
   cardName: string;
   isClassified: boolean;
+  mccCode?: string;
+  transactionType?: string;
+  location?: string;
+  referenceNumber?: string;
 }
 
 export interface ParsedTransaction {
@@ -14,4 +18,8 @@ export interface ParsedTransaction {
   amount: number;
   description: string;
   category?: string;
+  mccCode?: string;
+  transactionType?: string;
+  location?: string;
+  referenceNumber?: string;
 }

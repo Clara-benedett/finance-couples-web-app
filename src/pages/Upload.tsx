@@ -105,8 +105,8 @@ const Upload = () => {
           );
         }
 
-        // Parse the file
-        const parsedTransactions = await parseFile(fileUpload.file);
+        // Parse the file with new return format
+        const { transactions: parsedTransactions, detectedFields } = await parseFile(fileUpload.file);
         
         // Convert to Transaction objects with card name
         const transactions: Transaction[] = parsedTransactions.map(pt => ({
@@ -116,7 +116,11 @@ const Upload = () => {
           description: pt.description,
           category: pt.category || 'UNCLASSIFIED',
           cardName: cardName,
-          isClassified: false
+          isClassified: false,
+          mccCode: pt.mccCode,
+          transactionType: pt.transactionType,
+          location: pt.location,
+          referenceNumber: pt.referenceNumber
         }));
 
         // Add to store
@@ -131,9 +135,14 @@ const Upload = () => {
           )
         );
 
+        // Enhanced toast message with detected fields
+        const detectedFieldsText = detectedFields.length > 0 
+          ? ` | Detected fields: ${detectedFields.join(', ')}`
+          : '';
+
         toast({
           title: "File uploaded successfully",
-          description: `${transactions.length} transactions imported from ${cardName} (${fileUpload.file.name})`,
+          description: `${transactions.length} transactions imported from ${cardName} (${fileUpload.file.name})${detectedFieldsText}`,
         });
 
       } catch (error) {
