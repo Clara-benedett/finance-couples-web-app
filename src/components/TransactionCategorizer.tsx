@@ -130,7 +130,10 @@ const TransactionCategorizer = ({
     }
   };
 
-  const handleCreateRule = (merchantName: string, category: CategoryType, categoryDisplayName: string) => {
+  const handleCreateRule = (event: React.MouseEvent, merchantName: string, category: CategoryType, categoryDisplayName: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
     setShowRuleConfirmation({
       merchantName,
       category,
@@ -431,7 +434,7 @@ const TransactionCategorizer = ({
                                   <Button
                                     size="sm"
                                     variant="ghost"
-                                    onClick={() => handleCreateRule(transaction.description, ruleEligibility.category, ruleEligibility.categoryDisplayName)}
+                                    onClick={(e) => handleCreateRule(e, transaction.description, ruleEligibility.category, ruleEligibility.categoryDisplayName)}
                                     className="h-6 px-2 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 animate-fade-in"
                                   >
                                     <Bot className="w-3 h-3 mr-1" />
