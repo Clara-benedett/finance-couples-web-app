@@ -1,4 +1,3 @@
-
 export interface Transaction {
   id: string;
   date: string;
@@ -11,6 +10,7 @@ export interface Transaction {
   transactionType?: string;
   location?: string;
   referenceNumber?: string;
+  autoAppliedRule?: boolean;
 }
 
 export interface ParsedTransaction {

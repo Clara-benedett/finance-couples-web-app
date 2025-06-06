@@ -1,5 +1,5 @@
-
 import { Transaction } from '@/types/transaction';
+import { categorizationRulesEngine } from '@/utils/categorizationRules';
 
 const STORAGE_KEY = 'expense_tracker_transactions';
 const VERSION_KEY = 'expense_tracker_version';
@@ -47,9 +47,19 @@ class TransactionStore {
   }
 
   addTransactions(newTransactions: Transaction[]) {
-    this.transactions.push(...newTransactions);
+    // Apply rules to new transactions before adding them
+    const processedTransactions = categorizationRulesEngine.applyRulesToTransactions(newTransactions);
+    const transactionsToAdd = processedTransactions.map(result => result.transaction);
+    
+    this.transactions.push(...transactionsToAdd);
     this.saveToStorage();
     this.notifyListeners();
+    
+    // Log how many were auto-categorized
+    const autoAppliedCount = processedTransactions.filter(result => result.wasAutoApplied).length;
+    if (autoAppliedCount > 0) {
+      console.log(`Auto-categorized ${autoAppliedCount} transactions using existing rules`);
+    }
   }
 
   getTransactions(): Transaction[] {
@@ -113,6 +123,26 @@ class TransactionStore {
 
   private notifyListeners() {
     this.listeners.forEach(listener => listener());
+  }
+
+  // New method to apply rules to existing unclassified transactions
+  applyRulesToExistingTransactions(): number {
+    const unclassified = this.getUnclassifiedTransactions();
+    const processedTransactions = categorizationRulesEngine.applyRulesToTransactions(unclassified);
+    
+    let appliedCount = 0;
+    processedTransactions.forEach(result => {
+      if (result.wasAutoApplied) {
+        this.updateTransaction(result.transaction.id, {
+          category: result.transaction.category,
+          isClassified: result.transaction.isClassified,
+          autoAppliedRule: result.transaction.autoAppliedRule
+        });
+        appliedCount++;
+      }
+    });
+    
+    return appliedCount;
   }
 }
 

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
-import { Search, Filter, CheckSquare, Square, Info, X } from "lucide-react";
+import { Search, Filter, CheckSquare, Square, Info, X, Lightning } from "lucide-react";
 import { Transaction } from "@/types/transaction";
 import { getCategoryNames } from "@/utils/categoryNames";
 
@@ -264,6 +264,10 @@ const TransactionCategorizer = ({
                         <h3 className="font-medium text-gray-900 truncate">
                           {transaction.description}
                         </h3>
+                        {/* Lightning icon for auto-categorized transactions */}
+                        {transaction.autoAppliedRule && (
+                          <Lightning className="w-4 h-4 text-yellow-500" title="Auto-categorized using rule" />
+                        )}
                         {/* Hover card for additional details */}
                         {(transaction.transactionType || transaction.referenceNumber) && (
                           <HoverCard>
@@ -290,6 +294,12 @@ const TransactionCategorizer = ({
                                   <div>
                                     <span className="font-medium text-gray-700">MCC Code: </span>
                                     <span className="text-gray-600">{transaction.mccCode}</span>
+                                  </div>
+                                )}
+                                {transaction.autoAppliedRule && (
+                                  <div>
+                                    <span className="font-medium text-gray-700">Auto-categorized: </span>
+                                    <span className="text-yellow-600">Yes</span>
                                   </div>
                                 )}
                               </div>
