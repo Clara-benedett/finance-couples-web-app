@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -154,26 +153,24 @@ const TransactionCategorizer = ({
       <Card>
         <CardContent className="p-6">
           <div className="flex flex-col gap-4">
-            {/* Search bar - moved to top center */}
-            <div className="flex justify-center">
-              <div className="w-96">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search transactions..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10 pr-10"
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={clearSearch}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
+            {/* Search bar */}
+            <div className="w-96">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Search transactions..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-10"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={clearSearch}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
               </div>
             </div>
 
