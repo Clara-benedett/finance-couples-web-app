@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { transactionStore } from '@/store/transactionStore';
 import { calculateExpenses, getProportionSettings, ProportionSettings } from '@/utils/calculationEngine';
 import ProportionSettingsComponent from '@/components/ProportionSettings';
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [transactions, setTransactions] = useState(transactionStore.getTransactions());
   const [proportions, setProportions] = useState<ProportionSettings>(getProportionSettings());
   const [showProportionSettings, setShowProportionSettings] = useState(false);
@@ -27,6 +28,26 @@ const Dashboard = () => {
       setTransactions(transactionStore.getTransactions());
     });
     return unsubscribe;
+  }, []);
+
+  // Handle settings from URL parameters
+  useEffect(() => {
+    if (searchParams.get('settings') === 'true') {
+      setShowProportionSettings(true);
+      setSearchParams({}); // Clear the parameter
+    }
+  }, [searchParams, setSearchParams]);
+
+  // Listen for settings event from header
+  useEffect(() => {
+    const handleOpenSettings = () => {
+      setShowProportionSettings(true);
+    };
+
+    window.addEventListener('openSettings', handleOpenSettings);
+    return () => {
+      window.removeEventListener('openSettings', handleOpenSettings);
+    };
   }, []);
 
   const calculations = calculateExpenses(transactions, proportions);
