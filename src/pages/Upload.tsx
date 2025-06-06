@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -10,7 +11,7 @@ import { transactionStore } from "@/store/transactionStore";
 import { Transaction } from "@/types/transaction";
 import CardNameDialog from "@/components/CardNameDialog";
 import CategorySetup from "@/components/CategorySetup";
-import { CategoryNames } from "@/utils/categoryNames";
+import { CategoryNames, getCategoryNames } from "@/utils/categoryNames";
 import { Settings, User, Share } from "lucide-react";
 
 interface UploadedFile {
