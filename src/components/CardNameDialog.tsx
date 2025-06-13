@@ -164,18 +164,18 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
                     onValueChange={(value: 'person1' | 'person2') => handlePaidByChange(index, value)}
                     className="flex gap-6"
                   >
-                    <div className="flex items-center space-x-2">
+                    <Label htmlFor={`person1-${index}`} className="flex items-center space-x-2 cursor-pointer">
                       <RadioGroupItem value="person1" id={`person1-${index}`} />
-                      <Label htmlFor={`person1-${index}`} className="font-normal">
+                      <span className="font-normal">
                         {categoryNames.person1}
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
+                      </span>
+                    </Label>
+                    <Label htmlFor={`person2-${index}`} className="flex items-center space-x-2 cursor-pointer">
                       <RadioGroupItem value="person2" id={`person2-${index}`} />
-                      <Label htmlFor={`person2-${index}`} className="font-normal">
+                      <span className="font-normal">
                         {categoryNames.person2}
-                      </Label>
-                    </div>
+                      </span>
+                    </Label>
                   </RadioGroup>
                 </div>
               </div>
@@ -219,34 +219,34 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
                       handleClassificationChange(index, value)}
                     className="grid grid-cols-2 gap-4"
                   >
-                    <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-blue-50">
+                    <Label htmlFor={`class-person1-${index}`} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-blue-50 cursor-pointer">
                       <RadioGroupItem value="person1" id={`class-person1-${index}`} />
-                      <Label htmlFor={`class-person1-${index}`} className="font-normal text-blue-600 flex items-center gap-2">
+                      <span className="font-normal text-blue-600 flex items-center gap-2">
                         <User className="w-4 h-4" />
                         {categoryNames.person1}
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-green-50">
+                      </span>
+                    </Label>
+                    <Label htmlFor={`class-person2-${index}`} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-green-50 cursor-pointer">
                       <RadioGroupItem value="person2" id={`class-person2-${index}`} />
-                      <Label htmlFor={`class-person2-${index}`} className="font-normal text-green-600 flex items-center gap-2">
+                      <span className="font-normal text-green-600 flex items-center gap-2">
                         <User className="w-4 h-4" />
                         {categoryNames.person2}
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-purple-50">
+                      </span>
+                    </Label>
+                    <Label htmlFor={`class-shared-${index}`} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-purple-50 cursor-pointer">
                       <RadioGroupItem value="shared" id={`class-shared-${index}`} />
-                      <Label htmlFor={`class-shared-${index}`} className="font-normal text-purple-600 flex items-center gap-2">
+                      <span className="font-normal text-purple-600 flex items-center gap-2">
                         <Share className="w-4 h-4" />
                         {categoryNames.shared}
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50">
+                      </span>
+                    </Label>
+                    <Label htmlFor={`class-skip-${index}`} className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
                       <RadioGroupItem value="skip" id={`class-skip-${index}`} />
-                      <Label htmlFor={`class-skip-${index}`} className="font-normal text-gray-600 flex items-center gap-2">
+                      <span className="font-normal text-gray-600 flex items-center gap-2">
                         <SkipForward className="w-4 h-4" />
                         Skip auto-classification
-                      </Label>
-                    </div>
+                      </span>
+                    </Label>
                   </RadioGroup>
                 </div>
               </div>
