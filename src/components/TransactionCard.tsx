@@ -82,12 +82,26 @@ const TransactionCard = ({
     }
   };
 
-  const cardClassName = isInCategorizedSection 
-    ? "hover:shadow-sm transition-shadow bg-gray-50 opacity-90"
-    : "hover:shadow-md transition-shadow";
+  // Update card styling to show subtle difference for auto-categorized transactions
+  const getCardClassName = () => {
+    let baseClass = "hover:shadow-md transition-shadow";
+    
+    if (isInCategorizedSection) {
+      baseClass = "hover:shadow-sm transition-shadow bg-gray-50";
+      
+      // Add subtle styling for auto-categorized transactions
+      if (transaction.autoAppliedRule) {
+        baseClass += " border-l-2 border-l-yellow-300";
+      } else {
+        baseClass += " opacity-90";
+      }
+    }
+    
+    return baseClass;
+  };
 
   return (
-    <Card className={cardClassName}>
+    <Card className={getCardClassName()}>
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
           {/* Selection Checkbox */}
@@ -147,7 +161,7 @@ const TransactionCard = ({
                         </span>
                       </TooltipTrigger>
                       <TooltipContent>
-                        <p>Auto-categorized using rule</p>
+                        <p>Auto-categorized using rule (click to override)</p>
                       </TooltipContent>
                     </Tooltip>
                   )}
@@ -183,7 +197,7 @@ const TransactionCard = ({
                           {transaction.autoAppliedRule && (
                             <div>
                               <span className="font-medium text-gray-700">Auto-categorized: </span>
-                              <span className="text-yellow-600">Yes</span>
+                              <span className="text-yellow-600">Yes (editable)</span>
                             </div>
                           )}
                         </div>
@@ -210,12 +224,12 @@ const TransactionCard = ({
             </div>
           </div>
 
-          {/* Category Buttons */}
+          {/* Category Buttons - Always enabled, never disabled */}
           <div className="ml-4">
             <CategoryButtons
               currentCategory={transaction.category}
               onCategoryClick={onCategoryClick}
-              isDisabled={isInCategorizedSection}
+              isDisabled={false}
             />
           </div>
         </div>

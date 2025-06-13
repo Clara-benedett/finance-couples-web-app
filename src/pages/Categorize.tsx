@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { transactionStore } from "@/store/transactionStore";
 import { Transaction } from "@/types/transaction";
@@ -72,9 +71,11 @@ const Categorize = () => {
       }
     }
 
+    // Update transaction and clear autoAppliedRule flag when manually categorizing
     transactionStore.updateTransaction(id, { 
       category: categoryMap[category],
-      isClassified: category !== 'UNCLASSIFIED'
+      isClassified: category !== 'UNCLASSIFIED',
+      autoAppliedRule: false // Clear auto-applied flag to indicate manual override
     });
   };
 
