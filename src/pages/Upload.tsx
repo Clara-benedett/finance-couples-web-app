@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -12,6 +11,7 @@ import { Transaction } from "@/types/transaction";
 import CardNameDialog from "@/components/CardNameDialog";
 import CategorySetup from "@/components/CategorySetup";
 import { CategoryNames, getCategoryNames } from "@/utils/categoryNames";
+import { cardClassificationEngine } from "@/utils/cardClassificationRules";
 import { Settings, User, Share } from "lucide-react";
 
 interface UploadedFile {
@@ -21,6 +21,13 @@ interface UploadedFile {
   error?: string;
   transactionCount?: number;
   cardName?: string;
+  autoClassifiedCount?: number;
+}
+
+interface CardInfo {
+  name: string;
+  paidBy: 'person1' | 'person2';
+  autoClassification?: 'person1' | 'person2' | 'shared' | 'skip';
 }
 
 const Upload = () => {
@@ -68,7 +75,7 @@ const Upload = () => {
     setShowCardNameDialog(true);
   };
 
-  const handleCardNameConfirm = async (cardInfos: { name: string; paidBy: 'person1' | 'person2' }[]) => {
+  const handleCardNameConfirm = async (cardInfos: CardInfo[]) => {
     setShowCardNameDialog(false);
     await processFiles(pendingFiles, cardInfos);
     setPendingFiles([]);
@@ -88,7 +95,7 @@ const Upload = () => {
     setShowCategorySetup(true);
   };
 
-  const processFiles = async (files: File[], cardInfos: { name: string; paidBy: 'person1' | 'person2' }[]) => {
+  const processFiles = async (files: File[], cardInfos: CardInfo[]) => {
     const newFiles: UploadedFile[] = files.map((file, index) => ({
       file,
       status: 'uploading' as const,
@@ -120,45 +127,77 @@ const Upload = () => {
         // Parse the file with new return format
         const { transactions: parsedTransactions, detectedFields } = await parseFile(fileUpload.file);
         
-        // Convert to Transaction objects with card name and paidBy
-        const transactions: Transaction[] = parsedTransactions.map(pt => ({
-          id: generateId(),
-          date: pt.date,
-          amount: pt.amount,
-          description: pt.description,
-          category: pt.category || 'UNCLASSIFIED',
-          cardName: cardInfo.name,
-          paidBy: cardInfo.paidBy,
-          isClassified: false,
-          mccCode: pt.mccCode,
-          transactionType: pt.transactionType,
-          location: pt.location,
-          referenceNumber: pt.referenceNumber
-        }));
+        // Apply auto-classification if specified
+        let autoClassifiedCount = 0;
+        const processedTransactions = parsedTransactions.map(pt => {
+          let category = pt.category || 'UNCLASSIFIED';
+          let isClassified = false;
+          
+          // Apply card-level auto-classification
+          if (cardInfo.autoClassification && cardInfo.autoClassification !== 'skip') {
+            category = cardInfo.autoClassification;
+            isClassified = true;
+            autoClassifiedCount++;
+          }
+          
+          return {
+            id: generateId(),
+            date: pt.date,
+            amount: pt.amount,
+            description: pt.description,
+            category,
+            cardName: cardInfo.name,
+            paidBy: cardInfo.paidBy,
+            isClassified,
+            mccCode: pt.mccCode,
+            transactionType: pt.transactionType,
+            location: pt.location,
+            referenceNumber: pt.referenceNumber,
+            autoAppliedRule: isClassified
+          };
+        });
+
+        // Save card classification rule for future uploads
+        if (cardInfo.autoClassification && cardInfo.autoClassification !== 'skip') {
+          cardClassificationEngine.saveCardClassification(cardInfo.name, cardInfo.autoClassification);
+        }
 
         // Add to store
-        transactionStore.addTransactions(transactions);
+        transactionStore.addTransactions(processedTransactions);
 
         // Update file status
         setUploadedFiles(prev => 
           prev.map(f => 
             f.file === fileUpload.file 
-              ? { ...f, status: 'success' as const, transactionCount: transactions.length }
+              ? { 
+                  ...f, 
+                  status: 'success' as const, 
+                  transactionCount: processedTransactions.length,
+                  autoClassifiedCount 
+                }
               : f
           )
         );
 
-        // Enhanced toast message with detected fields
+        // Enhanced toast message with auto-classification info
         const detectedFieldsText = detectedFields.length > 0 
           ? ` | Detected fields: ${detectedFields.join(', ')}`
           : '';
 
         const categoryNames = getCategoryNames();
         const paidByName = cardInfo.paidBy === 'person1' ? categoryNames.person1 : categoryNames.person2;
+        
+        let autoClassificationText = '';
+        if (autoClassifiedCount > 0) {
+          const categoryName = cardInfo.autoClassification === 'person1' ? categoryNames.person1 :
+                              cardInfo.autoClassification === 'person2' ? categoryNames.person2 :
+                              categoryNames.shared;
+          autoClassificationText = ` | Applied ${categoryName} to ${autoClassifiedCount} transactions`;
+        }
 
         toast({
           title: "File uploaded successfully",
-          description: `${transactions.length} transactions imported from ${cardInfo.name} (paid by ${paidByName}) - ${fileUpload.file.name}${detectedFieldsText}`,
+          description: `${processedTransactions.length} transactions imported from ${cardInfo.name} (paid by ${paidByName})${autoClassificationText}${detectedFieldsText}`,
         });
 
       } catch (error) {
@@ -209,6 +248,7 @@ const Upload = () => {
 
   const successfulUploads = uploadedFiles.filter(f => f.status === 'success');
   const totalTransactions = successfulUploads.reduce((sum, f) => sum + (f.transactionCount || 0), 0);
+  const totalAutoClassified = successfulUploads.reduce((sum, f) => sum + (f.autoClassifiedCount || 0), 0);
 
   // Show category setup first if not completed
   if (showCategorySetup) {
@@ -398,9 +438,16 @@ const Upload = () => {
                     
                     <div className="text-sm text-gray-500">
                       {fileUpload.status === 'success' && (
-                        <span className="text-green-600">
-                          ✓ {fileUpload.transactionCount} transactions imported
-                        </span>
+                        <div className="space-y-1">
+                          <span className="text-green-600">
+                            ✓ {fileUpload.transactionCount} transactions imported
+                          </span>
+                          {fileUpload.autoClassifiedCount !== undefined && fileUpload.autoClassifiedCount > 0 && (
+                            <div className="text-purple-600">
+                              🏷️ {fileUpload.autoClassifiedCount} transactions auto-classified
+                            </div>
+                          )}
+                        </div>
                       )}
                       {fileUpload.status === 'error' && (
                         <span className="text-red-600">
@@ -423,9 +470,14 @@ const Upload = () => {
                     <h4 className="font-medium text-green-900">
                       {totalTransactions} transactions ready for categorization
                     </h4>
-                    <p className="text-sm text-green-700">
-                      Files processed successfully. Ready to categorize expenses.
-                    </p>
+                    <div className="text-sm text-green-700 space-y-1">
+                      <p>Files processed successfully. Ready to categorize expenses.</p>
+                      {totalAutoClassified > 0 && (
+                        <p className="text-purple-700">
+                          🏷️ {totalAutoClassified} transactions were automatically classified by card rules
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <Button 
                     onClick={() => navigate('/categorize')}
