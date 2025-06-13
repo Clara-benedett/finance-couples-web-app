@@ -59,7 +59,7 @@ class CardClassificationEngine {
     const normalizedCardName = cardName.toUpperCase().trim();
     const rule = this.rules[normalizedCardName];
     
-    if (rule) {
+    if (rule && rule.classification !== 'skip') {
       // Update last used timestamp
       rule.lastUsed = new Date().toISOString();
       this.saveRules();
