@@ -9,6 +9,8 @@ import CategorizeHeader from "@/components/CategorizeHeader";
 import CategoryEditModal from "@/components/CategoryEditModal";
 import EmptyTransactionsState from "@/components/EmptyTransactionsState";
 import RuleSuggestionDialog from "@/components/RuleSuggestionDialog";
+import ManualExpenseDialog from "@/components/ManualExpenseDialog";
+import ManualExpenseFAB from "@/components/ManualExpenseFAB";
 import { useToast } from "@/hooks/use-toast";
 
 type CategoryType = "person1" | "person2" | "shared" | "UNCLASSIFIED";
@@ -16,6 +18,7 @@ type CategoryType = "person1" | "person2" | "shared" | "UNCLASSIFIED";
 const Categorize = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showCategoryEdit, setShowCategoryEdit] = useState(false);
+  const [showManualExpense, setShowManualExpense] = useState(false);
   const [categoryNames, setCategoryNames] = useState(getCategoryNames());
   const [ruleSuggestion, setRuleSuggestion] = useState<{
     merchantName: string;
@@ -162,6 +165,12 @@ const Categorize = () => {
         onCancel={() => setShowCategoryEdit(false)}
       />
 
+      {/* Manual Expense Dialog */}
+      <ManualExpenseDialog
+        open={showManualExpense}
+        onOpenChange={setShowManualExpense}
+      />
+
       {/* Rule Suggestion Dialog - Used for both automatic suggestions and auto-rule button clicks */}
       {ruleSuggestion && (
         <RuleSuggestionDialog
@@ -179,6 +188,12 @@ const Categorize = () => {
         onUpdateTransaction={handleUpdateTransaction}
         onBulkUpdate={handleBulkUpdate}
         onRequestRuleSuggestion={handleRequestRuleSuggestion}
+      />
+
+      {/* Floating Action Button */}
+      <ManualExpenseFAB
+        onClick={() => setShowManualExpense(true)}
+        show={transactions.length > 0}
       />
     </div>
   );

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Upload as UploadIcon, FileText, CheckCircle, AlertCircle, File } from "lucide-react";
+import { Upload as UploadIcon, FileText, CheckCircle, AlertCircle, File, Plus } from "lucide-react";
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -10,6 +10,7 @@ import { transactionStore } from "@/store/transactionStore";
 import { Transaction } from "@/types/transaction";
 import CardNameDialog from "@/components/CardNameDialog";
 import CategorySetup from "@/components/CategorySetup";
+import ManualExpenseDialog from "@/components/ManualExpenseDialog";
 import { CategoryNames, getCategoryNames } from "@/utils/categoryNames";
 import { cardClassificationEngine } from "@/utils/cardClassificationRules";
 import { Settings, User, Share } from "lucide-react";
@@ -38,6 +39,7 @@ const Upload = () => {
   const [showCardNameDialog, setShowCardNameDialog] = useState(false);
   const [showCategorySetup, setShowCategorySetup] = useState(true);
   const [categoryNames, setCategoryNames] = useState<CategoryNames | null>(null);
+  const [showManualExpense, setShowManualExpense] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -277,7 +279,7 @@ const Upload = () => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Upload Expense Files</h1>
           <p className="text-gray-600">
-            Upload up to 5 CSV or Excel files containing your expense data
+            Upload CSV or Excel files, or add manual expenses
           </p>
         </div>
         <Button
@@ -315,46 +317,71 @@ const Upload = () => {
         </Card>
       )}
 
-      {/* Upload Area */}
-      <Card className={`border-2 border-dashed transition-colors ${
-        isDragging ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-400'
-      }`}>
-        <CardContent className="p-8">
-          <div
-            className={`text-center rounded-lg p-8 transition-colors ${
-              isDragging ? 'bg-blue-50' : ''
-            }`}
-            onDragOver={handleDragOver}
-            onDragLeave={handleDragLeave}
-            onDrop={handleDrop}
-          >
-            <UploadIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Drop files here or click to upload
-            </h3>
-            <p className="text-gray-500 mb-4">
-              Support for CSV and Excel files (.csv, .xlsx, .xls) up to 10MB each
-            </p>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept=".csv,.xlsx,.xls"
-              onChange={(e) => handleFileSelection(e.target.files)}
-              className="hidden"
-              disabled={isProcessing}
-            />
-            <Button 
-              onClick={handleChooseFiles}
-              className="bg-blue-600 hover:bg-blue-700"
-              disabled={isProcessing}
+      {/* Upload Options */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* File Upload */}
+        <Card className={`border-2 border-dashed transition-colors ${
+          isDragging ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-400'
+        }`}>
+          <CardContent className="p-8">
+            <div
+              className={`text-center rounded-lg p-8 transition-colors ${
+                isDragging ? 'bg-blue-50' : ''
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
             >
-              <UploadIcon className="w-4 h-4 mr-2" />
-              Choose Files
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              <UploadIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Upload Files
+              </h3>
+              <p className="text-gray-500 mb-4">
+                Drop CSV or Excel files here or click to upload
+              </p>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept=".csv,.xlsx,.xls"
+                onChange={(e) => handleFileSelection(e.target.files)}
+                className="hidden"
+                disabled={isProcessing}
+              />
+              <Button 
+                onClick={handleChooseFiles}
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={isProcessing}
+              >
+                <UploadIcon className="w-4 h-4 mr-2" />
+                Choose Files
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Manual Entry */}
+        <Card className="border-2 border-dashed border-purple-300 hover:border-purple-400 transition-colors">
+          <CardContent className="p-8">
+            <div className="text-center rounded-lg p-8">
+              <Plus className="mx-auto h-12 w-12 text-purple-400 mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">
+                Add Manual Expense
+              </h3>
+              <p className="text-gray-500 mb-4">
+                Add cash, PIX, Venmo, or other manual expenses
+              </p>
+              <Button 
+                onClick={() => setShowManualExpense(true)}
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Expense
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* File Format Instructions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -491,6 +518,11 @@ const Upload = () => {
           </CardContent>
         </Card>
       )}
+
+      <ManualExpenseDialog
+        open={showManualExpense}
+        onOpenChange={setShowManualExpense}
+      />
 
       <CardNameDialog
         isOpen={showCardNameDialog}

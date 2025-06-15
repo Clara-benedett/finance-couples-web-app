@@ -47,19 +47,42 @@ class TransactionStore {
   }
 
   addTransactions(newTransactions: Transaction[]) {
-    // Apply rules to new transactions before adding them
-    const processedTransactions = categorizationRulesEngine.applyRulesToTransactions(newTransactions);
-    const transactionsToAdd = processedTransactions.map(result => result.transaction);
+    // Apply rules to new transactions before adding them (skip manual entries)
+    const processedTransactions = categorizationRulesEngine.applyRulesToTransactions(
+      newTransactions.filter(t => !t.isManualEntry)
+    );
+    
+    // Manual entries are added as-is
+    const manualEntries = newTransactions.filter(t => t.isManualEntry);
+    
+    const transactionsToAdd = [
+      ...processedTransactions.map(result => result.transaction),
+      ...manualEntries
+    ];
     
     this.transactions.push(...transactionsToAdd);
     this.saveToStorage();
     this.notifyListeners();
     
-    // Log how many were auto-categorized
+    // Log how many were auto-categorized (excluding manual entries)
     const autoAppliedCount = processedTransactions.filter(result => result.wasAutoApplied).length;
     if (autoAppliedCount > 0) {
       console.log(`Auto-categorized ${autoAppliedCount} transactions using existing rules`);
     }
+  }
+
+  addManualTransaction(transaction: Transaction) {
+    // Apply rules to manual transaction if it's not already classified
+    if (!transaction.isClassified && !transaction.isManualEntry) {
+      const processedTransactions = categorizationRulesEngine.applyRulesToTransactions([transaction]);
+      if (processedTransactions[0].wasAutoApplied) {
+        transaction = processedTransactions[0].transaction;
+      }
+    }
+    
+    this.transactions.push(transaction);
+    this.saveToStorage();
+    this.notifyListeners();
   }
 
   getTransactions(): Transaction[] {

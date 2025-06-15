@@ -1,9 +1,21 @@
 
+import { Transaction } from "@/types/transaction";
+
 interface TransactionMCCEmojiProps {
   mccCode?: string;
+  isManualEntry?: boolean;
 }
 
-const TransactionMCCEmoji = ({ mccCode }: TransactionMCCEmojiProps) => {
+const TransactionMCCEmoji = ({ mccCode, isManualEntry }: TransactionMCCEmojiProps) => {
+  // Show hand icon for manual entries
+  if (isManualEntry) {
+    return (
+      <div className="text-xl" title="Manual Entry">
+        ✋
+      </div>
+    );
+  }
+
   const getMCCEmoji = (mccCode?: string) => {
     if (!mccCode) return '';
     

@@ -69,8 +69,11 @@ const TransactionCard = ({
             )}
           </button>
 
-          {/* MCC Emoji */}
-          <TransactionMCCEmoji mccCode={transaction.mccCode} />
+          {/* MCC Emoji or Manual Entry Hand */}
+          <TransactionMCCEmoji 
+            mccCode={transaction.mccCode} 
+            isManualEntry={transaction.isManualEntry}
+          />
 
           {/* Transaction Details */}
           <TransactionDetails
