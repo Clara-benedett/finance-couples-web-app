@@ -16,7 +16,7 @@ interface TransactionCardProps {
     categoryDisplayName: string;
     count: number;
   } | null;
-  onToggleSelection: () => void;
+  onToggleSelection: (shiftKey?: boolean) => void;
   onCategoryClick: (category: CategoryType) => void;
   onCreateRuleClick: (merchantName: string, category: CategoryType, categoryDisplayName: string) => void;
   isInCategorizedSection?: boolean;
@@ -49,13 +49,17 @@ const TransactionCard = ({
     return baseClass;
   };
 
+  const handleSelectionClick = (event: React.MouseEvent) => {
+    onToggleSelection(event.shiftKey);
+  };
+
   return (
     <Card className={getCardClassName()}>
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
           {/* Selection Checkbox */}
           <button
-            onClick={onToggleSelection}
+            onClick={handleSelectionClick}
             className="text-gray-400 hover:text-gray-600"
           >
             {isSelected ? (

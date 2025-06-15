@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +30,7 @@ const TransactionCategorizer = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
   const [isAlreadyCategorizedExpanded, setIsAlreadyCategorizedExpanded] = useState(false);
+  const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(null);
   const categoryNames = getCategoryNames();
 
   const filteredTransactions = useMemo(() => {
@@ -43,6 +45,11 @@ const TransactionCategorizer = ({
     const categorized = filteredTransactions.filter(t => t.category !== 'UNCLASSIFIED');
     return { uncategorizedTransactions: uncategorized, categorizedTransactions: categorized };
   }, [filteredTransactions]);
+
+  // Create unified list for range selection calculations
+  const allVisibleTransactions = useMemo(() => {
+    return [...uncategorizedTransactions, ...categorizedTransactions];
+  }, [uncategorizedTransactions, categorizedTransactions]);
 
   // Check against complete dataset for celebration logic
   const allUncategorizedCount = useMemo(() => {
@@ -104,14 +111,46 @@ const TransactionCategorizer = ({
     }
   };
 
-  const toggleTransactionSelection = (transactionId: string) => {
-    const newSelection = new Set(selectedTransactions);
-    if (newSelection.has(transactionId)) {
-      newSelection.delete(transactionId);
+  const toggleTransactionSelection = (transactionId: string, shiftKey?: boolean) => {
+    const currentIndex = allVisibleTransactions.findIndex(t => t.id === transactionId);
+    
+    if (shiftKey && lastClickedIndex !== null && currentIndex !== -1) {
+      // Range selection
+      const startIndex = Math.min(lastClickedIndex, currentIndex);
+      const endIndex = Math.max(lastClickedIndex, currentIndex);
+      
+      // Determine target state based on current transaction's selection
+      const targetTransaction = allVisibleTransactions[currentIndex];
+      const shouldSelect = !selectedTransactions.has(targetTransaction.id);
+      
+      const newSelection = new Set(selectedTransactions);
+      
+      // Apply selection state to all transactions in range
+      for (let i = startIndex; i <= endIndex; i++) {
+        const transaction = allVisibleTransactions[i];
+        if (shouldSelect) {
+          newSelection.add(transaction.id);
+        } else {
+          newSelection.delete(transaction.id);
+        }
+      }
+      
+      setSelectedTransactions(newSelection);
     } else {
-      newSelection.add(transactionId);
+      // Single selection toggle
+      const newSelection = new Set(selectedTransactions);
+      if (newSelection.has(transactionId)) {
+        newSelection.delete(transactionId);
+      } else {
+        newSelection.add(transactionId);
+      }
+      setSelectedTransactions(newSelection);
     }
-    setSelectedTransactions(newSelection);
+    
+    // Update last clicked index for future range selections
+    if (currentIndex !== -1) {
+      setLastClickedIndex(currentIndex);
+    }
   };
 
   const selectAllVisible = () => {
@@ -121,6 +160,7 @@ const TransactionCategorizer = ({
 
   const clearSelection = () => {
     setSelectedTransactions(new Set());
+    setLastClickedIndex(null);
   };
 
   const categorizedCount = transactions.filter(t => t.category !== 'UNCLASSIFIED').length;
@@ -168,7 +208,7 @@ const TransactionCategorizer = ({
                       transaction={transaction}
                       isSelected={selectedTransactions.has(transaction.id)}
                       ruleEligibility={ruleEligibility}
-                      onToggleSelection={() => toggleTransactionSelection(transaction.id)}
+                      onToggleSelection={(shiftKey) => toggleTransactionSelection(transaction.id, shiftKey)}
                       onCategoryClick={(category) => handleCategoryClick(transaction.id, category)}
                       onCreateRuleClick={handleCreateRuleClick}
                     />
@@ -231,7 +271,7 @@ const TransactionCategorizer = ({
                       transaction={transaction}
                       isSelected={selectedTransactions.has(transaction.id)}
                       ruleEligibility={null}
-                      onToggleSelection={() => toggleTransactionSelection(transaction.id)}
+                      onToggleSelection={(shiftKey) => toggleTransactionSelection(transaction.id, shiftKey)}
                       onCategoryClick={(category) => handleCategoryClick(transaction.id, category)}
                       onCreateRuleClick={handleCreateRuleClick}
                       isInCategorizedSection={true}
