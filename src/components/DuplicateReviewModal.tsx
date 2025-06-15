@@ -78,6 +78,7 @@ const DuplicateReviewModal = ({
 
   const finalUploadCount = uniqueTransactions + selectedDuplicates.size;
   const skippedDuplicates = duplicates.length - selectedDuplicates.size;
+  const hasZeroTransactions = finalUploadCount === 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -171,43 +172,86 @@ const DuplicateReviewModal = ({
             </div>
           </div>
 
-          {/* Final Upload Summary */}
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          {/* Final Upload Summary - Different styling for zero transactions */}
+          <div className={`${hasZeroTransactions ? 'bg-orange-50 border-orange-200' : 'bg-green-50 border-green-200'} border rounded-lg p-4`}>
             <div className="flex items-center gap-2 mb-3">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-              <h3 className="font-semibold text-green-900">Final Upload Summary</h3>
+              {hasZeroTransactions ? (
+                <AlertTriangle className="h-5 w-5 text-orange-600" />
+              ) : (
+                <CheckCircle className="h-5 w-5 text-green-600" />
+              )}
+              <h3 className={`font-semibold ${hasZeroTransactions ? 'text-orange-900' : 'text-green-900'}`}>
+                {hasZeroTransactions ? 'Upload Result' : 'Final Upload Summary'}
+              </h3>
             </div>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-700">• {uniqueTransactions} unique transactions</span>
-                <span className="text-green-700 font-medium">✓ Will be uploaded</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-700">• {selectedDuplicates.size} selected duplicates</span>
-                <span className="text-green-700 font-medium">✓ Will be uploaded</span>
-              </div>
-              {skippedDuplicates > 0 && (
+            
+            {hasZeroTransactions ? (
+              <div className="space-y-2 text-sm">
+                <div className="text-orange-800 font-medium mb-2">
+                  All transactions in your file are duplicates and none were selected.
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700">• {uniqueTransactions} unique transactions</span>
+                  <span className="text-orange-700 font-medium">No new transactions</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700">• {selectedDuplicates.size} selected duplicates</span>
+                  <span className="text-orange-700 font-medium">None selected</span>
+                </div>
                 <div className="flex justify-between">
                   <span className="text-gray-700">• {skippedDuplicates} duplicate transactions</span>
                   <span className="text-orange-700 font-medium">⚠ Will be skipped</span>
                 </div>
-              )}
-              <div className="pt-2 border-t border-green-200">
-                <div className="flex justify-between font-semibold">
-                  <span className="text-green-900">Total transactions to upload:</span>
-                  <span className="text-green-900">{finalUploadCount}</span>
+                <div className="pt-2 border-t border-orange-200">
+                  <div className="flex justify-between font-semibold">
+                    <span className="text-orange-900">No transactions will be uploaded</span>
+                    <span className="text-orange-900">0</span>
+                  </div>
+                </div>
+                <div className="text-xs text-orange-700 mt-2">
+                  💡 If you want to upload duplicates anyway, select them above
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-700">• {uniqueTransactions} unique transactions</span>
+                  <span className="text-green-700 font-medium">✓ Will be uploaded</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-700">• {selectedDuplicates.size} selected duplicates</span>
+                  <span className="text-green-700 font-medium">✓ Will be uploaded</span>
+                </div>
+                {skippedDuplicates > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-700">• {skippedDuplicates} duplicate transactions</span>
+                    <span className="text-orange-700 font-medium">⚠ Will be skipped</span>
+                  </div>
+                )}
+                <div className="pt-2 border-t border-green-200">
+                  <div className="flex justify-between font-semibold">
+                    <span className="text-green-900">Total transactions to upload:</span>
+                    <span className="text-green-900">{finalUploadCount}</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Action Buttons */}
+          {/* Action Buttons - Different text for zero transactions */}
           <div className="flex justify-between items-center pt-4">
             <Button variant="outline" onClick={onCancel} className="min-w-[160px]">
               Cancel Entire Upload
             </Button>
-            <Button onClick={handleConfirm} className="min-w-[200px]">
-              Continue Upload ({finalUploadCount} transactions)
+            <Button 
+              onClick={handleConfirm} 
+              className="min-w-[200px]"
+              variant={hasZeroTransactions ? "outline" : "default"}
+            >
+              {hasZeroTransactions 
+                ? "Close - No Upload Needed" 
+                : `Continue Upload (${finalUploadCount} transactions)`
+              }
             </Button>
           </div>
         </div>
