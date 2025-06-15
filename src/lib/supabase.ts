@@ -1,23 +1,16 @@
 
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = "https://lenyovyegrjcegiucnex.supabase.co";
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlbnlvdnllZ3JqY2VnaXVjbmV4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk5NzA5MTAsImV4cCI6MjA2NTU0NjkxMH0.WB6t2CnXTbJGNq1Mtg7_2NLSFK17UyDJ_r8P7DmgnFM";
 
-// Check if Supabase is configured
-export const isSupabaseConfigured = !!(supabaseUrl && supabaseAnonKey);
+// Supabase is always configured in Lovable
+export const isSupabaseConfigured = true;
 
-// Create a mock client when Supabase isn't configured
-const createMockClient = () => ({
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
-    getSession: () => Promise.resolve({ data: { session: null } }),
-    onAuthStateChange: () => ({ data: { subscription: { unsubscribe: () => {} } } }),
-    signInWithPassword: () => Promise.resolve({ error: { message: 'Supabase not configured' } }),
-    signUp: () => Promise.resolve({ error: { message: 'Supabase not configured' } }),
-    signOut: () => Promise.resolve({ error: null }),
-  },
+    storage: localStorage,
+    persistSession: true,
+    autoRefreshToken: true,
+  }
 });
-
-export const supabase = isSupabaseConfigured 
-  ? createClient(supabaseUrl, supabaseAnonKey)
-  : createMockClient() as any;

@@ -7,7 +7,7 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, loading, isSupabaseConfigured } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -20,12 +20,7 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // If Supabase isn't configured, show the app without authentication
-  if (!isSupabaseConfigured) {
-    return <>{children}</>;
-  }
-
-  // If Supabase is configured but user isn't signed in, show auth form
+  // If user isn't signed in, show auth form
   if (!user) {
     return <AuthForm />;
   }

@@ -1,5 +1,4 @@
-
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 import { Transaction } from '@/types/transaction';
 import { categorizationRulesEngine } from '@/utils/categorizationRules';
 import { findDuplicates } from '@/utils/duplicateDetection';
@@ -15,9 +14,7 @@ class SupabaseTransactionStore {
   private isInitialized = false;
 
   constructor() {
-    if (isSupabaseConfigured) {
-      this.initializeStore();
-    }
+    this.initializeStore();
   }
 
   private async initializeStore() {
@@ -32,8 +29,6 @@ class SupabaseTransactionStore {
   }
 
   private async loadFromDatabase() {
-    if (!isSupabaseConfigured) return;
-
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
@@ -110,14 +105,12 @@ class SupabaseTransactionStore {
   }
 
   async addTransactions(newTransactions: Transaction[], skipDuplicateCheck: boolean = false) {
-    if (!isSupabaseConfigured) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       // Fallback to localStorage behavior
       this.addTransactionsLocal(newTransactions, skipDuplicateCheck);
       return;
     }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
 
     // Apply rules to new transactions before adding them
     const processedTransactions = categorizationRulesEngine.applyRulesToTransactions(
@@ -418,14 +411,12 @@ class SupabaseTransactionStore {
 
   // New methods for proportion settings
   async getProportionSettings(): Promise<ProportionSettings> {
-    if (!isSupabaseConfigured) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       // Fallback to localStorage
       const stored = localStorage.getItem('expense_tracker_proportions');
       return stored ? JSON.parse(stored) : { person1_percentage: 50, person2_percentage: 50 };
     }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { person1_percentage: 50, person2_percentage: 50 };
 
     try {
       const { data, error } = await supabase
@@ -447,14 +438,12 @@ class SupabaseTransactionStore {
   }
 
   async saveProportionSettings(settings: ProportionSettings): Promise<boolean> {
-    if (!isSupabaseConfigured) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
       // Fallback to localStorage
       localStorage.setItem('expense_tracker_proportions', JSON.stringify(settings));
       return true;
     }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return false;
 
     try {
       const { error } = await supabase
@@ -474,6 +463,63 @@ class SupabaseTransactionStore {
       return true;
     } catch (error) {
       console.error('Error saving proportion settings:', error);
+      return false;
+    }
+  }
+
+  async migrateLocalStorageToDatabase(): Promise<boolean> {
+    if (!isSupabaseConfigured) return false;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    try {
+      const localData = localStorage.getItem('expense_tracker_transactions');
+      if (!localData) return true; // No data to migrate
+
+      const localTransactions = JSON.parse(localData);
+      if (!Array.isArray(localTransactions) || localTransactions.length === 0) {
+        return true; // No valid data to migrate
+      }
+
+      // Check if user already has transactions in database
+      const { data: existingTransactions } = await supabase
+        .from('transactions')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+
+      if (existingTransactions && existingTransactions.length > 0) {
+        console.log('User already has transactions in database, skipping migration');
+        return true;
+      }
+
+      // Migrate data
+      const dbTransactions = localTransactions.map((t: Transaction) => 
+        this.mapTransactionToDatabase(t, user.id)
+      );
+
+      const { error } = await supabase
+        .from('transactions')
+        .insert(dbTransactions);
+
+      if (error) {
+        console.error('Error migrating data to database:', error);
+        return false;
+      }
+
+      console.log(`Successfully migrated ${localTransactions.length} transactions to database`);
+      
+      // Clear localStorage after successful migration
+      localStorage.removeItem('expense_tracker_transactions');
+      localStorage.removeItem('expense_tracker_version');
+      
+      // Reload data from database
+      await this.loadFromDatabase();
+      
+      return true;
+    } catch (error) {
+      console.error('Error during migration:', error);
       return false;
     }
   }

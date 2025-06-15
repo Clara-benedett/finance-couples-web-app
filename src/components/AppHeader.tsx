@@ -1,130 +1,81 @@
 
-import { useState } from "react";
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Upload, Menu, X } from "lucide-react";
+import { LogOut, Settings, Upload, Home, History, Tags } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
-const navigationItems = [
-  { title: "Dashboard", url: "/" },
-  { title: "Upload", url: "/upload" },
-  { title: "Categorize", url: "/categorize" },
-  { title: "History", url: "/history" },
-  { title: "Settings", url: "/settings" },
-];
-
-export function AppHeader() {
+const AppHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { signOut, user } = useAuth();
+  const { toast } = useToast();
 
-  const isActive = (path: string) => {
-    if (path === "/") {
-      return location.pathname === "/";
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast({
+        title: "Signed out",
+        description: "You have been successfully signed out.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive",
+      });
     }
-    return location.pathname.startsWith(path);
   };
 
-  const getNavLinkClasses = (path: string) => {
-    const baseClasses = "px-4 py-2 text-sm font-medium rounded-lg transition-colors duration-200";
-    if (isActive(path)) {
-      return `${baseClasses} bg-blue-100 text-blue-700 border-b-2 border-blue-600`;
-    }
-    return `${baseClasses} text-gray-600 hover:text-gray-900 hover:bg-gray-100`;
-  };
+  const navItems = [
+    { path: "/", icon: Home, label: "Dashboard" },
+    { path: "/upload", icon: Upload, label: "Upload" },
+    { path: "/categorize", icon: Tags, label: "Categorize" },
+    { path: "/history", icon: History, label: "History" },
+    { path: "/settings", icon: Settings, label: "Settings" },
+  ];
 
   return (
-    <header className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo - Now clickable */}
-          <div 
-            className="flex items-center space-x-2 cursor-pointer hover:opacity-80 transition-opacity"
-            onClick={() => navigate("/")}
-          >
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">C</span>
-            </div>
-            <h1 className="text-xl font-bold text-gray-900">Couply</h1>
-          </div>
-
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1">
-            {navigationItems.map((item) => (
-              <NavLink
-                key={item.title}
-                to={item.url}
-                end={item.url === "/"}
-                className={getNavLinkClasses(item.url)}
+    <header className="bg-white border-b border-gray-200 px-4 py-3">
+      <div className="max-w-7xl mx-auto flex items-center justify-between">
+        <div className="flex items-center space-x-6">
+          <h1 className="text-xl font-bold text-gray-900">Couply Finance</h1>
+          
+          <nav className="hidden md:flex space-x-4">
+            {navItems.map(({ path, icon: Icon, label }) => (
+              <Button
+                key={path}
+                variant={location.pathname === path ? "default" : "ghost"}
+                size="sm"
+                onClick={() => navigate(path)}
+                className="flex items-center gap-2"
               >
-                {item.title}
-              </NavLink>
+                <Icon className="w-4 h-4" />
+                {label}
+              </Button>
             ))}
           </nav>
-
-          {/* Action Buttons */}
-          <div className="hidden md:flex items-center space-x-3">
-            <Button 
-              onClick={() => navigate("/upload")}
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              Upload Expenses
-            </Button>
-          </div>
-
-          {/* Mobile Menu Button */}
-          <div className="md:hidden">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              {isMobileMenuOpen ? (
-                <X className="w-5 h-5" />
-              ) : (
-                <Menu className="w-5 h-5" />
-              )}
-            </Button>
-          </div>
         </div>
 
-        {/* Mobile Navigation Menu */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-gray-200 py-4">
-            <div className="flex flex-col space-y-2">
-              {navigationItems.map((item) => (
-                <NavLink
-                  key={item.title}
-                  to={item.url}
-                  end={item.url === "/"}
-                  className={getNavLinkClasses(item.url)}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {item.title}
-                </NavLink>
-              ))}
-              
-              <div className="pt-4 border-t border-gray-200 mt-4">
-                <div className="flex flex-col space-y-2">
-                  <Button 
-                    onClick={() => {
-                      navigate("/upload");
-                      setIsMobileMenuOpen(false);
-                    }}
-                    size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 text-white justify-start"
-                  >
-                    <Upload className="w-4 h-4 mr-2" />
-                    Upload Expenses
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <div className="flex items-center space-x-4">
+          {user && (
+            <span className="text-sm text-gray-600 hidden sm:block">
+              {user.email}
+            </span>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSignOut}
+            className="flex items-center gap-2"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
+          </Button>
+        </div>
       </div>
     </header>
   );
-}
+};
+
+export default AppHeader;

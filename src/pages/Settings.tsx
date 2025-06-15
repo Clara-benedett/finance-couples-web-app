@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,17 +7,44 @@ import { Slider } from "@/components/ui/slider";
 import { Settings as SettingsIcon, CreditCard, Users, Edit3, Save, X, User, Share, Trash2 } from "lucide-react";
 import CardRulesManager from "@/components/CardRulesManager";
 import { getCategoryNames, setCategoryNames, CategoryNames } from "@/utils/categoryNames";
-import { getProportionSettings, saveProportionSettings, ProportionSettings } from '@/utils/calculationEngine';
-import { transactionStore } from '@/store/transactionStore';
+import { supabaseTransactionStore } from '@/store/supabaseTransactionStore';
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/contexts/AuthContext';
+
+interface ProportionSettings {
+  person1Percentage: number;
+  person2Percentage: number;
+}
 
 const Settings = () => {
-  const [proportions, setProportions] = useState<ProportionSettings>(getProportionSettings());
+  const [proportions, setProportions] = useState<ProportionSettings>({ person1Percentage: 50, person2Percentage: 50 });
   const [categoryNames, setCategoryNamesState] = useState<CategoryNames>(getCategoryNames());
   const [isEditingNames, setIsEditingNames] = useState(false);
   const [editedNames, setEditedNames] = useState<CategoryNames>(categoryNames);
   const [isClearing, setIsClearing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
+  const { user } = useAuth();
+
+  // Load proportion settings from Supabase
+  useEffect(() => {
+    const loadProportions = async () => {
+      if (user) {
+        try {
+          const settings = await supabaseTransactionStore.getProportionSettings();
+          setProportions({
+            person1Percentage: settings.person1_percentage,
+            person2Percentage: settings.person2_percentage,
+          });
+        } catch (error) {
+          console.error('Error loading proportions:', error);
+        }
+      }
+      setLoading(false);
+    };
+
+    loadProportions();
+  }, [user]);
 
   const handleSliderChange = (value: number[]) => {
     const person1Percentage = value[0];
@@ -45,12 +72,32 @@ const Settings = () => {
     }
   };
 
-  const handleSaveProportions = () => {
-    saveProportionSettings(proportions);
-    toast({
-      title: "Settings saved",
-      description: "Your expense split settings have been updated successfully",
-    });
+  const handleSaveProportions = async () => {
+    try {
+      const success = await supabaseTransactionStore.saveProportionSettings({
+        person1_percentage: proportions.person1Percentage,
+        person2_percentage: proportions.person2Percentage,
+      });
+
+      if (success) {
+        toast({
+          title: "Settings saved",
+          description: "Your expense split settings have been updated successfully",
+        });
+      } else {
+        toast({
+          title: "Error saving settings",
+          description: "There was an error saving your settings",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error saving settings",
+        description: "There was an error saving your settings",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditNames = () => {
@@ -93,7 +140,7 @@ const Settings = () => {
   const handleClearAllData = () => {
     setIsClearing(true);
     try {
-      transactionStore.clearAllData();
+      supabaseTransactionStore.clearAllData();
       toast({
         title: "All data cleared",
         description: "Your app data has been reset. Refresh the page to see changes.",
@@ -109,7 +156,18 @@ const Settings = () => {
     }
   };
 
-  const storageInfo = transactionStore.getStorageInfo();
+  const storageInfo = supabaseTransactionStore.getStorageInfo();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
