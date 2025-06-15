@@ -56,26 +56,24 @@ const SmartCardDropdown = ({
             {existingSuggestions.map((suggestion, index) => {
               const rule = cardClassificationEngine.getExactMatch(suggestion);
               return (
-                <Button
+                <div
                   key={`existing-${index}`}
-                  variant="ghost"
-                  className="w-full justify-start h-auto p-2 text-left"
+                  className="w-full p-2 text-left hover:bg-gray-100 cursor-pointer rounded border"
                   onClick={() => onSuggestionClick(suggestion)}
-                  type="button"
                 >
-                  <div className="flex items-center gap-2 w-full">
-                    <CreditCard className="w-4 h-4 text-blue-600" />
-                    <div className="flex-1">
-                      <div className="font-medium">{suggestion}</div>
+                  <div className="flex items-center gap-2 w-full pointer-events-none">
+                    <CreditCard className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium truncate">{suggestion}</div>
                       {rule && (
                         <div className="text-xs text-green-600">
                           Auto-classified as {getCategoryDisplay(rule.classification)}
                         </div>
                       )}
                     </div>
-                    <Check className="w-4 h-4 text-green-600" />
+                    <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
                   </div>
-                </Button>
+                </div>
               );
             })}
           </div>
