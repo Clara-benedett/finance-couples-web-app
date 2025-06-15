@@ -1,8 +1,11 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
+import { supabaseTransactionStore } from '@/store/supabaseTransactionStore';
 import { transactionStore } from '@/store/transactionStore';
 import { calculateExpenses, getProportionSettings, ProportionSettings } from '@/utils/calculationEngine';
+import { useAuth } from '@/contexts/AuthContext';
+import { isSupabaseConfigured } from '@/lib/supabase';
 import DebugCalculation from '@/components/DebugCalculation';
 import TestScenarios from '@/components/TestScenarios';
 import { useDebugMode } from '@/hooks/useDebugMode';
@@ -14,19 +17,52 @@ import ActionItems from '@/components/dashboard/ActionItems';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [transactions, setTransactions] = useState(transactionStore.getTransactions());
+  const { user } = useAuth();
+  const [transactions, setTransactions] = useState(
+    isSupabaseConfigured && user 
+      ? supabaseTransactionStore.getTransactions()
+      : transactionStore.getTransactions()
+  );
   const [proportions, setProportions] = useState<ProportionSettings>(getProportionSettings());
   const [showCalculationDetails, setShowCalculationDetails] = useState(false);
+  const [migrationStatus, setMigrationStatus] = useState<'checking' | 'migrating' | 'complete' | 'error'>('checking');
   const { isDebugMode, toggleDebugMode } = useDebugMode();
 
+  const activeStore = isSupabaseConfigured && user ? supabaseTransactionStore : transactionStore;
+
   useEffect(() => {
-    const unsubscribe = transactionStore.subscribe(() => {
-      setTransactions(transactionStore.getTransactions());
+    const unsubscribe = activeStore.subscribe(() => {
+      setTransactions(activeStore.getTransactions());
     });
     return unsubscribe;
-  }, []);
+  }, [activeStore]);
 
-  // Update proportions when they change in localStorage
+  // Handle data migration when user signs in
+  useEffect(() => {
+    const handleMigration = async () => {
+      if (isSupabaseConfigured && user && migrationStatus === 'checking') {
+        setMigrationStatus('migrating');
+        try {
+          const success = await supabaseTransactionStore.migrateLocalStorageToDatabase();
+          setMigrationStatus(success ? 'complete' : 'error');
+          
+          if (success) {
+            // Update transactions from the migrated data
+            setTransactions(supabaseTransactionStore.getTransactions());
+          }
+        } catch (error) {
+          console.error('Migration failed:', error);
+          setMigrationStatus('error');
+        }
+      } else if (!isSupabaseConfigured || !user) {
+        setMigrationStatus('complete');
+      }
+    };
+
+    handleMigration();
+  }, [user, migrationStatus]);
+
+  // Update proportions when they change
   useEffect(() => {
     const handleStorageChange = () => {
       setProportions(getProportionSettings());
@@ -38,6 +74,18 @@ const Dashboard = () => {
 
   const calculations = calculateExpenses(transactions, proportions);
   const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  // Show migration status if in progress
+  if (migrationStatus === 'migrating') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Migrating your data...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

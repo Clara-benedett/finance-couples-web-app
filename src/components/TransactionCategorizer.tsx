@@ -218,7 +218,7 @@ const TransactionCategorizer = ({
             </div>
           )}
 
-          {/* All Categorized Celebration - Only show when ALL transactions are categorized */}
+          {/* All Categorized Celebration */}
           {allUncategorizedCount === 0 && totalCount > 0 && (
             <Card className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200">
               <CardContent className="p-8 text-center">
@@ -229,7 +229,7 @@ const TransactionCategorizer = ({
             </Card>
           )}
 
-          {/* Filtered completion message - Show when filtered view is complete but overall work remains */}
+          {/* Filtered completion message */}
           {allUncategorizedCount > 0 && uncategorizedTransactions.length === 0 && searchTerm && categorizedTransactions.length > 0 && (
             <Card className="bg-blue-50 border border-blue-200">
               <CardContent className="p-6 text-center">

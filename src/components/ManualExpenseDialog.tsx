@@ -8,7 +8,10 @@ import {
 } from "@/components/ui/dialog";
 import ManualExpenseForm from "./ManualExpenseForm";
 import { Transaction } from "@/types/transaction";
+import { supabaseTransactionStore } from "@/store/supabaseTransactionStore";
 import { transactionStore } from "@/store/transactionStore";
+import { useAuth } from "@/contexts/AuthContext";
+import { isSupabaseConfigured } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { useState } from "react";
@@ -31,7 +34,10 @@ interface ManualExpenseDialogProps {
 
 const ManualExpenseDialog = ({ open, onOpenChange }: ManualExpenseDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
   const { toast } = useToast();
+
+  const activeStore = isSupabaseConfigured && user ? supabaseTransactionStore : transactionStore;
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -53,7 +59,11 @@ const ManualExpenseDialog = ({ open, onOpenChange }: ManualExpenseDialogProps) =
         autoAppliedRule: false
       };
 
-      transactionStore.addTransactions([transaction]);
+      if (isSupabaseConfigured && user) {
+        await activeStore.addManualTransaction(transaction);
+      } else {
+        activeStore.addTransactions([transaction]);
+      }
       
       toast({
         title: "Expense added successfully",
@@ -74,7 +84,6 @@ const ManualExpenseDialog = ({ open, onOpenChange }: ManualExpenseDialogProps) =
   const handleAddAnother = async (formData: FormData) => {
     await handleSubmit(formData);
     
-    // Show different toast message for "Add Another"
     toast({
       title: "Expense saved!",
       description: "Ready to add another expense",

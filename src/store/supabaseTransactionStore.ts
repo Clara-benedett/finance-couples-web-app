@@ -1,136 +1,216 @@
 
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { Transaction } from '@/types/transaction';
-import { supabase } from '@/lib/supabase';
 import { categorizationRulesEngine } from '@/utils/categorizationRules';
+import { findDuplicates } from '@/utils/duplicateDetection';
 
-export interface UserProfile {
-  id: string;
-  email: string;
-  person1_name?: string;
-  person2_name?: string;
+export interface ProportionSettings {
   person1_percentage: number;
   person2_percentage: number;
-  created_at: string;
 }
 
 class SupabaseTransactionStore {
   private transactions: Transaction[] = [];
   private listeners: (() => void)[] = [];
-  private userProfile: UserProfile | null = null;
+  private isInitialized = false;
 
-  async initialize(userId: string) {
-    await this.loadUserProfile(userId);
-    await this.loadTransactions(userId);
-    this.setupRealtimeSubscription(userId);
-  }
-
-  private async loadUserProfile(userId: string) {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    if (error && error.code !== 'PGRST116') {
-      console.error('Error loading user profile:', error);
-      return;
-    }
-
-    if (!data) {
-      // Create default profile
-      const { data: newProfile, error: createError } = await supabase
-        .from('profiles')
-        .insert({
-          id: userId,
-          person1_percentage: 45,
-          person2_percentage: 55,
-        })
-        .select()
-        .single();
-
-      if (createError) {
-        console.error('Error creating user profile:', createError);
-        return;
-      }
-
-      this.userProfile = newProfile;
-    } else {
-      this.userProfile = data;
+  constructor() {
+    if (isSupabaseConfigured) {
+      this.initializeStore();
     }
   }
 
-  private async loadTransactions(userId: string) {
+  private async initializeStore() {
+    try {
+      await this.loadFromDatabase();
+      this.isInitialized = true;
+    } catch (error) {
+      console.error('Error initializing Supabase store:', error);
+      // Fallback to localStorage if database fails
+      this.loadFromLocalStorage();
+    }
+  }
+
+  private async loadFromDatabase() {
+    if (!isSupabaseConfigured) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
     const { data, error } = await supabase
       .from('transactions')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', user.id)
       .order('date', { ascending: false });
 
     if (error) {
-      console.error('Error loading transactions:', error);
+      console.error('Error loading transactions from database:', error);
       return;
     }
 
-    this.transactions = data || [];
-    this.notifyListeners();
+    this.transactions = data?.map(this.mapDatabaseToTransaction) || [];
+    console.log(`Loaded ${this.transactions.length} transactions from database`);
   }
 
-  private setupRealtimeSubscription(userId: string) {
-    supabase
-      .channel('transactions')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'transactions',
-          filter: `user_id=eq.${userId}`,
-        },
-        () => {
-          this.loadTransactions(userId);
+  private loadFromLocalStorage() {
+    try {
+      const data = localStorage.getItem('expense_tracker_transactions');
+      if (data) {
+        const parsedData = JSON.parse(data);
+        if (Array.isArray(parsedData)) {
+          this.transactions = parsedData;
+          console.log(`Loaded ${this.transactions.length} transactions from localStorage`);
         }
-      )
-      .subscribe();
+      }
+    } catch (error) {
+      console.error('Error loading transactions from localStorage:', error);
+      this.transactions = [];
+    }
   }
 
-  async addTransactions(newTransactions: Transaction[], userId: string, skipDuplicateCheck: boolean = false) {
-    // Apply rules to new transactions before adding them (skip manual entries)
+  private mapDatabaseToTransaction(dbTransaction: any): Transaction {
+    return {
+      id: dbTransaction.id,
+      date: dbTransaction.date,
+      amount: parseFloat(dbTransaction.amount),
+      description: dbTransaction.description,
+      category: dbTransaction.category,
+      cardName: dbTransaction.card_name,
+      paidBy: dbTransaction.paid_by,
+      isClassified: dbTransaction.is_classified,
+      mccCode: dbTransaction.mcc_code,
+      transactionType: dbTransaction.transaction_type,
+      location: dbTransaction.location,
+      referenceNumber: dbTransaction.reference_number,
+      autoAppliedRule: dbTransaction.auto_applied_rule,
+      isManualEntry: dbTransaction.is_manual_entry,
+      paymentMethod: dbTransaction.payment_method,
+    };
+  }
+
+  private mapTransactionToDatabase(transaction: Transaction, userId: string) {
+    return {
+      id: transaction.id,
+      user_id: userId,
+      date: transaction.date,
+      amount: transaction.amount,
+      description: transaction.description,
+      category: transaction.category,
+      card_name: transaction.cardName,
+      paid_by: transaction.paidBy,
+      is_classified: transaction.isClassified,
+      mcc_code: transaction.mccCode,
+      transaction_type: transaction.transactionType,
+      location: transaction.location,
+      reference_number: transaction.referenceNumber,
+      auto_applied_rule: transaction.autoAppliedRule,
+      is_manual_entry: transaction.isManualEntry,
+      payment_method: transaction.paymentMethod,
+    };
+  }
+
+  async addTransactions(newTransactions: Transaction[], skipDuplicateCheck: boolean = false) {
+    if (!isSupabaseConfigured) {
+      // Fallback to localStorage behavior
+      this.addTransactionsLocal(newTransactions, skipDuplicateCheck);
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Apply rules to new transactions before adding them
     const processedTransactions = categorizationRulesEngine.applyRulesToTransactions(
       newTransactions.filter(t => !t.isManualEntry)
     );
     
-    // Manual entries are added as-is
     const manualEntries = newTransactions.filter(t => t.isManualEntry);
-    
     const transactionsToAdd = [
-      ...processedTransactions.map(result => ({
-        ...result.transaction,
-        user_id: userId,
-      })),
-      ...manualEntries.map(t => ({
-        ...t,
-        user_id: userId,
-      }))
+      ...processedTransactions.map(result => result.transaction),
+      ...manualEntries
     ];
 
-    const { error } = await supabase
-      .from('transactions')
-      .insert(transactionsToAdd);
+    try {
+      const dbTransactions = transactionsToAdd.map(t => this.mapTransactionToDatabase(t, user.id));
+      
+      const { error } = await supabase
+        .from('transactions')
+        .insert(dbTransactions);
 
-    if (error) {
-      console.error('Error adding transactions:', error);
-      throw error;
-    }
+      if (error) {
+        console.error('Error inserting transactions:', error);
+        return;
+      }
 
-    // Log how many were auto-categorized (excluding manual entries)
-    const autoAppliedCount = processedTransactions.filter(result => result.wasAutoApplied).length;
-    if (autoAppliedCount > 0) {
-      console.log(`Auto-categorized ${autoAppliedCount} transactions using existing rules`);
+      this.transactions.push(...transactionsToAdd);
+      this.notifyListeners();
+
+      const autoAppliedCount = processedTransactions.filter(result => result.wasAutoApplied).length;
+      if (autoAppliedCount > 0) {
+        console.log(`Auto-categorized ${autoAppliedCount} transactions using existing rules`);
+      }
+    } catch (error) {
+      console.error('Error adding transactions to database:', error);
     }
   }
 
-  async addManualTransaction(transaction: Transaction, userId: string) {
-    // Apply rules to manual transaction if it's not already classified
+  private addTransactionsLocal(newTransactions: Transaction[], skipDuplicateCheck: boolean = false) {
+    const processedTransactions = categorizationRulesEngine.applyRulesToTransactions(
+      newTransactions.filter(t => !t.isManualEntry)
+    );
+    
+    const manualEntries = newTransactions.filter(t => t.isManualEntry);
+    const transactionsToAdd = [
+      ...processedTransactions.map(result => result.transaction),
+      ...manualEntries
+    ];
+    
+    this.transactions.push(...transactionsToAdd);
+    this.saveToLocalStorage();
+    this.notifyListeners();
+  }
+
+  private saveToLocalStorage() {
+    try {
+      localStorage.setItem('expense_tracker_transactions', JSON.stringify(this.transactions));
+    } catch (error) {
+      console.error('Error saving transactions to localStorage:', error);
+    }
+  }
+
+  checkForDuplicates(newTransactions: any[]) {
+    return findDuplicates(newTransactions, this.transactions);
+  }
+
+  async addManualTransaction(transaction: Transaction) {
+    if (!isSupabaseConfigured) {
+      this.addManualTransactionLocal(transaction);
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    try {
+      const dbTransaction = this.mapTransactionToDatabase(transaction, user.id);
+      
+      const { error } = await supabase
+        .from('transactions')
+        .insert([dbTransaction]);
+
+      if (error) {
+        console.error('Error inserting manual transaction:', error);
+        return;
+      }
+
+      this.transactions.push(transaction);
+      this.notifyListeners();
+    } catch (error) {
+      console.error('Error adding manual transaction to database:', error);
+    }
+  }
+
+  private addManualTransactionLocal(transaction: Transaction) {
     if (!transaction.isClassified && !transaction.isManualEntry) {
       const processedTransactions = categorizationRulesEngine.applyRulesToTransactions([transaction]);
       if (processedTransactions[0].wasAutoApplied) {
@@ -138,17 +218,9 @@ class SupabaseTransactionStore {
       }
     }
     
-    const { error } = await supabase
-      .from('transactions')
-      .insert({
-        ...transaction,
-        user_id: userId,
-      });
-
-    if (error) {
-      console.error('Error adding manual transaction:', error);
-      throw error;
-    }
+    this.transactions.push(transaction);
+    this.saveToLocalStorage();
+    this.notifyListeners();
   }
 
   getTransactions(): Transaction[] {
@@ -160,47 +232,100 @@ class SupabaseTransactionStore {
   }
 
   async updateTransaction(id: string, updates: Partial<Transaction>) {
-    const { error } = await supabase
-      .from('transactions')
-      .update(updates)
-      .eq('id', id);
+    if (!isSupabaseConfigured) {
+      this.updateTransactionLocal(id, updates);
+      return;
+    }
 
-    if (error) {
-      console.error('Error updating transaction:', error);
-      throw error;
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    try {
+      const dbUpdates = {
+        category: updates.category,
+        is_classified: updates.isClassified,
+        auto_applied_rule: updates.autoAppliedRule,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('transactions')
+        .update(dbUpdates)
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error updating transaction:', error);
+        return;
+      }
+
+      const index = this.transactions.findIndex(t => t.id === id);
+      if (index !== -1) {
+        this.transactions[index] = { ...this.transactions[index], ...updates };
+        this.notifyListeners();
+      }
+    } catch (error) {
+      console.error('Error updating transaction in database:', error);
     }
   }
 
-  async clearAllData(userId: string) {
-    const { error } = await supabase
-      .from('transactions')
-      .delete()
-      .eq('user_id', userId);
-
-    if (error) {
-      console.error('Error clearing transactions:', error);
-      throw error;
+  private updateTransactionLocal(id: string, updates: Partial<Transaction>) {
+    const index = this.transactions.findIndex(t => t.id === id);
+    if (index !== -1) {
+      this.transactions[index] = { ...this.transactions[index], ...updates };
+      this.saveToLocalStorage();
+      this.notifyListeners();
     }
   }
 
-  getUserProfile(): UserProfile | null {
-    return this.userProfile;
+  async clearTransactions() {
+    if (!isSupabaseConfigured) {
+      this.transactions = [];
+      this.notifyListeners();
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    try {
+      const { error } = await supabase
+        .from('transactions')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error clearing transactions:', error);
+        return;
+      }
+
+      this.transactions = [];
+      this.notifyListeners();
+    } catch (error) {
+      console.error('Error clearing transactions from database:', error);
+    }
   }
 
-  async updateUserProfile(userId: string, updates: Partial<UserProfile>) {
-    const { error } = await supabase
-      .from('profiles')
-      .update(updates)
-      .eq('id', userId);
+  async clearAllData() {
+    await this.clearTransactions();
+    localStorage.removeItem('expense_tracker_transactions');
+    localStorage.removeItem('expense_tracker_version');
+  }
 
-    if (error) {
-      console.error('Error updating user profile:', error);
-      throw error;
-    }
+  exportData() {
+    return {
+      transactions: this.transactions,
+      version: '1.0',
+      exportDate: new Date().toISOString()
+    };
+  }
 
-    if (this.userProfile) {
-      this.userProfile = { ...this.userProfile, ...updates };
-    }
+  getStorageInfo() {
+    return {
+      transactionCount: this.transactions.length,
+      storageSize: isSupabaseConfigured ? 'Database' : 'Local Storage',
+      version: '1.0'
+    };
   }
 
   subscribe(listener: () => void) {
@@ -214,24 +339,7 @@ class SupabaseTransactionStore {
     this.listeners.forEach(listener => listener());
   }
 
-  exportData() {
-    return {
-      transactions: this.transactions,
-      profile: this.userProfile,
-      exportDate: new Date().toISOString()
-    };
-  }
-
-  getStorageInfo() {
-    return {
-      transactionCount: this.transactions.length,
-      storageType: 'Supabase Database',
-      profile: this.userProfile?.email || 'unknown'
-    };
-  }
-
-  // Apply rules to existing unclassified transactions
-  async applyRulesToExistingTransactions(userId: string): Promise<number> {
+  async applyRulesToExistingTransactions(): Promise<number> {
     const unclassified = this.getUnclassifiedTransactions();
     const processedTransactions = categorizationRulesEngine.applyRulesToTransactions(unclassified);
     
@@ -248,6 +356,126 @@ class SupabaseTransactionStore {
     }
     
     return appliedCount;
+  }
+
+  // New method to migrate localStorage data to database
+  async migrateLocalStorageToDatabase(): Promise<boolean> {
+    if (!isSupabaseConfigured) return false;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    try {
+      const localData = localStorage.getItem('expense_tracker_transactions');
+      if (!localData) return true; // No data to migrate
+
+      const localTransactions = JSON.parse(localData);
+      if (!Array.isArray(localTransactions) || localTransactions.length === 0) {
+        return true; // No valid data to migrate
+      }
+
+      // Check if user already has transactions in database
+      const { data: existingTransactions } = await supabase
+        .from('transactions')
+        .select('id')
+        .eq('user_id', user.id)
+        .limit(1);
+
+      if (existingTransactions && existingTransactions.length > 0) {
+        console.log('User already has transactions in database, skipping migration');
+        return true;
+      }
+
+      // Migrate data
+      const dbTransactions = localTransactions.map((t: Transaction) => 
+        this.mapTransactionToDatabase(t, user.id)
+      );
+
+      const { error } = await supabase
+        .from('transactions')
+        .insert(dbTransactions);
+
+      if (error) {
+        console.error('Error migrating data to database:', error);
+        return false;
+      }
+
+      console.log(`Successfully migrated ${localTransactions.length} transactions to database`);
+      
+      // Clear localStorage after successful migration
+      localStorage.removeItem('expense_tracker_transactions');
+      localStorage.removeItem('expense_tracker_version');
+      
+      // Reload data from database
+      await this.loadFromDatabase();
+      
+      return true;
+    } catch (error) {
+      console.error('Error during migration:', error);
+      return false;
+    }
+  }
+
+  // New methods for proportion settings
+  async getProportionSettings(): Promise<ProportionSettings> {
+    if (!isSupabaseConfigured) {
+      // Fallback to localStorage
+      const stored = localStorage.getItem('expense_tracker_proportions');
+      return stored ? JSON.parse(stored) : { person1_percentage: 50, person2_percentage: 50 };
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { person1_percentage: 50, person2_percentage: 50 };
+
+    try {
+      const { data, error } = await supabase
+        .from('proportion_settings')
+        .select('person1_percentage, person2_percentage')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('Error loading proportion settings:', error);
+        return { person1_percentage: 50, person2_percentage: 50 };
+      }
+
+      return data || { person1_percentage: 50, person2_percentage: 50 };
+    } catch (error) {
+      console.error('Error getting proportion settings:', error);
+      return { person1_percentage: 50, person2_percentage: 50 };
+    }
+  }
+
+  async saveProportionSettings(settings: ProportionSettings): Promise<boolean> {
+    if (!isSupabaseConfigured) {
+      // Fallback to localStorage
+      localStorage.setItem('expense_tracker_proportions', JSON.stringify(settings));
+      return true;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('proportion_settings')
+        .upsert({
+          user_id: user.id,
+          person1_percentage: settings.person1_percentage,
+          person2_percentage: settings.person2_percentage,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (error) {
+        console.error('Error saving proportion settings:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error saving proportion settings:', error);
+      return false;
+    }
   }
 }
 
