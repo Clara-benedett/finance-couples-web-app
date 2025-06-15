@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 
@@ -12,8 +13,38 @@ const AuthForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { signIn, signUp, isSupabaseConfigured } = useAuth();
   const { toast } = useToast();
+
+  // If Supabase isn't configured, show connection message
+  if (!isSupabaseConfigured) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold text-gray-900">Expense Tracker</h2>
+            <p className="mt-2 text-gray-600">Manage your shared expenses</p>
+          </div>
+          
+          <Card>
+            <CardHeader>
+              <CardTitle>Connect to Supabase</CardTitle>
+              <CardDescription>
+                To enable authentication and data storage, please connect your project to Supabase
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Alert>
+                <AlertDescription>
+                  Click the green Supabase button in the top right of the Lovable interface to connect your project to Supabase and enable user authentication.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
