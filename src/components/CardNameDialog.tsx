@@ -33,11 +33,11 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
   const [cardInfos, setCardInfos] = useState<CardInfo[]>([]);
   const categoryNames = getCategoryNames();
 
-  // Initialize card infos array when dialog opens
+  // Initialize card infos array when dialog opens or fileNames change
   useEffect(() => {
     if (isOpen && fileNames.length > 0) {
       console.log('CardNameDialog: Initializing cardInfos for', fileNames.length, 'files');
-      const initialCardInfos = new Array(fileNames.length).fill(null).map(() => ({
+      const initialCardInfos = fileNames.map(() => ({
         name: '',
         paidBy: 'person1' as const,
         autoClassification: 'skip' as const
@@ -45,18 +45,23 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
       setCardInfos(initialCardInfos);
       setStep('names');
       console.log('CardNameDialog: Initial cardInfos set to:', initialCardInfos);
+    } else if (!isOpen) {
+      // Reset when dialog closes
+      setCardInfos([]);
+      setStep('names');
     }
-  }, [isOpen, fileNames.length]);
+  }, [isOpen, fileNames]);
 
   const handleCardNameChange = (index: number, value: string) => {
     console.log('CardNameDialog: handleCardNameChange called with index:', index, 'value:', value);
     console.log('CardNameDialog: current cardInfos before update:', cardInfos);
     
-    const newCardInfos = [...cardInfos];
-    newCardInfos[index] = { ...newCardInfos[index], name: value };
-    
-    console.log('CardNameDialog: setting new cardInfos:', newCardInfos);
-    setCardInfos(newCardInfos);
+    setCardInfos(prevCardInfos => {
+      const newCardInfos = [...prevCardInfos];
+      newCardInfos[index] = { ...newCardInfos[index], name: value };
+      console.log('CardNameDialog: setting new cardInfos:', newCardInfos);
+      return newCardInfos;
+    });
   };
 
   const handleExistingRuleSelected = (index: number, rule: CardClassificationRule) => {
@@ -146,15 +151,18 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
         {step === 'names' && (
           <div className="space-y-6">
             {fileNames.map((fileName, index) => {
-              console.log('CardNameDialog: Rendering SmartCardInput for index:', index, 'with value:', cardInfos[index]?.name || '');
+              const currentCardInfo = cardInfos[index];
+              const currentValue = currentCardInfo?.name || '';
+              console.log('CardNameDialog: Rendering SmartCardInput for index:', index, 'with value:', currentValue);
+              
               return (
-                <div key={index} className="space-y-4 p-4 border rounded-lg bg-gray-50">
+                <div key={`${fileName}-${index}`} className="space-y-4 p-4 border rounded-lg bg-gray-50">
                   <div className="text-sm text-gray-600">
                     <strong>File {index + 1}:</strong> {fileName}
                   </div>
                   
                   <SmartCardInput
-                    value={cardInfos[index]?.name || ''}
+                    value={currentValue}
                     onChange={(value) => handleCardNameChange(index, value)}
                     onExistingRuleSelected={(rule) => handleExistingRuleSelected(index, rule)}
                   />
@@ -162,7 +170,7 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
                   <div className="space-y-3">
                     <Label>Bill paid by <span className="text-sm text-gray-500">(who pays the bill of this card?)</span></Label>
                     <RadioGroup
-                      value={cardInfos[index]?.paidBy || 'person1'}
+                      value={currentCardInfo?.paidBy || 'person1'}
                       onValueChange={(value: 'person1' | 'person2') => handlePaidByChange(index, value)}
                       className="flex gap-6"
                     >
