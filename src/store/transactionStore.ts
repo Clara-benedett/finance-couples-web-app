@@ -1,4 +1,3 @@
-
 import { Transaction } from '@/types/transaction';
 import { categorizationRulesEngine } from '@/utils/categorizationRules';
 import { findDuplicates } from '@/utils/duplicateDetection';
@@ -117,6 +116,11 @@ class TransactionStore {
     this.transactions = [];
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(VERSION_KEY);
+    // Also clear other app-related localStorage items
+    localStorage.removeItem('categoryNames');
+    localStorage.removeItem('proportionSettings');
+    localStorage.removeItem('cardClassificationRules');
+    console.log('All localStorage data cleared');
     this.notifyListeners();
   }
 
@@ -181,3 +185,9 @@ class TransactionStore {
 }
 
 export const transactionStore = new TransactionStore();
+
+// Add a global function to easily clear data from console
+(window as any).clearAppData = () => {
+  transactionStore.clearAllData();
+  console.log('App data cleared! Refresh the page to see changes.');
+};
