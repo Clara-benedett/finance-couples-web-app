@@ -19,4 +19,6 @@ export interface DuplicateReviewState {
   duplicates: any[];
   pendingTransactions: any[];
   cardInfos: CardInfo[];
+  totalTransactions: number;
+  uniqueTransactions: number;
 }

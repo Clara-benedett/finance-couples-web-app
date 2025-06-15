@@ -6,7 +6,7 @@ import { CardInfo, DuplicateReviewState } from "@/types/upload";
 export const handleDuplicateDetection = (
   allParsedTransactions: any[],
   cardInfos: CardInfo[]
-): { hasDuplicates: boolean; duplicateResult?: any } => {
+): { hasDuplicates: boolean; duplicateResult?: DuplicateReviewState } => {
   const duplicateResult = transactionStore.checkForDuplicates(allParsedTransactions);
   
   if (duplicateResult.duplicates.length > 0) {
@@ -15,7 +15,9 @@ export const handleDuplicateDetection = (
       duplicateResult: {
         duplicates: duplicateResult.duplicates,
         pendingTransactions: allParsedTransactions,
-        cardInfos
+        cardInfos,
+        totalTransactions: allParsedTransactions.length,
+        uniqueTransactions: duplicateResult.uniqueTransactions.length
       }
     };
   }

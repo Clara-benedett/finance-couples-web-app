@@ -134,6 +134,8 @@ const Upload = () => {
         open={!!duplicateReview}
         onOpenChange={() => {}}
         duplicates={duplicateReview?.duplicates || []}
+        totalTransactions={duplicateReview?.totalTransactions || 0}
+        uniqueTransactions={duplicateReview?.uniqueTransactions || 0}
         onConfirm={handleDuplicateReview}
         onCancel={handleDuplicateCancel}
       />
