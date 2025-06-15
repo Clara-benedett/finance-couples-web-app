@@ -289,7 +289,7 @@ const CardRulesManager = () => {
           <DialogHeader>
             <DialogTitle>Edit Card Rule</DialogTitle>
             <DialogDescription>
-              Update the card name and classification rule. This will only affect future transactions from this card - your existing transactions will keep their current categories.
+              Update the card name and classification rule.
             </DialogDescription>
           </DialogHeader>
           
