@@ -13,7 +13,6 @@ export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCar
   const [existingRule, setExistingRule] = useState<CardClassificationRule | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const isClickingDropdown = useRef(false);
 
   useEffect(() => {
     if (value.length > 0) {
@@ -34,10 +33,7 @@ export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCar
   const handleSuggestionClick = (suggestion: string, onChange: (value: string) => void) => {
     console.log('Suggestion clicked:', suggestion);
     
-    // Prevent blur from interfering
-    isClickingDropdown.current = true;
-    
-    // Update the input value
+    // Update the input value immediately
     onChange(suggestion);
     
     // Close the dropdown
@@ -47,26 +43,15 @@ export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCar
     const rule = cardClassificationEngine.getExactMatch(suggestion);
     if (rule && onExistingRuleSelected) {
       console.log('Existing rule found:', rule);
-      setTimeout(() => {
-        onExistingRuleSelected(rule);
-      }, 10);
+      onExistingRuleSelected(rule);
     }
-    
-    // Reset the flag after a short delay
-    setTimeout(() => {
-      isClickingDropdown.current = false;
-    }, 100);
   };
 
   const handleInputBlur = (e: React.FocusEvent) => {
-    // Don't close if we're clicking within the dropdown
-    if (isClickingDropdown.current) {
-      return;
-    }
-    
+    // Only close if focus is moving outside the dropdown container
     const relatedTarget = e.relatedTarget as HTMLElement;
     if (!dropdownRef.current?.contains(relatedTarget)) {
-      setTimeout(() => setIsOpen(false), 150);
+      setIsOpen(false);
     }
   };
 
@@ -76,14 +61,9 @@ export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCar
     }
   };
 
-  const handleDropdownMouseDown = () => {
-    isClickingDropdown.current = true;
-  };
-
-  const handleDropdownMouseUp = () => {
-    setTimeout(() => {
-      isClickingDropdown.current = false;
-    }, 100);
+  const handleDropdownMouseDown = (e: React.MouseEvent) => {
+    // Prevent the input from losing focus when clicking in dropdown
+    e.preventDefault();
   };
 
   return {
@@ -95,7 +75,6 @@ export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCar
     handleSuggestionClick,
     handleInputBlur,
     handleInputFocus,
-    handleDropdownMouseDown,
-    handleDropdownMouseUp
+    handleDropdownMouseDown
   };
 };

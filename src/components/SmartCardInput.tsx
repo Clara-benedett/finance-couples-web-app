@@ -31,8 +31,7 @@ const SmartCardInput = ({
     handleSuggestionClick,
     handleInputBlur,
     handleInputFocus,
-    handleDropdownMouseDown,
-    handleDropdownMouseUp
+    handleDropdownMouseDown
   } = useSmartCardInput({ value, onExistingRuleSelected });
 
   const getCategoryDisplay = (classification: string) => {
@@ -79,7 +78,6 @@ const SmartCardInput = ({
         dropdownRef={dropdownRef}
         onSuggestionClick={onSuggestionClick}
         onMouseDown={handleDropdownMouseDown}
-        onMouseUp={handleDropdownMouseUp}
       />
 
       {/* Status Message */}

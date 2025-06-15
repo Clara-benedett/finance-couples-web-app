@@ -10,8 +10,7 @@ interface SmartCardDropdownProps {
   value: string;
   dropdownRef: React.RefObject<HTMLDivElement>;
   onSuggestionClick: (suggestion: string) => void;
-  onMouseDown: () => void;
-  onMouseUp: () => void;
+  onMouseDown: (e: React.MouseEvent) => void;
 }
 
 const SmartCardDropdown = ({
@@ -20,8 +19,7 @@ const SmartCardDropdown = ({
   value,
   dropdownRef,
   onSuggestionClick,
-  onMouseDown,
-  onMouseUp
+  onMouseDown
 }: SmartCardDropdownProps) => {
   const categoryNames = getCategoryNames();
 
@@ -47,7 +45,6 @@ const SmartCardDropdown = ({
       ref={dropdownRef}
       className="absolute z-50 w-full mt-1 shadow-lg border bg-white"
       onMouseDown={onMouseDown}
-      onMouseUp={onMouseUp}
     >
       <CardContent className="p-2 max-h-60 overflow-y-auto">
         {/* Existing Cards Section */}
