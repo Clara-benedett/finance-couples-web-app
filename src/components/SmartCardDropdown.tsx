@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Check, Plus, CreditCard, Sparkles } from "lucide-react";
@@ -32,6 +33,11 @@ const SmartCardDropdown = ({
     }
   };
 
+  const handleExistingCardClick = (suggestion: string) => {
+    console.log('Existing card clicked:', suggestion);
+    onSuggestionClick(suggestion);
+  };
+
   const existingCards = cardClassificationEngine.getAllRules().map(rule => rule.cardName);
   const newSuggestions = suggestions.filter(s => !existingCards.includes(s));
   const existingSuggestions = suggestions.filter(s => existingCards.includes(s));
@@ -59,9 +65,9 @@ const SmartCardDropdown = ({
                 <div
                   key={`existing-${index}`}
                   className="w-full p-2 text-left hover:bg-gray-100 cursor-pointer rounded border"
-                  onClick={() => onSuggestionClick(suggestion)}
+                  onClick={() => handleExistingCardClick(suggestion)}
                 >
-                  <div className="flex items-center gap-2 w-full pointer-events-none">
+                  <div className="flex items-center gap-2 w-full">
                     <CreditCard className="w-4 h-4 text-blue-600 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">{suggestion}</div>

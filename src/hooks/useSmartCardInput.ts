@@ -31,19 +31,22 @@ export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCar
   }, [value]);
 
   const handleSuggestionClick = (suggestion: string, onChange: (value: string) => void) => {
-    console.log('Suggestion clicked:', suggestion);
+    console.log('handleSuggestionClick called with:', suggestion);
     
-    // Update the input value immediately
-    onChange(suggestion);
-    
-    // Close the dropdown
+    // Close the dropdown first
     setIsOpen(false);
+    
+    // Update the input value
+    onChange(suggestion);
     
     // Check if this suggestion has an existing rule and notify parent
     const rule = cardClassificationEngine.getExactMatch(suggestion);
     if (rule && onExistingRuleSelected) {
-      console.log('Existing rule found:', rule);
-      onExistingRuleSelected(rule);
+      console.log('Existing rule found for suggestion:', rule);
+      // Use setTimeout to ensure the onChange has been processed first
+      setTimeout(() => {
+        onExistingRuleSelected(rule);
+      }, 0);
     }
   };
 
