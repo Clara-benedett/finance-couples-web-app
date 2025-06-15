@@ -2,13 +2,14 @@
 import { useState } from "react";
 import { NavLink, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Upload, Settings, Menu, X } from "lucide-react";
+import { Upload, Menu, X } from "lucide-react";
 
 const navigationItems = [
   { title: "Dashboard", url: "/" },
   { title: "Upload", url: "/upload" },
   { title: "Categorize", url: "/categorize" },
   { title: "History", url: "/history" },
+  { title: "Settings", url: "/settings" },
 ];
 
 export function AppHeader() {
@@ -70,23 +71,6 @@ export function AppHeader() {
               <Upload className="w-4 h-4 mr-2" />
               Upload Expenses
             </Button>
-            <Button 
-              onClick={() => {
-                // This will trigger the settings in Dashboard component
-                if (location.pathname === "/") {
-                  const settingsEvent = new CustomEvent('openSettings');
-                  window.dispatchEvent(settingsEvent);
-                } else {
-                  navigate("/?settings=true");
-                }
-              }}
-              variant="outline"
-              size="sm"
-              className="border-gray-300 hover:bg-gray-50"
-            >
-              <Settings className="w-4 h-4 mr-2" />
-              Split Settings
-            </Button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -134,23 +118,6 @@ export function AppHeader() {
                   >
                     <Upload className="w-4 h-4 mr-2" />
                     Upload Expenses
-                  </Button>
-                  <Button 
-                    onClick={() => {
-                      if (location.pathname === "/") {
-                        const settingsEvent = new CustomEvent('openSettings');
-                        window.dispatchEvent(settingsEvent);
-                      } else {
-                        navigate("/?settings=true");
-                      }
-                      setIsMobileMenuOpen(false);
-                    }}
-                    variant="outline"
-                    size="sm"
-                    className="border-gray-300 hover:bg-gray-50 justify-start"
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Split Settings
                   </Button>
                 </div>
               </div>

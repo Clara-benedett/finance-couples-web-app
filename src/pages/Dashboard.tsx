@@ -1,9 +1,8 @@
 
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { transactionStore } from '@/store/transactionStore';
 import { calculateExpenses, getProportionSettings, ProportionSettings } from '@/utils/calculationEngine';
-import ProportionSettingsComponent from '@/components/ProportionSettings';
 import DebugCalculation from '@/components/DebugCalculation';
 import TestScenarios from '@/components/TestScenarios';
 import { useDebugMode } from '@/hooks/useDebugMode';
@@ -12,14 +11,11 @@ import SettlementHero from '@/components/dashboard/SettlementHero';
 import OverviewCards from '@/components/dashboard/OverviewCards';
 import CalculationDetails from '@/components/dashboard/CalculationDetails';
 import ActionItems from '@/components/dashboard/ActionItems';
-import { Button } from "@/components/ui/button";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
   const [transactions, setTransactions] = useState(transactionStore.getTransactions());
   const [proportions, setProportions] = useState<ProportionSettings>(getProportionSettings());
-  const [showProportionSettings, setShowProportionSettings] = useState(false);
   const [showCalculationDetails, setShowCalculationDetails] = useState(false);
   const { isDebugMode, toggleDebugMode } = useDebugMode();
 
@@ -30,50 +26,18 @@ const Dashboard = () => {
     return unsubscribe;
   }, []);
 
-  // Handle settings from URL parameters
+  // Update proportions when they change in localStorage
   useEffect(() => {
-    if (searchParams.get('settings') === 'true') {
-      setShowProportionSettings(true);
-      setSearchParams({}); // Clear the parameter
-    }
-  }, [searchParams, setSearchParams]);
-
-  // Listen for settings event from header
-  useEffect(() => {
-    const handleOpenSettings = () => {
-      setShowProportionSettings(true);
+    const handleStorageChange = () => {
+      setProportions(getProportionSettings());
     };
-
-    window.addEventListener('openSettings', handleOpenSettings);
-    return () => {
-      window.removeEventListener('openSettings', handleOpenSettings);
-    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const calculations = calculateExpenses(transactions, proportions);
   const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-
-  const handleProportionUpdate = (newProportions: ProportionSettings) => {
-    setProportions(newProportions);
-  };
-
-  if (showProportionSettings) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard Settings</h1>
-          <Button variant="outline" onClick={() => setShowProportionSettings(false)}>
-            Back to Dashboard
-          </Button>
-        </div>
-        <ProportionSettingsComponent
-          proportions={proportions}
-          onUpdate={handleProportionUpdate}
-          onClose={() => setShowProportionSettings(false)}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-8">
@@ -83,7 +47,7 @@ const Dashboard = () => {
         isDebugMode={isDebugMode}
         toggleDebugMode={toggleDebugMode}
         onUploadClick={() => navigate("/upload")}
-        onSettingsClick={() => setShowProportionSettings(true)}
+        onSettingsClick={() => navigate("/settings")}
       />
 
       {/* Debug Mode Sections */}
