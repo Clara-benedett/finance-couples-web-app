@@ -1,4 +1,3 @@
-
 import { parseFile } from "@/utils/fileParser";
 import { transactionStore } from "@/store/transactionStore";
 import { getCategoryNames } from "@/utils/categoryNames";
@@ -18,13 +17,13 @@ export const parseAllFiles = async (
     const file = files[i];
     const cardInfo = cardInfos[i];
     
-    // Simulate progress for parsing
-    for (let progress = 0; progress <= 50; progress += 10) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      updateProgress(i, progress);
-    }
-
+    // Update progress for parsing phase (0-60%)
+    updateProgress(i, 10);
+    
     const { transactions: parsedTransactions } = await parseFile(file);
+    
+    // Update progress after parsing (60%)
+    updateProgress(i, 60);
     
     // Add card info to each transaction
     const transactionsWithCardInfo = parsedTransactions.map(pt => ({
@@ -34,7 +33,13 @@ export const parseAllFiles = async (
       autoClassification: cardInfo.autoClassification
     }));
     
+    // Update progress after processing (80%)
+    updateProgress(i, 80);
+    
     allParsedTransactions.push(...transactionsWithCardInfo);
+    
+    // Complete this file (100%)
+    updateProgress(i, 100);
   }
   
   return allParsedTransactions;
