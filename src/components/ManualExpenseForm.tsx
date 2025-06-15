@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,11 +24,12 @@ interface FormData {
 
 interface ManualExpenseFormProps {
   onSubmit: (data: FormData) => void;
+  onAddAnother?: (data: FormData) => void;
   onCancel: () => void;
   isSubmitting?: boolean;
 }
 
-const ManualExpenseForm = ({ onSubmit, onCancel, isSubmitting = false }: ManualExpenseFormProps) => {
+const ManualExpenseForm = ({ onSubmit, onAddAnother, onCancel, isSubmitting = false }: ManualExpenseFormProps) => {
   const [formData, setFormData] = useState<FormData>({
     amount: '0.00',
     description: '',
@@ -92,8 +92,10 @@ const ManualExpenseForm = ({ onSubmit, onCancel, isSubmitting = false }: ManualE
   };
 
   const handleAddAnother = () => {
-    onSubmit(formData);
-    clearForm();
+    if (validateForm() && onAddAnother) {
+      onAddAnother(formData);
+      clearForm();
+    }
   };
 
   return (
@@ -211,7 +213,7 @@ const ManualExpenseForm = ({ onSubmit, onCancel, isSubmitting = false }: ManualE
             type="button" 
             variant="secondary" 
             onClick={handleAddAnother}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !onAddAnother}
             className="flex-1"
           >
             Add Another

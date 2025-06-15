@@ -71,6 +71,16 @@ const ManualExpenseDialog = ({ open, onOpenChange }: ManualExpenseDialogProps) =
     }
   };
 
+  const handleAddAnother = async (formData: FormData) => {
+    await handleSubmit(formData);
+    
+    // Show different toast message for "Add Another"
+    toast({
+      title: "Expense saved!",
+      description: "Ready to add another expense",
+    });
+  };
+
   const handleFormSubmit = (formData: FormData) => {
     handleSubmit(formData);
     onOpenChange(false);
@@ -88,6 +98,7 @@ const ManualExpenseDialog = ({ open, onOpenChange }: ManualExpenseDialogProps) =
         
         <ManualExpenseForm
           onSubmit={handleFormSubmit}
+          onAddAnother={handleAddAnother}
           onCancel={() => onOpenChange(false)}
           isSubmitting={isSubmitting}
         />
