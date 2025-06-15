@@ -29,7 +29,7 @@ const FileUploadCard = ({
 
   return (
     <Card className={`border-2 border-dashed transition-colors ${
-      isDragging ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-400'
+      isDragging ? 'border-blue-400 bg-blue-50' : 'border-blue-200 hover:border-blue-400'
     }`}>
       <CardContent className="p-4">
         <div
