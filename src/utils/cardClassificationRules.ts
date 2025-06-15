@@ -113,21 +113,12 @@ class CardClassificationEngine {
   }
 
   getSuggestions(query: string): string[] {
-    const existingCards = this.getAllRules().map(rule => rule.cardName);
     const lowerQuery = query.toLowerCase();
     
-    // Filter existing cards
-    const matchingExisting = existingCards.filter(card => 
-      card.toLowerCase().includes(lowerQuery)
+    // Only return common card templates that match the query
+    return COMMON_CARD_TEMPLATES.filter(template => 
+      template.toLowerCase().includes(lowerQuery)
     );
-    
-    // Filter common templates
-    const matchingTemplates = COMMON_CARD_TEMPLATES.filter(template => 
-      template.toLowerCase().includes(lowerQuery) &&
-      !existingCards.some(existing => existing.toLowerCase() === template.toLowerCase())
-    );
-    
-    return [...matchingExisting, ...matchingTemplates];
   }
 
   updateCardName(oldName: string, newName: string) {

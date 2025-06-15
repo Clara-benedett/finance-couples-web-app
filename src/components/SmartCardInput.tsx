@@ -1,7 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Check } from "lucide-react";
-import { CardClassificationRule } from "@/utils/cardClassificationRules";
 import { getCategoryNames } from "@/utils/categoryNames";
 import { useSmartCardInput } from "@/hooks/useSmartCardInput";
 import SmartCardDropdown from "./SmartCardDropdown";
@@ -11,14 +10,12 @@ interface SmartCardInputProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  onExistingRuleSelected?: (rule: CardClassificationRule) => void;
 }
 
 const SmartCardInput = ({ 
   value, 
   onChange, 
-  placeholder = "e.g., Chase Sapphire, AMEX Gold, BILT Card",
-  onExistingRuleSelected
+  placeholder = "e.g., Chase Sapphire, AMEX Gold, BILT Card"
 }: SmartCardInputProps) => {
   const categoryNames = getCategoryNames();
   
@@ -32,7 +29,7 @@ const SmartCardInput = ({
     handleInputBlur,
     handleInputFocus,
     handleDropdownMouseDown
-  } = useSmartCardInput({ value, onExistingRuleSelected });
+  } = useSmartCardInput({ value });
 
   const getCategoryDisplay = (classification: string) => {
     switch (classification) {

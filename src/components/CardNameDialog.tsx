@@ -13,7 +13,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CreditCard, User, Share, SkipForward } from "lucide-react";
 import { getCategoryNames } from "@/utils/categoryNames";
 import SmartCardInput from "./SmartCardInput";
-import { CardClassificationRule } from "@/utils/cardClassificationRules";
 
 interface CardInfo {
   name: string;
@@ -62,17 +61,6 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
       console.log('CardNameDialog: setting new cardInfos:', newCardInfos);
       return newCardInfos;
     });
-  };
-
-  const handleExistingRuleSelected = (index: number, rule: CardClassificationRule) => {
-    console.log('CardNameDialog: handleExistingRuleSelected called with index:', index, 'rule:', rule);
-    const newCardInfos = [...cardInfos];
-    newCardInfos[index] = { 
-      ...newCardInfos[index], 
-      autoClassification: rule.classification as 'person1' | 'person2' | 'shared' | 'skip'
-    };
-    setCardInfos(newCardInfos);
-    console.log(`CardNameDialog: Auto-populated classification for ${rule.cardName}: ${rule.classification}`);
   };
 
   const handlePaidByChange = (index: number, value: 'person1' | 'person2') => {
@@ -164,7 +152,6 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
                   <SmartCardInput
                     value={currentValue}
                     onChange={(value) => handleCardNameChange(index, value)}
-                    onExistingRuleSelected={(rule) => handleExistingRuleSelected(index, rule)}
                   />
 
                   <div className="space-y-3">

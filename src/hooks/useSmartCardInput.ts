@@ -4,10 +4,9 @@ import { cardClassificationEngine, CardClassificationRule } from "@/utils/cardCl
 
 interface UseSmartCardInputProps {
   value: string;
-  onExistingRuleSelected?: (rule: CardClassificationRule) => void;
 }
 
-export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCardInputProps) => {
+export const useSmartCardInput = ({ value }: UseSmartCardInputProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [existingRule, setExistingRule] = useState<CardClassificationRule | null>(null);
@@ -22,7 +21,7 @@ export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCar
       setSuggestions(suggestions);
       setIsOpen(true);
       
-      // Check for exact match
+      // Check for exact match to show the green checkmark indicator
       const exact = cardClassificationEngine.getExactMatch(value);
       setExistingRule(exact);
       console.log('useSmartCardInput: existingRule set to:', exact);
@@ -35,7 +34,6 @@ export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCar
 
   const handleSuggestionClick = (suggestion: string, onChange: (value: string) => void) => {
     console.log('useSmartCardInput: handleSuggestionClick called with:', suggestion);
-    console.log('useSmartCardInput: current value before onChange:', value);
     
     // Close the dropdown immediately
     setIsOpen(false);
@@ -44,14 +42,8 @@ export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCar
     console.log('useSmartCardInput: calling onChange with:', suggestion);
     onChange(suggestion);
     
-    // Check if this suggestion has an existing rule and notify parent
+    // Check if this suggestion has an existing rule for the indicator
     const rule = cardClassificationEngine.getExactMatch(suggestion);
-    if (rule && onExistingRuleSelected) {
-      console.log('useSmartCardInput: Existing rule found for suggestion:', rule);
-      onExistingRuleSelected(rule);
-    }
-
-    // Update existing rule state
     setExistingRule(rule);
   };
 

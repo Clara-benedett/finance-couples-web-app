@@ -1,9 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Check, Plus, CreditCard, Sparkles } from "lucide-react";
-import { cardClassificationEngine } from "@/utils/cardClassificationRules";
-import { getCategoryNames } from "@/utils/categoryNames";
+import { Plus, Sparkles } from "lucide-react";
 
 interface SmartCardDropdownProps {
   isOpen: boolean;
@@ -22,25 +20,6 @@ const SmartCardDropdown = ({
   onSuggestionClick,
   onMouseDown
 }: SmartCardDropdownProps) => {
-  const categoryNames = getCategoryNames();
-
-  const getCategoryDisplay = (classification: string) => {
-    switch (classification) {
-      case 'person1': return categoryNames.person1;
-      case 'person2': return categoryNames.person2;
-      case 'shared': return categoryNames.shared;
-      default: return classification;
-    }
-  };
-
-  const handleExistingCardClick = (suggestion: string) => {
-    console.log('Existing card clicked:', suggestion);
-    onSuggestionClick(suggestion);
-  };
-
-  const existingCards = cardClassificationEngine.getAllRules().map(rule => rule.cardName);
-  const newSuggestions = suggestions.filter(s => !existingCards.includes(s));
-  const existingSuggestions = suggestions.filter(s => existingCards.includes(s));
 
   if (!isOpen || suggestions.length === 0) {
     return null;
@@ -53,47 +32,15 @@ const SmartCardDropdown = ({
       onMouseDown={onMouseDown}
     >
       <CardContent className="p-2 max-h-60 overflow-y-auto">
-        {/* Existing Cards Section */}
-        {existingSuggestions.length > 0 && (
-          <div className="space-y-1 mb-3">
-            <div className="text-xs font-medium text-gray-500 px-2 py-1">
-              Existing Cards
-            </div>
-            {existingSuggestions.map((suggestion, index) => {
-              const rule = cardClassificationEngine.getExactMatch(suggestion);
-              return (
-                <div
-                  key={`existing-${index}`}
-                  className="w-full p-2 text-left hover:bg-gray-100 cursor-pointer rounded border"
-                  onClick={() => handleExistingCardClick(suggestion)}
-                >
-                  <div className="flex items-center gap-2 w-full">
-                    <CreditCard className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{suggestion}</div>
-                      {rule && (
-                        <div className="text-xs text-green-600">
-                          Auto-classified as {getCategoryDisplay(rule.classification)}
-                        </div>
-                      )}
-                    </div>
-                    <Check className="w-4 h-4 text-green-600 flex-shrink-0" />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* New Cards Section */}
-        {newSuggestions.length > 0 && (
+        {/* Common Cards Section */}
+        {suggestions.length > 0 && (
           <div className="space-y-1">
             <div className="text-xs font-medium text-gray-500 px-2 py-1">
-              {existingSuggestions.length > 0 ? 'Common Card Names' : 'Suggestions'}
+              Common Card Names
             </div>
-            {newSuggestions.map((suggestion, index) => (
+            {suggestions.map((suggestion, index) => (
               <Button
-                key={`new-${index}`}
+                key={index}
                 variant="ghost"
                 className="w-full justify-start h-auto p-2 text-left"
                 onClick={() => onSuggestionClick(suggestion)}
@@ -104,10 +51,9 @@ const SmartCardDropdown = ({
                   <div className="flex-1">
                     <div className="font-medium">{suggestion}</div>
                     <div className="text-xs text-gray-500">
-                      Add new card
+                      Common card
                     </div>
                   </div>
-                  <Plus className="w-4 h-4 text-gray-400" />
                 </div>
               </Button>
             ))}
