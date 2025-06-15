@@ -1,217 +1,101 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { parseFile } from "@/utils/fileParser";
 import { transactionStore } from "@/store/transactionStore";
 import { getCategoryNames } from "@/utils/categoryNames";
-import { cardClassificationEngine } from "@/utils/cardClassificationRules";
-
-interface UploadedFile {
-  file: File;
-  status: 'uploading' | 'success' | 'error';
-  progress: number;
-  error?: string;
-  transactionCount?: number;
-  cardName?: string;
-  autoClassifiedCount?: number;
-}
-
-interface CardInfo {
-  name: string;
-  paidBy: 'person1' | 'person2';
-  autoClassification?: 'person1' | 'person2' | 'shared' | 'skip';
-}
+import { DuplicateReviewDecision } from "@/types/duplicateDetection";
+import { UploadedFile, CardInfo, DuplicateReviewState } from "@/types/upload";
+import { 
+  parseAllFiles, 
+  processTransactions, 
+  saveCardClassificationRules, 
+  updateFileStatuses 
+} from "@/utils/fileProcessing";
+import { handleDuplicateDetection, processDuplicateDecisions } from "@/utils/duplicateHandling";
+import { validateFiles, createUploadFiles, handleFileError } from "@/utils/fileUpload";
 
 export const useUploadLogic = () => {
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-  const [duplicateReview, setDuplicateReview] = useState<{
-    duplicates: any[];
-    pendingTransactions: any[];
-    cardInfos: CardInfo[];
-  } | null>(null);
+  const [duplicateReview, setDuplicateReview] = useState<DuplicateReviewState | null>(null);
   const { toast } = useToast();
 
-  const generateId = () => Math.random().toString(36).substr(2, 9);
-
   const handleFileSelection = (files: FileList | null) => {
-    if (!files) return;
-
-    const validFiles = Array.from(files).filter(file => {
-      const extension = file.name.split('.').pop()?.toLowerCase();
-      return ['csv', 'xlsx', 'xls'].includes(extension || '');
-    });
-
-    if (validFiles.length === 0) {
-      toast({
-        title: "Invalid file format",
-        description: "Please upload CSV or Excel files only.",
-        variant: "destructive"
-      });
+    const validation = validateFiles(files);
+    
+    if (!validation.valid) {
+      if (validation.error) {
+        toast({
+          title: "Invalid file format",
+          description: validation.error,
+          variant: "destructive"
+        });
+      }
       return;
     }
 
-    if (validFiles.length > 5) {
-      toast({
-        title: "Too many files",
-        description: "Please upload a maximum of 5 files at once.",
-        variant: "destructive"
-      });
-      return;
-    }
+    setPendingFiles(validation.files);
+    return validation.files;
+  };
 
-    setPendingFiles(validFiles);
-    return validFiles;
+  const updateFileProgress = (fileIndex: number, progress: number) => {
+    setUploadedFiles(prev => 
+      prev.map((f, index) => 
+        index >= prev.length - pendingFiles.length + fileIndex
+          ? { ...f, progress }
+          : f
+      )
+    );
   };
 
   const processFiles = async (files: File[], cardInfos: CardInfo[]) => {
-    const newFiles: UploadedFile[] = files.map((file, index) => ({
-      file,
-      status: 'uploading' as const,
-      progress: 0,
-      cardName: cardInfos[index].name
-    }));
+    const cardNames = cardInfos.map(ci => ci.name);
+    const newFiles = createUploadFiles(files, cardNames);
 
     setUploadedFiles(prev => [...prev, ...newFiles]);
     setIsProcessing(true);
 
-    // Parse all files first
-    let allParsedTransactions: any[] = [];
-    
-    for (let i = 0; i < newFiles.length; i++) {
-      const fileUpload = newFiles[i];
-      const cardInfo = cardInfos[i];
+    try {
+      const allParsedTransactions = await parseAllFiles(files, cardInfos, updateFileProgress);
       
-      try {
-        // Simulate progress for parsing
-        for (let progress = 0; progress <= 50; progress += 10) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-          setUploadedFiles(prev => 
-            prev.map(f => 
-              f.file === fileUpload.file 
-                ? { ...f, progress }
-                : f
-            )
-          );
-        }
-
-        const { transactions: parsedTransactions } = await parseFile(fileUpload.file);
-        
-        // Add card info to each transaction
-        const transactionsWithCardInfo = parsedTransactions.map(pt => ({
-          ...pt,
-          cardName: cardInfo.name,
-          paidBy: cardInfo.paidBy,
-          autoClassification: cardInfo.autoClassification
-        }));
-        
-        allParsedTransactions.push(...transactionsWithCardInfo);
-        
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-        
-        setUploadedFiles(prev => 
-          prev.map(f => 
-            f.file === fileUpload.file 
-              ? { ...f, status: 'error' as const, error: errorMessage }
-              : f
-          )
-        );
-
-        toast({
-          title: "Upload failed",
-          description: errorMessage,
-          variant: "destructive"
-        });
-        
+      // Check for duplicates
+      const { hasDuplicates, duplicateResult } = handleDuplicateDetection(allParsedTransactions, cardInfos);
+      
+      if (hasDuplicates) {
+        setDuplicateReview(duplicateResult);
         setIsProcessing(false);
         return;
       }
-    }
 
-    // Check for duplicates
-    const duplicateResult = transactionStore.checkForDuplicates(allParsedTransactions);
-    
-    if (duplicateResult.duplicates.length > 0) {
-      // Show duplicate review modal
-      setDuplicateReview({
-        duplicates: duplicateResult.duplicates,
-        pendingTransactions: allParsedTransactions,
-        cardInfos
+      // No duplicates, proceed with normal upload
+      await finishUpload(allParsedTransactions, cardInfos, newFiles);
+    } catch (error) {
+      const errorMessage = handleFileError(newFiles[0], error as Error, setUploadedFiles);
+      
+      toast({
+        title: "Upload failed",
+        description: errorMessage,
+        variant: "destructive"
       });
+      
       setIsProcessing(false);
-      return;
     }
-
-    // No duplicates, proceed with normal upload
-    await finishUpload(allParsedTransactions, cardInfos, newFiles);
   };
 
   const finishUpload = async (transactions: any[], cardInfos: CardInfo[], fileUploads: UploadedFile[]) => {
-    let totalAutoClassified = 0;
-    
-    const processedTransactions = transactions.map(tx => {
-      const cardInfo = cardInfos.find(ci => ci.name === tx.cardName) || cardInfos[0];
-      let category = tx.category || 'UNCLASSIFIED';
-      let isClassified = false;
-      
-      if (cardInfo.autoClassification && cardInfo.autoClassification !== 'skip') {
-        category = cardInfo.autoClassification;
-        isClassified = true;
-        totalAutoClassified++;
-      }
-      
-      return {
-        id: generateId(),
-        date: tx.date,
-        amount: tx.amount,
-        description: tx.description,
-        category,
-        cardName: cardInfo.name,
-        paidBy: cardInfo.paidBy,
-        isClassified,
-        mccCode: tx.mccCode,
-        transactionType: tx.transactionType,
-        location: tx.location,
-        referenceNumber: tx.referenceNumber,
-        autoAppliedRule: isClassified
-      };
-    });
+    const { processedTransactions, totalAutoClassified } = processTransactions(transactions, cardInfos);
 
     // Save card classification rules
-    cardInfos.forEach(cardInfo => {
-      if (cardInfo.autoClassification && cardInfo.autoClassification !== 'skip') {
-        cardClassificationEngine.saveCardClassification(cardInfo.name, cardInfo.autoClassification);
-      }
-    });
+    saveCardClassificationRules(cardInfos);
 
     // Add transactions to store
-    transactionStore.addTransactions(processedTransactions, true); // Skip duplicate check since we already did it
+    transactionStore.addTransactions(processedTransactions, true);
 
     // Update file statuses
-    fileUploads.forEach(fileUpload => {
-      const fileTransactions = processedTransactions.filter(t => 
-        cardInfos.find(ci => ci.name === fileUpload.cardName)
-      );
-      
-      setUploadedFiles(prev => 
-        prev.map(f => 
-          f.file === fileUpload.file 
-            ? { 
-                ...f, 
-                status: 'success' as const, 
-                progress: 100,
-                transactionCount: fileTransactions.length,
-                autoClassifiedCount: fileTransactions.filter(t => t.autoAppliedRule).length
-              }
-              : f
-        )
-      );
-    });
+    updateFileStatuses(fileUploads, processedTransactions, cardInfos, setUploadedFiles);
 
-    const categoryNames = getCategoryNames();
-    
     toast({
       title: "Files uploaded successfully",
       description: `${processedTransactions.length} transactions imported${totalAutoClassified > 0 ? `, ${totalAutoClassified} auto-classified` : ''}`,
@@ -220,29 +104,16 @@ export const useUploadLogic = () => {
     setIsProcessing(false);
   };
 
-  const handleDuplicateReview = async (decisions: any[]) => {
+  const handleDuplicateReview = async (decisions: DuplicateReviewDecision[]) => {
     if (!duplicateReview) return;
     
-    const { duplicates, pendingTransactions, cardInfos } = duplicateReview;
-    
-    // Include selected duplicates with the unique transactions
-    const selectedDuplicateTransactions = decisions
-      .filter(decision => decision.shouldInclude)
-      .map(decision => pendingTransactions[duplicates[decision.duplicateIndex].newTransaction.index]);
-    
-    // Get unique transactions (non-duplicates)
-    const uniqueTransactions = pendingTransactions.filter((_, index) => 
-      !duplicates.some(dup => dup.newTransaction.index === index)
-    );
-    
-    const transactionsToUpload = [...uniqueTransactions, ...selectedDuplicateTransactions];
+    const { transactionsToUpload, skippedCount, totalDuplicates } = processDuplicateDecisions(decisions, duplicateReview);
     
     // Show summary
-    const skippedCount = duplicates.length - selectedDuplicateTransactions.length;
     if (skippedCount > 0) {
       toast({
         title: "Duplicate transactions skipped",
-        description: `${skippedCount} of ${duplicates.length} duplicate transactions were skipped to avoid duplication`,
+        description: `${skippedCount} of ${totalDuplicates} duplicate transactions were skipped to avoid duplication`,
       });
     }
     
@@ -251,7 +122,7 @@ export const useUploadLogic = () => {
     if (transactionsToUpload.length > 0) {
       setIsProcessing(true);
       const fileUploads = uploadedFiles.filter(f => f.status === 'uploading');
-      await finishUpload(transactionsToUpload, cardInfos, fileUploads);
+      await finishUpload(transactionsToUpload, duplicateReview.cardInfos, fileUploads);
     } else {
       // All transactions were duplicates and user chose not to include any
       setUploadedFiles(prev => prev.filter(f => f.status !== 'uploading'));

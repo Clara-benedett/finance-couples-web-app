@@ -11,12 +11,7 @@ import FormatInstructions from "@/components/upload/FormatInstructions";
 import UploadProgress from "@/components/upload/UploadProgress";
 import DuplicateReviewModal from "@/components/DuplicateReviewModal";
 import { useUploadLogic } from "@/hooks/useUploadLogic";
-
-interface CardInfo {
-  name: string;
-  paidBy: 'person1' | 'person2';
-  autoClassification?: 'person1' | 'person2' | 'shared' | 'skip';
-}
+import { CardInfo } from "@/types/upload";
 
 const Upload = () => {
   const [showCardNameDialog, setShowCardNameDialog] = useState(false);
