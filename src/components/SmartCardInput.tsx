@@ -1,3 +1,4 @@
+
 import { useState, useRef, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +25,7 @@ const SmartCardInput = ({
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [existingRule, setExistingRule] = useState<CardClassificationRule | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const categoryNames = getCategoryNames();
 
   useEffect(() => {
@@ -43,13 +45,28 @@ const SmartCardInput = ({
   }, [value]);
 
   const handleSuggestionClick = (suggestion: string) => {
+    console.log('Suggestion clicked:', suggestion);
     onChange(suggestion);
     setIsOpen(false);
     
     // Check if this suggestion has an existing rule
     const rule = cardClassificationEngine.getExactMatch(suggestion);
     if (rule && onExistingRuleSelected) {
+      console.log('Existing rule found:', rule);
       onExistingRuleSelected(rule);
+    }
+  };
+
+  const handleInputBlur = (e: React.FocusEvent) => {
+    // Only close if we're not clicking on the dropdown
+    if (!dropdownRef.current?.contains(e.relatedTarget as Node)) {
+      setTimeout(() => setIsOpen(false), 150);
+    }
+  };
+
+  const handleInputFocus = () => {
+    if (value.length > 0) {
+      setIsOpen(true);
     }
   };
 
@@ -76,8 +93,8 @@ const SmartCardInput = ({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          onFocus={() => value.length > 0 && setIsOpen(true)}
-          onBlur={() => setTimeout(() => setIsOpen(false), 200)}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
         />
         
         {/* Existing Rule Indicator */}
@@ -91,7 +108,10 @@ const SmartCardInput = ({
 
       {/* Dropdown */}
       {isOpen && suggestions.length > 0 && (
-        <Card className="absolute z-50 w-full mt-1 shadow-lg border">
+        <Card 
+          ref={dropdownRef}
+          className="absolute z-50 w-full mt-1 shadow-lg border"
+        >
           <CardContent className="p-2 max-h-60 overflow-y-auto">
             {/* Existing Cards Section */}
             {existingSuggestions.length > 0 && (
@@ -106,7 +126,10 @@ const SmartCardInput = ({
                       key={`existing-${index}`}
                       variant="ghost"
                       className="w-full justify-start h-auto p-2 text-left"
-                      onClick={() => handleSuggestionClick(suggestion)}
+                      onMouseDown={(e) => {
+                        e.preventDefault(); // Prevent input blur
+                        handleSuggestionClick(suggestion);
+                      }}
                     >
                       <div className="flex items-center gap-2 w-full">
                         <CreditCard className="w-4 h-4 text-blue-600" />
@@ -137,7 +160,10 @@ const SmartCardInput = ({
                     key={`new-${index}`}
                     variant="ghost"
                     className="w-full justify-start h-auto p-2 text-left"
-                    onClick={() => handleSuggestionClick(suggestion)}
+                    onMouseDown={(e) => {
+                      e.preventDefault(); // Prevent input blur
+                      handleSuggestionClick(suggestion);
+                    }}
                   >
                     <div className="flex items-center gap-2 w-full">
                       <Sparkles className="w-4 h-4 text-gray-400" />
@@ -160,7 +186,10 @@ const SmartCardInput = ({
                 <Button
                   variant="ghost"
                   className="w-full justify-start h-auto p-2 text-left"
-                  onClick={() => handleSuggestionClick(value)}
+                  onMouseDown={(e) => {
+                    e.preventDefault(); // Prevent input blur
+                    handleSuggestionClick(value);
+                  }}
                 >
                   <div className="flex items-center gap-2 w-full">
                     <Plus className="w-4 h-4 text-blue-600" />
