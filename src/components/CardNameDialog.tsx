@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -34,17 +34,19 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
   const categoryNames = getCategoryNames();
 
   // Initialize card infos array when dialog opens
-  useState(() => {
+  useEffect(() => {
     if (isOpen && fileNames.length > 0) {
       console.log('CardNameDialog: Initializing cardInfos for', fileNames.length, 'files');
-      setCardInfos(new Array(fileNames.length).fill(null).map(() => ({
+      const initialCardInfos = new Array(fileNames.length).fill(null).map(() => ({
         name: '',
         paidBy: 'person1' as const,
         autoClassification: 'skip' as const
-      })));
+      }));
+      setCardInfos(initialCardInfos);
       setStep('names');
+      console.log('CardNameDialog: Initial cardInfos set to:', initialCardInfos);
     }
-  });
+  }, [isOpen, fileNames.length]);
 
   const handleCardNameChange = (index: number, value: string) => {
     console.log('CardNameDialog: handleCardNameChange called with index:', index, 'value:', value);
