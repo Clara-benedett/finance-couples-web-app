@@ -1,5 +1,7 @@
+
 import { Transaction } from '@/types/transaction';
 import { categorizationRulesEngine } from '@/utils/categorizationRules';
+import { findDuplicates } from '@/utils/duplicateDetection';
 
 const STORAGE_KEY = 'expense_tracker_transactions';
 const VERSION_KEY = 'expense_tracker_version';
@@ -72,8 +74,6 @@ class TransactionStore {
   }
 
   checkForDuplicates(newTransactions: any[]) {
-    // Import here to avoid circular dependencies
-    const { findDuplicates } = require('@/utils/duplicateDetection');
     return findDuplicates(newTransactions, this.transactions);
   }
 
