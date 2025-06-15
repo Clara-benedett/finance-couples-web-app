@@ -78,8 +78,8 @@ const ManualExpenseDialog = ({ open, onOpenChange }: ManualExpenseDialogProps) =
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="pb-4">
           <DialogTitle>Add Manual Expense</DialogTitle>
           <DialogDescription>
             Add a cash, PIX, Venmo, or other non-card expense manually.

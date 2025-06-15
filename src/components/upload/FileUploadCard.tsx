@@ -31,16 +31,16 @@ const FileUploadCard = ({
     <Card className={`border-2 border-dashed transition-colors ${
       isDragging ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-400'
     }`}>
-      <CardContent className="p-8">
+      <CardContent className="p-6">
         <div
-          className={`text-center rounded-lg p-8 transition-colors ${
+          className={`text-center rounded-lg p-6 transition-colors ${
             isDragging ? 'bg-blue-50' : ''
           }`}
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
           onDrop={onDrop}
         >
-          <UploadIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+          <UploadIcon className="mx-auto h-10 w-10 text-gray-400 mb-3" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             Upload Files
           </h3>

@@ -8,13 +8,13 @@ interface PaymentMethodSelectProps {
 
 const PaymentMethodSelect = ({ value, onValueChange }: PaymentMethodSelectProps) => {
   const paymentMethods = [
+    { value: 'bank_transfer', label: 'Bank Transfer' },
     { value: 'cash', label: 'Cash' },
+    { value: 'debit', label: 'Debit' },
+    { value: 'other', label: 'Other' },
     { value: 'pix', label: 'PIX' },
     { value: 'venmo', label: 'Venmo' },
-    { value: 'zelle', label: 'Zelle' },
-    { value: 'debit', label: 'Debit' },
-    { value: 'bank_transfer', label: 'Bank Transfer' },
-    { value: 'other', label: 'Other' }
+    { value: 'zelle', label: 'Zelle' }
   ];
 
   return (
