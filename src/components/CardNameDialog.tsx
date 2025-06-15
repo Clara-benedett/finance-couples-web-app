@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import {
   Dialog,
@@ -59,6 +58,7 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
       autoClassification: rule.classification as 'person1' | 'person2' | 'shared' | 'skip'
     };
     setCardInfos(newCardInfos);
+    console.log(`Auto-populated classification for ${rule.cardName}: ${rule.classification}`);
   };
 
   const handlePaidByChange = (index: number, value: 'person1' | 'person2') => {
