@@ -1,14 +1,14 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Settings as SettingsIcon, CreditCard, Users, Edit3, Save, X, User, Share } from "lucide-react";
+import { Settings as SettingsIcon, CreditCard, Users, Edit3, Save, X, User, Share, Trash2 } from "lucide-react";
 import CardRulesManager from "@/components/CardRulesManager";
 import { getCategoryNames, setCategoryNames, CategoryNames } from "@/utils/categoryNames";
 import { getProportionSettings, saveProportionSettings, ProportionSettings } from '@/utils/calculationEngine';
+import { transactionStore } from '@/store/transactionStore';
 import { useToast } from "@/hooks/use-toast";
 
 const Settings = () => {
@@ -16,6 +16,7 @@ const Settings = () => {
   const [categoryNames, setCategoryNamesState] = useState<CategoryNames>(getCategoryNames());
   const [isEditingNames, setIsEditingNames] = useState(false);
   const [editedNames, setEditedNames] = useState<CategoryNames>(categoryNames);
+  const [isClearing, setIsClearing] = useState(false);
   const { toast } = useToast();
 
   const handleSliderChange = (value: number[]) => {
@@ -88,6 +89,27 @@ const Settings = () => {
       [field]: value
     }));
   };
+
+  const handleClearAllData = () => {
+    setIsClearing(true);
+    try {
+      transactionStore.clearAllData();
+      toast({
+        title: "All data cleared",
+        description: "Your app data has been reset. Refresh the page to see changes.",
+      });
+    } catch (error) {
+      toast({
+        title: "Error clearing data",
+        description: "There was an error clearing your data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
+  const storageInfo = transactionStore.getStorageInfo();
 
   return (
     <div className="space-y-6">
@@ -286,6 +308,45 @@ const Settings = () => {
         </CardHeader>
         <CardContent>
           <CardRulesManager />
+        </CardContent>
+      </Card>
+
+      {/* Data Management Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Trash2 className="w-5 h-5 text-red-600" />
+            Data Management
+          </CardTitle>
+          <CardDescription>
+            Manage your stored data and reset the application
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="p-3 bg-gray-50 rounded-lg border">
+            <h4 className="font-medium text-gray-900 mb-2">Current Storage</h4>
+            <div className="text-sm text-gray-600 space-y-1">
+              <p>Transactions: {storageInfo.transactionCount}</p>
+              <p>Storage size: {storageInfo.storageSize}</p>
+              <p>Version: {storageInfo.version}</p>
+            </div>
+          </div>
+          
+          <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+            <h4 className="font-medium text-red-900 mb-2">⚠️ Clear All Data</h4>
+            <p className="text-sm text-red-700 mb-3">
+              This will permanently delete all your transactions, settings, and rules. This action cannot be undone.
+            </p>
+            <Button 
+              variant="destructive"
+              onClick={handleClearAllData}
+              disabled={isClearing}
+              className="w-full sm:w-auto"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              {isClearing ? 'Clearing...' : 'Clear All Data'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
