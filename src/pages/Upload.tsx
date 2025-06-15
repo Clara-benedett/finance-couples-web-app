@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { CategoryNames, getCategoryNames } from "@/utils/categoryNames";
 import CategorySetup from "@/components/CategorySetup";
@@ -99,8 +98,8 @@ const Upload = () => {
         <CategoryDisplay categoryNames={categoryNames} />
       )}
 
-      {/* Upload Options */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* File Upload Section */}
+      <div className="space-y-4">
         <FileUploadCard
           isDragging={isDragging}
           isProcessing={isProcessing}
@@ -109,13 +108,14 @@ const Upload = () => {
           onDrop={handleDropWithDialog}
           onFileSelection={handleFileSelectionWithDialog}
         />
-
-        <ManualEntryCard
-          onAddManualExpense={() => setShowManualExpense(true)}
-        />
+        
+        <FormatInstructions />
       </div>
 
-      <FormatInstructions />
+      {/* Manual Entry Section */}
+      <ManualEntryCard
+        onAddManualExpense={() => setShowManualExpense(true)}
+      />
 
       <UploadProgress uploadedFiles={uploadedFiles} />
 
