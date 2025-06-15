@@ -9,6 +9,7 @@ import FileUploadCard from "@/components/upload/FileUploadCard";
 import ManualEntryCard from "@/components/upload/ManualEntryCard";
 import FormatInstructions from "@/components/upload/FormatInstructions";
 import UploadProgress from "@/components/upload/UploadProgress";
+import DuplicateReviewModal from "@/components/DuplicateReviewModal";
 import { useUploadLogic } from "@/hooks/useUploadLogic";
 
 interface CardInfo {
@@ -28,12 +29,15 @@ const Upload = () => {
     isDragging,
     isProcessing,
     pendingFiles,
+    duplicateReview,
     handleFileSelection,
     processFiles,
     handleDragOver,
     handleDragLeave,
     handleDrop,
-    setPendingFiles
+    setPendingFiles,
+    handleDuplicateReview,
+    handleDuplicateCancel
   } = useUploadLogic();
 
   const handleFileSelectionWithDialog = (files: FileList | null) => {
@@ -129,6 +133,14 @@ const Upload = () => {
         onConfirm={handleCardNameConfirm}
         onCancel={handleCardNameCancel}
         fileNames={pendingFiles.map(f => f.name)}
+      />
+
+      <DuplicateReviewModal
+        open={!!duplicateReview}
+        onOpenChange={() => {}}
+        duplicates={duplicateReview?.duplicates || []}
+        onConfirm={handleDuplicateReview}
+        onCancel={handleDuplicateCancel}
       />
     </div>
   );

@@ -46,7 +46,7 @@ class TransactionStore {
     }
   }
 
-  addTransactions(newTransactions: Transaction[]) {
+  addTransactions(newTransactions: Transaction[], skipDuplicateCheck: boolean = false) {
     // Apply rules to new transactions before adding them (skip manual entries)
     const processedTransactions = categorizationRulesEngine.applyRulesToTransactions(
       newTransactions.filter(t => !t.isManualEntry)
@@ -69,6 +69,12 @@ class TransactionStore {
     if (autoAppliedCount > 0) {
       console.log(`Auto-categorized ${autoAppliedCount} transactions using existing rules`);
     }
+  }
+
+  checkForDuplicates(newTransactions: any[]) {
+    // Import here to avoid circular dependencies
+    const { findDuplicates } = require('@/utils/duplicateDetection');
+    return findDuplicates(newTransactions, this.transactions);
   }
 
   addManualTransaction(transaction: Transaction) {
