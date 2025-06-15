@@ -46,21 +46,30 @@ const SmartCardInput = ({
 
   const handleSuggestionClick = (suggestion: string) => {
     console.log('Suggestion clicked:', suggestion);
+    
+    // Immediately update the input value
     onChange(suggestion);
+    
+    // Close the dropdown
     setIsOpen(false);
     
-    // Check if this suggestion has an existing rule
+    // Check if this suggestion has an existing rule and notify parent
     const rule = cardClassificationEngine.getExactMatch(suggestion);
     if (rule && onExistingRuleSelected) {
       console.log('Existing rule found:', rule);
-      onExistingRuleSelected(rule);
+      // Use a small delay to ensure the input update is processed first
+      setTimeout(() => {
+        onExistingRuleSelected(rule);
+      }, 10);
     }
   };
 
   const handleInputBlur = (e: React.FocusEvent) => {
-    // Only close if we're not clicking on the dropdown
-    if (!dropdownRef.current?.contains(e.relatedTarget as Node)) {
-      setTimeout(() => setIsOpen(false), 150);
+    // Only close if we're not clicking within the dropdown
+    const relatedTarget = e.relatedTarget as HTMLElement;
+    if (!dropdownRef.current?.contains(relatedTarget)) {
+      // Add a small delay to allow click events to complete
+      setTimeout(() => setIsOpen(false), 200);
     }
   };
 
@@ -110,7 +119,7 @@ const SmartCardInput = ({
       {isOpen && suggestions.length > 0 && (
         <Card 
           ref={dropdownRef}
-          className="absolute z-50 w-full mt-1 shadow-lg border"
+          className="absolute z-50 w-full mt-1 shadow-lg border bg-white"
         >
           <CardContent className="p-2 max-h-60 overflow-y-auto">
             {/* Existing Cards Section */}
@@ -126,10 +135,8 @@ const SmartCardInput = ({
                       key={`existing-${index}`}
                       variant="ghost"
                       className="w-full justify-start h-auto p-2 text-left"
-                      onMouseDown={(e) => {
-                        e.preventDefault(); // Prevent input blur
-                        handleSuggestionClick(suggestion);
-                      }}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      type="button"
                     >
                       <div className="flex items-center gap-2 w-full">
                         <CreditCard className="w-4 h-4 text-blue-600" />
@@ -160,10 +167,8 @@ const SmartCardInput = ({
                     key={`new-${index}`}
                     variant="ghost"
                     className="w-full justify-start h-auto p-2 text-left"
-                    onMouseDown={(e) => {
-                      e.preventDefault(); // Prevent input blur
-                      handleSuggestionClick(suggestion);
-                    }}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    type="button"
                   >
                     <div className="flex items-center gap-2 w-full">
                       <Sparkles className="w-4 h-4 text-gray-400" />
@@ -186,10 +191,8 @@ const SmartCardInput = ({
                 <Button
                   variant="ghost"
                   className="w-full justify-start h-auto p-2 text-left"
-                  onMouseDown={(e) => {
-                    e.preventDefault(); // Prevent input blur
-                    handleSuggestionClick(value);
-                  }}
+                  onClick={() => handleSuggestionClick(value)}
+                  type="button"
                 >
                   <div className="flex items-center gap-2 w-full">
                     <Plus className="w-4 h-4 text-blue-600" />
