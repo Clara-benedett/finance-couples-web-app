@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +34,7 @@ import { cardClassificationEngine, CardClassificationRule } from "@/utils/cardCl
 import { getCategoryNames } from "@/utils/categoryNames";
 import { useToast } from "@/hooks/use-toast";
 import SmartCardInput from "./SmartCardInput";
+import { Info } from "lucide-react";
 
 const CardRulesManager = () => {
   const [rules, setRules] = useState<CardClassificationRule[]>([]);
@@ -82,7 +82,7 @@ const CardRulesManager = () => {
       setNewCardName('');
       toast({
         title: "Card rule updated",
-        description: `Card rule has been updated successfully`,
+        description: `Rule updated successfully. Future transactions from this card will be classified as ${getCategoryDisplay(newClassification)}.`,
       });
     }
   };
@@ -289,11 +289,20 @@ const CardRulesManager = () => {
           <DialogHeader>
             <DialogTitle>Edit Card Rule</DialogTitle>
             <DialogDescription>
-              Update the card name and classification rule.
+              Update the card name and classification rule. This will only affect future transactions from this card - your existing transactions will keep their current categories.
             </DialogDescription>
           </DialogHeader>
           
           <div className="space-y-4">
+            {/* Informational Alert */}
+            <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-blue-700">
+                <p className="font-medium">Important:</p>
+                <p>Changing this rule will only affect new transactions. Previously categorized transactions will remain unchanged to protect your existing work.</p>
+              </div>
+            </div>
+
             <div className="space-y-1">
               <Label htmlFor="edit-card-name">Card Name</Label>
               <Input
