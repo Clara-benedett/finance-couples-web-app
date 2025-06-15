@@ -1,15 +1,40 @@
-
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Plus, Edit, Trash2, Merge, User, Share } from "lucide-react";
 import { cardClassificationEngine, CardClassificationRule } from "@/utils/cardClassificationRules";
 import { getCategoryNames } from "@/utils/categoryNames";
 import { useToast } from "@/hooks/use-toast";
-import CardRulesTable from "./CardRulesTable";
-import AddCardRuleDialog from "./AddCardRuleDialog";
-import EditCardRuleDialog from "./EditCardRuleDialog";
-import DeleteCardRuleDialog from "./DeleteCardRuleDialog";
-import MergeCardsDialog from "./MergeCardsDialog";
+import SmartCardInput from "./SmartCardInput";
+import { Info } from "lucide-react";
 
 const CardRulesManager = () => {
   const [rules, setRules] = useState<CardClassificationRule[]>([]);
@@ -98,6 +123,15 @@ const CardRulesManager = () => {
     }
   };
 
+  const getCategoryIcon = (classification: string) => {
+    switch (classification) {
+      case 'person1': return <User className="w-4 h-4 text-blue-600" />;
+      case 'person2': return <User className="w-4 h-4 text-green-600" />;
+      case 'shared': return <Share className="w-4 h-4 text-purple-600" />;
+      default: return null;
+    }
+  };
+
   const openEditDialog = (rule: CardClassificationRule) => {
     setEditingRule(rule);
     setNewCardName(rule.cardName);
@@ -133,52 +167,236 @@ const CardRulesManager = () => {
       </div>
 
       {/* Rules Table */}
-      <CardRulesTable
-        rules={rules}
-        onEdit={openEditDialog}
-        onDelete={openDeleteDialog}
-        onMerge={openMergeDialog}
-      />
+      {rules.length > 0 ? (
+        <div className="border rounded-lg">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Card Name</TableHead>
+                <TableHead>Auto-Classification</TableHead>
+                <TableHead>Last Used</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rules.map((rule) => (
+                <TableRow key={rule.cardName}>
+                  <TableCell className="font-medium">{rule.cardName}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      {getCategoryIcon(rule.classification)}
+                      {getCategoryDisplay(rule.classification)}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-gray-500">
+                    {new Date(rule.lastUsed).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center gap-1 justify-end">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEditDialog(rule)}
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openMergeDialog(rule)}
+                      >
+                        <Merge className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openDeleteDialog(rule)}
+                        className="text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      ) : (
+        <div className="text-center py-8 text-gray-500">
+          <p>No card rules configured yet.</p>
+          <p className="text-sm">Add your first rule to automatically classify transactions.</p>
+        </div>
+      )}
 
       {/* Add Rule Dialog */}
-      <AddCardRuleDialog
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-        cardName={newCardName}
-        onCardNameChange={setNewCardName}
-        classification={newClassification}
-        onClassificationChange={setNewClassification}
-        onAdd={handleAddRule}
-      />
+      <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add New Card Rule</DialogTitle>
+            <DialogDescription>
+              Create an automatic classification rule for a card or account.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <SmartCardInput
+              value={newCardName}
+              onChange={setNewCardName}
+              placeholder="Enter card or account name"
+            />
+
+            <div className="space-y-3">
+              <Label>Automatically classify as:</Label>
+              <RadioGroup
+                value={newClassification}
+                onValueChange={(value: 'person1' | 'person2' | 'shared') => setNewClassification(value)}
+                className="grid grid-cols-1 gap-3"
+              >
+                <Label htmlFor="add-person1" className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-blue-50 cursor-pointer">
+                  <RadioGroupItem value="person1" id="add-person1" />
+                  <User className="w-4 h-4 text-blue-600" />
+                  <span className="font-normal text-blue-600">{categoryNames.person1}</span>
+                </Label>
+                <Label htmlFor="add-person2" className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-green-50 cursor-pointer">
+                  <RadioGroupItem value="person2" id="add-person2" />
+                  <User className="w-4 h-4 text-green-600" />
+                  <span className="font-normal text-green-600">{categoryNames.person2}</span>
+                </Label>
+                <Label htmlFor="add-shared" className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-purple-50 cursor-pointer">
+                  <RadioGroupItem value="shared" id="add-shared" />
+                  <Share className="w-4 h-4 text-purple-600" />
+                  <span className="font-normal text-purple-600">{categoryNames.shared}</span>
+                </Label>
+              </RadioGroup>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddRule} disabled={!newCardName.trim()}>
+              Add Rule
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Rule Dialog */}
-      <EditCardRuleDialog
-        open={showEditDialog}
-        onOpenChange={setShowEditDialog}
-        cardName={newCardName}
-        onCardNameChange={setNewCardName}
-        classification={newClassification}
-        onClassificationChange={setNewClassification}
-        onUpdate={handleEditRule}
-      />
+      <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Card Rule</DialogTitle>
+            <DialogDescription>
+              Update the card name and classification rule.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            {/* Informational Alert */}
+            <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <Info className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-blue-700">
+                <p className="font-medium">Important:</p>
+                <p>Changing this rule will only affect new transactions. Previously categorized transactions will remain unchanged to protect your existing work.</p>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="edit-card-name">Card Name</Label>
+              <Input
+                id="edit-card-name"
+                value={newCardName}
+                onChange={(e) => setNewCardName(e.target.value)}
+                placeholder="Enter card or account name"
+              />
+            </div>
+
+            <div className="space-y-3">
+              <Label>Automatically classify as:</Label>
+              <RadioGroup
+                value={newClassification}
+                onValueChange={(value: 'person1' | 'person2' | 'shared') => setNewClassification(value)}
+                className="grid grid-cols-1 gap-3"
+              >
+                <Label htmlFor="edit-person1" className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-blue-50 cursor-pointer">
+                  <RadioGroupItem value="person1" id="edit-person1" />
+                  <User className="w-4 h-4 text-blue-600" />
+                  <span className="font-normal text-blue-600">{categoryNames.person1}</span>
+                </Label>
+                <Label htmlFor="edit-person2" className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-green-50 cursor-pointer">
+                  <RadioGroupItem value="person2" id="edit-person2" />
+                  <User className="w-4 h-4 text-green-600" />
+                  <span className="font-normal text-green-600">{categoryNames.person2}</span>
+                </Label>
+                <Label htmlFor="edit-shared" className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-purple-50 cursor-pointer">
+                  <RadioGroupItem value="shared" id="edit-shared" />
+                  <Share className="w-4 h-4 text-purple-600" />
+                  <span className="font-normal text-purple-600">{categoryNames.shared}</span>
+                </Label>
+              </RadioGroup>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleEditRule} disabled={!newCardName.trim()}>
+              Update Rule
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <DeleteCardRuleDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        rule={editingRule}
-        onDelete={handleDeleteRule}
-      />
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Card Rule</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the rule for "{editingRule?.cardName}"? 
+              This action cannot be undone and future transactions from this card will not be automatically classified.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteRule} className="bg-red-600 hover:bg-red-700">
+              Delete Rule
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Merge Cards Dialog */}
-      <MergeCardsDialog
-        open={showMergeDialog}
-        onOpenChange={setShowMergeDialog}
-        rule={editingRule}
-        mergeTarget={mergeTarget}
-        onMergeTargetChange={setMergeTarget}
-        onMerge={handleMergeCards}
-      />
+      <Dialog open={showMergeDialog} onOpenChange={setShowMergeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Merge Card Rules</DialogTitle>
+            <DialogDescription>
+              Merge "{editingRule?.cardName}" into another card. The rule for "{editingRule?.cardName}" will be deleted.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4">
+            <SmartCardInput
+              value={mergeTarget}
+              onChange={setMergeTarget}
+              placeholder="Select target card to merge into"
+            />
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowMergeDialog(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleMergeCards} disabled={!mergeTarget.trim()}>
+              Merge Cards
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
