@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from 'react';
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,6 +25,7 @@ const SmartCardInput = ({
   const [existingRule, setExistingRule] = useState<CardClassificationRule | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isClickingDropdown = useRef(false);
   const categoryNames = getCategoryNames();
 
   useEffect(() => {
@@ -47,7 +47,10 @@ const SmartCardInput = ({
   const handleSuggestionClick = (suggestion: string) => {
     console.log('Suggestion clicked:', suggestion);
     
-    // Immediately update the input value
+    // Prevent blur from interfering
+    isClickingDropdown.current = true;
+    
+    // Update the input value
     onChange(suggestion);
     
     // Close the dropdown
@@ -57,19 +60,26 @@ const SmartCardInput = ({
     const rule = cardClassificationEngine.getExactMatch(suggestion);
     if (rule && onExistingRuleSelected) {
       console.log('Existing rule found:', rule);
-      // Use a small delay to ensure the input update is processed first
       setTimeout(() => {
         onExistingRuleSelected(rule);
       }, 10);
     }
+    
+    // Reset the flag after a short delay
+    setTimeout(() => {
+      isClickingDropdown.current = false;
+    }, 100);
   };
 
   const handleInputBlur = (e: React.FocusEvent) => {
-    // Only close if we're not clicking within the dropdown
+    // Don't close if we're clicking within the dropdown
+    if (isClickingDropdown.current) {
+      return;
+    }
+    
     const relatedTarget = e.relatedTarget as HTMLElement;
     if (!dropdownRef.current?.contains(relatedTarget)) {
-      // Add a small delay to allow click events to complete
-      setTimeout(() => setIsOpen(false), 200);
+      setTimeout(() => setIsOpen(false), 150);
     }
   };
 
@@ -77,6 +87,16 @@ const SmartCardInput = ({
     if (value.length > 0) {
       setIsOpen(true);
     }
+  };
+
+  const handleDropdownMouseDown = () => {
+    isClickingDropdown.current = true;
+  };
+
+  const handleDropdownMouseUp = () => {
+    setTimeout(() => {
+      isClickingDropdown.current = false;
+    }, 100);
   };
 
   const getCategoryDisplay = (classification: string) => {
@@ -120,6 +140,8 @@ const SmartCardInput = ({
         <Card 
           ref={dropdownRef}
           className="absolute z-50 w-full mt-1 shadow-lg border bg-white"
+          onMouseDown={handleDropdownMouseDown}
+          onMouseUp={handleDropdownMouseUp}
         >
           <CardContent className="p-2 max-h-60 overflow-y-auto">
             {/* Existing Cards Section */}
