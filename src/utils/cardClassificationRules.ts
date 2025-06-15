@@ -8,6 +8,28 @@ export interface CardClassificationRule {
   lastUsed: string;
 }
 
+// Common card name templates for suggestions
+export const COMMON_CARD_TEMPLATES = [
+  'Chase Sapphire Preferred',
+  'Chase Sapphire Reserve',
+  'Chase Freedom',
+  'Chase Freedom Unlimited',
+  'AMEX Gold',
+  'AMEX Platinum',
+  'AMEX Blue Cash',
+  'Capital One Venture',
+  'Capital One Quicksilver',
+  'Citi Double Cash',
+  'Discover It',
+  'Apple Card',
+  'Bank of America Cash Rewards',
+  'Wells Fargo Active Cash',
+  'PayPal Credit',
+  'Venmo Credit Card',
+  'Target RedCard',
+  'Amazon Prime Card'
+];
+
 class CardClassificationEngine {
   private rules: { [cardName: string]: CardClassificationRule } = {};
 
@@ -38,7 +60,6 @@ class CardClassificationEngine {
 
   saveCardClassification(cardName: string, classification: 'person1' | 'person2' | 'shared' | 'skip') {
     if (classification === 'skip') {
-      // Don't save skip rules
       return;
     }
 
@@ -60,7 +81,6 @@ class CardClassificationEngine {
     const rule = this.rules[normalizedCardName];
     
     if (rule && rule.classification !== 'skip') {
-      // Update last used timestamp
       rule.lastUsed = new Date().toISOString();
       this.saveRules();
       return rule.classification;
@@ -77,6 +97,58 @@ class CardClassificationEngine {
     const normalizedCardName = cardName.toUpperCase().trim();
     delete this.rules[normalizedCardName];
     this.saveRules();
+  }
+
+  // New methods for smart management
+  searchCards(query: string): CardClassificationRule[] {
+    const lowerQuery = query.toLowerCase();
+    return this.getAllRules().filter(rule => 
+      rule.cardName.toLowerCase().includes(lowerQuery)
+    );
+  }
+
+  getExactMatch(cardName: string): CardClassificationRule | null {
+    const normalizedCardName = cardName.toUpperCase().trim();
+    return this.rules[normalizedCardName] || null;
+  }
+
+  getSuggestions(query: string): string[] {
+    const existingCards = this.getAllRules().map(rule => rule.cardName);
+    const lowerQuery = query.toLowerCase();
+    
+    // Filter existing cards
+    const matchingExisting = existingCards.filter(card => 
+      card.toLowerCase().includes(lowerQuery)
+    );
+    
+    // Filter common templates
+    const matchingTemplates = COMMON_CARD_TEMPLATES.filter(template => 
+      template.toLowerCase().includes(lowerQuery) &&
+      !existingCards.some(existing => existing.toLowerCase() === template.toLowerCase())
+    );
+    
+    return [...matchingExisting, ...matchingTemplates];
+  }
+
+  updateCardName(oldName: string, newName: string) {
+    const normalizedOldName = oldName.toUpperCase().trim();
+    const rule = this.rules[normalizedOldName];
+    
+    if (rule) {
+      delete this.rules[normalizedOldName];
+      this.saveCardClassification(newName, rule.classification);
+    }
+  }
+
+  mergeCards(sourceCardName: string, targetCardName: string) {
+    const normalizedSource = sourceCardName.toUpperCase().trim();
+    const sourceRule = this.rules[normalizedSource];
+    
+    if (sourceRule) {
+      this.saveCardClassification(targetCardName, sourceRule.classification);
+      delete this.rules[normalizedSource];
+      this.saveRules();
+    }
   }
 }
 

@@ -9,11 +9,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CreditCard, User, Share, SkipForward } from "lucide-react";
 import { getCategoryNames } from "@/utils/categoryNames";
+import SmartCardInput from "./SmartCardInput";
+import { CardClassificationRule } from "@/utils/cardClassificationRules";
 
 interface CardInfo {
   name: string;
@@ -51,6 +52,15 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
     setCardInfos(newCardInfos);
   };
 
+  const handleExistingRuleSelected = (index: number, rule: CardClassificationRule) => {
+    const newCardInfos = [...cardInfos];
+    newCardInfos[index] = { 
+      ...newCardInfos[index], 
+      autoClassification: rule.classification as 'person1' | 'person2' | 'shared' | 'skip'
+    };
+    setCardInfos(newCardInfos);
+  };
+
   const handlePaidByChange = (index: number, value: 'person1' | 'person2') => {
     const newCardInfos = [...cardInfos];
     newCardInfos[index] = { ...newCardInfos[index], paidBy: value };
@@ -85,19 +95,6 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
     onCancel();
     setCardInfos([]);
     setStep('names');
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent, index: number) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      // Focus next input or go to next step if it's the last one
-      if (index < fileNames.length - 1) {
-        const nextInput = document.getElementById(`cardName-${index + 1}`);
-        nextInput?.focus();
-      } else if (cardInfos.every(info => info.name.trim().length > 0)) {
-        handleNextStep();
-      }
-    }
   };
 
   const allFieldsFilled = cardInfos.length === fileNames.length && 
@@ -145,17 +142,11 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
                   <strong>File {index + 1}:</strong> {fileName}
                 </div>
                 
-                <div className="space-y-1">
-                  <Label htmlFor={`cardName-${index}`}>Card/Account Name</Label>
-                  <Input
-                    id={`cardName-${index}`}
-                    placeholder="e.g., Chase Sapphire, AMEX Gold, BILT Card"
-                    value={cardInfos[index]?.name || ''}
-                    onChange={(e) => handleCardNameChange(index, e.target.value)}
-                    onKeyPress={(e) => handleKeyPress(e, index)}
-                    autoFocus={index === 0}
-                  />
-                </div>
+                <SmartCardInput
+                  value={cardInfos[index]?.name || ''}
+                  onChange={(value) => handleCardNameChange(index, value)}
+                  onExistingRuleSelected={(rule) => handleExistingRuleSelected(index, rule)}
+                />
 
                 <div className="space-y-3">
                   <Label>Bill paid by <span className="text-sm text-gray-500">(who pays the bill of this card?)</span></Label>

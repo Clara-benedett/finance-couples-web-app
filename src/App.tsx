@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Upload from "./pages/Upload";
 import Categorize from "./pages/Categorize";
 import History from "./pages/History";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +26,7 @@ const App = () => (
             <Route path="upload" element={<Upload />} />
             <Route path="categorize" element={<Categorize />} />
             <Route path="history" element={<History />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
