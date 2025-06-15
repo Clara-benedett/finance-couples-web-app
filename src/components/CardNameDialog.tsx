@@ -36,6 +36,7 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
   // Initialize card infos array when dialog opens
   useState(() => {
     if (isOpen && fileNames.length > 0) {
+      console.log('CardNameDialog: Initializing cardInfos for', fileNames.length, 'files');
       setCardInfos(new Array(fileNames.length).fill(null).map(() => ({
         name: '',
         paidBy: 'person1' as const,
@@ -46,19 +47,25 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
   });
 
   const handleCardNameChange = (index: number, value: string) => {
+    console.log('CardNameDialog: handleCardNameChange called with index:', index, 'value:', value);
+    console.log('CardNameDialog: current cardInfos before update:', cardInfos);
+    
     const newCardInfos = [...cardInfos];
     newCardInfos[index] = { ...newCardInfos[index], name: value };
+    
+    console.log('CardNameDialog: setting new cardInfos:', newCardInfos);
     setCardInfos(newCardInfos);
   };
 
   const handleExistingRuleSelected = (index: number, rule: CardClassificationRule) => {
+    console.log('CardNameDialog: handleExistingRuleSelected called with index:', index, 'rule:', rule);
     const newCardInfos = [...cardInfos];
     newCardInfos[index] = { 
       ...newCardInfos[index], 
       autoClassification: rule.classification as 'person1' | 'person2' | 'shared' | 'skip'
     };
     setCardInfos(newCardInfos);
-    console.log(`Auto-populated classification for ${rule.cardName}: ${rule.classification}`);
+    console.log(`CardNameDialog: Auto-populated classification for ${rule.cardName}: ${rule.classification}`);
   };
 
   const handlePaidByChange = (index: number, value: 'person1' | 'person2') => {
@@ -136,41 +143,44 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
         
         {step === 'names' && (
           <div className="space-y-6">
-            {fileNames.map((fileName, index) => (
-              <div key={index} className="space-y-4 p-4 border rounded-lg bg-gray-50">
-                <div className="text-sm text-gray-600">
-                  <strong>File {index + 1}:</strong> {fileName}
-                </div>
-                
-                <SmartCardInput
-                  value={cardInfos[index]?.name || ''}
-                  onChange={(value) => handleCardNameChange(index, value)}
-                  onExistingRuleSelected={(rule) => handleExistingRuleSelected(index, rule)}
-                />
+            {fileNames.map((fileName, index) => {
+              console.log('CardNameDialog: Rendering SmartCardInput for index:', index, 'with value:', cardInfos[index]?.name || '');
+              return (
+                <div key={index} className="space-y-4 p-4 border rounded-lg bg-gray-50">
+                  <div className="text-sm text-gray-600">
+                    <strong>File {index + 1}:</strong> {fileName}
+                  </div>
+                  
+                  <SmartCardInput
+                    value={cardInfos[index]?.name || ''}
+                    onChange={(value) => handleCardNameChange(index, value)}
+                    onExistingRuleSelected={(rule) => handleExistingRuleSelected(index, rule)}
+                  />
 
-                <div className="space-y-3">
-                  <Label>Bill paid by <span className="text-sm text-gray-500">(who pays the bill of this card?)</span></Label>
-                  <RadioGroup
-                    value={cardInfos[index]?.paidBy || 'person1'}
-                    onValueChange={(value: 'person1' | 'person2') => handlePaidByChange(index, value)}
-                    className="flex gap-6"
-                  >
-                    <Label htmlFor={`person1-${index}`} className="flex items-center space-x-2 cursor-pointer">
-                      <RadioGroupItem value="person1" id={`person1-${index}`} />
-                      <span className="font-normal">
-                        {categoryNames.person1}
-                      </span>
-                    </Label>
-                    <Label htmlFor={`person2-${index}`} className="flex items-center space-x-2 cursor-pointer">
-                      <RadioGroupItem value="person2" id={`person2-${index}`} />
-                      <span className="font-normal">
-                        {categoryNames.person2}
-                      </span>
-                    </Label>
-                  </RadioGroup>
+                  <div className="space-y-3">
+                    <Label>Bill paid by <span className="text-sm text-gray-500">(who pays the bill of this card?)</span></Label>
+                    <RadioGroup
+                      value={cardInfos[index]?.paidBy || 'person1'}
+                      onValueChange={(value: 'person1' | 'person2') => handlePaidByChange(index, value)}
+                      className="flex gap-6"
+                    >
+                      <Label htmlFor={`person1-${index}`} className="flex items-center space-x-2 cursor-pointer">
+                        <RadioGroupItem value="person1" id={`person1-${index}`} />
+                        <span className="font-normal">
+                          {categoryNames.person1}
+                        </span>
+                      </Label>
+                      <Label htmlFor={`person2-${index}`} className="flex items-center space-x-2 cursor-pointer">
+                        <RadioGroupItem value="person2" id={`person2-${index}`} />
+                        <span className="font-normal">
+                          {categoryNames.person2}
+                        </span>
+                      </Label>
+                    </RadioGroup>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 

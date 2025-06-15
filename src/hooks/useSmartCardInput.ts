@@ -13,15 +13,10 @@ export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCar
   const [existingRule, setExistingRule] = useState<CardClassificationRule | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const justClickedRef = useRef(false);
 
   useEffect(() => {
-    // Don't trigger suggestions if we just clicked a suggestion
-    if (justClickedRef.current) {
-      justClickedRef.current = false;
-      return;
-    }
-
+    console.log('useSmartCardInput: value changed to:', value);
+    
     if (value.length > 0) {
       const suggestions = cardClassificationEngine.getSuggestions(value);
       setSuggestions(suggestions);
@@ -30,6 +25,7 @@ export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCar
       // Check for exact match
       const exact = cardClassificationEngine.getExactMatch(value);
       setExistingRule(exact);
+      console.log('useSmartCardInput: existingRule set to:', exact);
     } else {
       setSuggestions([]);
       setIsOpen(false);
@@ -38,21 +34,20 @@ export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCar
   }, [value]);
 
   const handleSuggestionClick = (suggestion: string, onChange: (value: string) => void) => {
-    console.log('handleSuggestionClick called with:', suggestion);
-    
-    // Set flag to prevent useEffect from triggering
-    justClickedRef.current = true;
+    console.log('useSmartCardInput: handleSuggestionClick called with:', suggestion);
+    console.log('useSmartCardInput: current value before onChange:', value);
     
     // Close the dropdown immediately
     setIsOpen(false);
     
     // Update the input value through the parent component
+    console.log('useSmartCardInput: calling onChange with:', suggestion);
     onChange(suggestion);
     
     // Check if this suggestion has an existing rule and notify parent
     const rule = cardClassificationEngine.getExactMatch(suggestion);
     if (rule && onExistingRuleSelected) {
-      console.log('Existing rule found for suggestion:', rule);
+      console.log('useSmartCardInput: Existing rule found for suggestion:', rule);
       onExistingRuleSelected(rule);
     }
 
@@ -69,7 +64,7 @@ export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCar
   };
 
   const handleInputFocus = () => {
-    if (value.length > 0 && !justClickedRef.current) {
+    if (value.length > 0) {
       setIsOpen(true);
     }
   };
