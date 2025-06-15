@@ -5,15 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
-import { Settings as SettingsIcon, CreditCard, Users } from "lucide-react";
+import { Settings as SettingsIcon, CreditCard, Users, Edit3, Save, X, User, Share } from "lucide-react";
 import CardRulesManager from "@/components/CardRulesManager";
-import { getCategoryNames } from "@/utils/categoryNames";
+import { getCategoryNames, setCategoryNames, CategoryNames } from "@/utils/categoryNames";
 import { getProportionSettings, saveProportionSettings, ProportionSettings } from '@/utils/calculationEngine';
 import { useToast } from "@/hooks/use-toast";
 
 const Settings = () => {
   const [proportions, setProportions] = useState<ProportionSettings>(getProportionSettings());
-  const categoryNames = getCategoryNames();
+  const [categoryNames, setCategoryNamesState] = useState<CategoryNames>(getCategoryNames());
+  const [isEditingNames, setIsEditingNames] = useState(false);
+  const [editedNames, setEditedNames] = useState<CategoryNames>(categoryNames);
   const { toast } = useToast();
 
   const handleSliderChange = (value: number[]) => {
@@ -48,6 +50,43 @@ const Settings = () => {
       title: "Settings saved",
       description: "Your expense split settings have been updated successfully",
     });
+  };
+
+  const handleEditNames = () => {
+    setEditedNames(categoryNames);
+    setIsEditingNames(true);
+  };
+
+  const handleCancelEditNames = () => {
+    setEditedNames(categoryNames);
+    setIsEditingNames(false);
+  };
+
+  const handleSaveNames = () => {
+    if (!editedNames.person1.trim() || !editedNames.person2.trim() || !editedNames.shared.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "All category names must be filled in",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setCategoryNames(editedNames);
+    setCategoryNamesState(editedNames);
+    setIsEditingNames(false);
+    
+    toast({
+      title: "Category names updated",
+      description: "Your expense category names have been updated successfully",
+    });
+  };
+
+  const handleNameInputChange = (field: keyof CategoryNames, value: string) => {
+    setEditedNames(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   return (
@@ -138,29 +177,99 @@ const Settings = () => {
         </CardContent>
       </Card>
 
-      {/* Current Categories Display */}
+      {/* Category Names Management */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Current Categories</CardTitle>
-          <CardDescription>
-            The expense categories you're currently using
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">Category Names</CardTitle>
+              <CardDescription>
+                {isEditingNames ? "Edit your expense category names" : "The expense categories you're currently using"}
+              </CardDescription>
+            </div>
+            {!isEditingNames && (
+              <Button variant="outline" size="sm" onClick={handleEditNames}>
+                <Edit3 className="w-4 h-4 mr-2" />
+                Edit Names
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <h4 className="font-medium text-blue-900">{categoryNames.person1}</h4>
-              <p className="text-sm text-blue-700">Individual expenses</p>
+          {isEditingNames ? (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="person1Name" className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Your Name
+                  </Label>
+                  <Input
+                    id="person1Name"
+                    value={editedNames.person1}
+                    onChange={(e) => handleNameInputChange('person1', e.target.value)}
+                    placeholder="e.g., John, Sarah"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="person2Name" className="flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    Partner's Name
+                  </Label>
+                  <Input
+                    id="person2Name"
+                    value={editedNames.person2}
+                    onChange={(e) => handleNameInputChange('person2', e.target.value)}
+                    placeholder="e.g., Jane, Mike"
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="sharedName" className="flex items-center gap-2">
+                    <Share className="w-4 h-4" />
+                    Shared Expenses Name
+                  </Label>
+                  <Input
+                    id="sharedName"
+                    value={editedNames.shared}
+                    onChange={(e) => handleNameInputChange('shared', e.target.value)}
+                    placeholder="e.g., Joint, Together"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-2 pt-4">
+                <Button variant="outline" onClick={handleCancelEditNames}>
+                  <X className="w-4 h-4 mr-2" />
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={handleSaveNames}
+                  className="bg-blue-600 hover:bg-blue-700"
+                  disabled={!editedNames.person1.trim() || !editedNames.person2.trim() || !editedNames.shared.trim()}
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Names
+                </Button>
+              </div>
             </div>
-            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-              <h4 className="font-medium text-green-900">{categoryNames.person2}</h4>
-              <p className="text-sm text-green-700">Individual expenses</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                <h4 className="font-medium text-blue-900">{categoryNames.person1}</h4>
+                <p className="text-sm text-blue-700">Individual expenses</p>
+              </div>
+              <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                <h4 className="font-medium text-green-900">{categoryNames.person2}</h4>
+                <p className="text-sm text-green-700">Individual expenses</p>
+              </div>
+              <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
+                <h4 className="font-medium text-purple-900">{categoryNames.shared}</h4>
+                <p className="text-sm text-purple-700">Shared expenses</p>
+              </div>
             </div>
-            <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-              <h4 className="font-medium text-purple-900">{categoryNames.shared}</h4>
-              <p className="text-sm text-purple-700">Shared expenses</p>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
