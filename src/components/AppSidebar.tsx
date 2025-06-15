@@ -1,6 +1,6 @@
 
 import { NavLink, useLocation } from "react-router-dom";
-import { Upload, LayoutDashboard, FolderOpen, History } from "lucide-react";
+import { Upload, LayoutDashboard, FolderOpen, History, Settings } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -18,6 +18,7 @@ const navigationItems = [
   { title: "Upload", url: "/upload", icon: Upload },
   { title: "Categorize", url: "/categorize", icon: FolderOpen },
   { title: "History", url: "/history", icon: History },
+  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 export function AppSidebar() {
