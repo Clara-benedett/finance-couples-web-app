@@ -13,12 +13,12 @@ export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCar
   const [existingRule, setExistingRule] = useState<CardClassificationRule | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const isSettingValueRef = useRef(false);
-  const lastSetValueRef = useRef<string>('');
+  const justClickedRef = useRef(false);
 
   useEffect(() => {
-    // Don't trigger suggestions when we're programmatically setting a value
-    if (isSettingValueRef.current && value === lastSetValueRef.current) {
+    // Don't trigger suggestions if we just clicked a suggestion
+    if (justClickedRef.current) {
+      justClickedRef.current = false;
       return;
     }
 
@@ -40,14 +40,13 @@ export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCar
   const handleSuggestionClick = (suggestion: string, onChange: (value: string) => void) => {
     console.log('handleSuggestionClick called with:', suggestion);
     
-    // Set flag and remember what value we're setting
-    isSettingValueRef.current = true;
-    lastSetValueRef.current = suggestion;
+    // Set flag to prevent useEffect from triggering
+    justClickedRef.current = true;
     
-    // Close the dropdown
+    // Close the dropdown immediately
     setIsOpen(false);
     
-    // Update the input value
+    // Update the input value through the parent component
     onChange(suggestion);
     
     // Check if this suggestion has an existing rule and notify parent
@@ -59,12 +58,6 @@ export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCar
 
     // Update existing rule state
     setExistingRule(rule);
-    
-    // Reset the flag after the next tick to allow normal behavior to resume
-    setTimeout(() => {
-      isSettingValueRef.current = false;
-      lastSetValueRef.current = '';
-    }, 50);
   };
 
   const handleInputBlur = (e: React.FocusEvent) => {
@@ -76,7 +69,7 @@ export const useSmartCardInput = ({ value, onExistingRuleSelected }: UseSmartCar
   };
 
   const handleInputFocus = () => {
-    if (value.length > 0 && !isSettingValueRef.current) {
+    if (value.length > 0 && !justClickedRef.current) {
       setIsOpen(true);
     }
   };
