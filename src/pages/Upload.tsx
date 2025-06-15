@@ -91,7 +91,7 @@ const Upload = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <UploadHeader onEditCategories={handleEditCategories} />
 
       {categoryNames && (
@@ -99,7 +99,7 @@ const Upload = () => {
       )}
 
       {/* File Upload Section */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <FileUploadCard
           isDragging={isDragging}
           isProcessing={isProcessing}

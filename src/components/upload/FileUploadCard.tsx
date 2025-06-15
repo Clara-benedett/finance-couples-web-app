@@ -31,20 +31,20 @@ const FileUploadCard = ({
     <Card className={`border-2 border-dashed transition-colors ${
       isDragging ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-blue-400'
     }`}>
-      <CardContent className="p-6">
+      <CardContent className="p-4">
         <div
-          className={`text-center rounded-lg p-6 transition-colors ${
+          className={`text-center rounded-lg p-4 transition-colors ${
             isDragging ? 'bg-blue-50' : ''
           }`}
           onDragOver={onDragOver}
           onDragLeave={onDragLeave}
           onDrop={onDrop}
         >
-          <UploadIcon className="mx-auto h-10 w-10 text-gray-400 mb-3" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <UploadIcon className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+          <h3 className="text-lg font-medium text-gray-900 mb-1">
             Upload Files
           </h3>
-          <p className="text-gray-500 mb-4">
+          <p className="text-gray-500 mb-3">
             Drop CSV or Excel files here or click to upload
           </p>
           <input
