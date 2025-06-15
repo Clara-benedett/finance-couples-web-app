@@ -1,4 +1,3 @@
-
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { ParsedTransaction } from '@/types/transaction';
@@ -144,23 +143,118 @@ function detectExtraFields(headers: string[]): { [key: string]: number } {
 
 export async function parseCSV(file: File): Promise<{ transactions: ParsedTransaction[], detectedFields: string[] }> {
   return new Promise((resolve, reject) => {
-    Papa.parse(file, {
-      header: false, // Parse as array to handle dynamic header detection
-      skipEmptyLines: true,
-      complete: (results) => {
+    try {
+      console.log('Starting CSV parse for file:', file.name);
+      Papa.parse(file, {
+        header: false, // Parse as array to handle dynamic header detection
+        skipEmptyLines: true,
+        complete: (results) => {
+          try {
+            console.log('Papa.parse completed successfully');
+            const data = results.data as any[][];
+            
+            if (data.length === 0) {
+              reject(new Error('CSV file is empty'));
+              return;
+            }
+            
+            console.log('CSV data loaded, total rows:', data.length);
+            
+            const { startRow, headers } = findDataStartRow(data);
+            
+            console.log('CSV Headers found:', headers);
+            console.log('Looking for columns:', COLUMN_MAPPINGS);
+            
+            const dateIndex = findColumnIndex(headers, COLUMN_MAPPINGS.date);
+            const amountIndex = findColumnIndex(headers, COLUMN_MAPPINGS.amount);
+            const descIndex = findColumnIndex(headers, COLUMN_MAPPINGS.description);
+
+            console.log('Column indices found:', { dateIndex, amountIndex, descIndex });
+
+            if (dateIndex === -1 || amountIndex === -1 || descIndex === -1) {
+              reject(new Error(`Required columns not found. Found headers: ${headers.join(', ')}. Please ensure your CSV has Date, Amount, and Description columns.`));
+              return;
+            }
+
+            // Detect extra fields
+            const extraFields = detectExtraFields(headers);
+            const detectedFields = Object.keys(extraFields);
+            
+            console.log('Extra fields detected:', extraFields);
+
+            // Skip the header row and process data
+            const dataRows = data.slice(startRow + 1);
+            
+            const transactions: ParsedTransaction[] = dataRows.map(row => {
+              const transaction: ParsedTransaction = {
+                date: parseDate(row[dateIndex]),
+                amount: parseAmount(row[amountIndex]),
+                description: String(row[descIndex] || 'Unknown'),
+                category: 'UNCLASSIFIED'
+              };
+
+              // Add extra fields if detected
+              if (extraFields.mccCode !== undefined) {
+                transaction.mccCode = parseOptionalField(row[extraFields.mccCode]);
+              }
+              if (extraFields.transactionType !== undefined) {
+                transaction.transactionType = parseOptionalField(row[extraFields.transactionType]);
+              }
+              if (extraFields.location !== undefined) {
+                transaction.location = parseOptionalField(row[extraFields.location]);
+              }
+              if (extraFields.referenceNumber !== undefined) {
+                transaction.referenceNumber = parseOptionalField(row[extraFields.referenceNumber]);
+              }
+
+              return transaction;
+            }).filter(t => t.amount > 0);
+
+            console.log('Parsed transactions:', transactions.length);
+            console.log('Sample transaction with extra fields:', transactions[0]);
+            
+            resolve({ transactions, detectedFields });
+          } catch (error) {
+            console.error('Error processing CSV data:', error);
+            reject(new Error('Failed to parse CSV file: ' + (error as Error).message));
+          }
+        },
+        error: (error) => {
+          console.error('Papa.parse error:', error);
+          reject(new Error(`CSV parsing error: ${error.message}`));
+        }
+      });
+    } catch (error) {
+      console.error('Error in parseCSV:', error);
+      reject(new Error('Failed to initialize CSV parsing: ' + (error as Error).message));
+    }
+  });
+}
+
+export async function parseExcel(file: File): Promise<{ transactions: ParsedTransaction[], detectedFields: string[] }> {
+  return new Promise((resolve, reject) => {
+    try {
+      console.log('Starting Excel parse for file:', file.name);
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
         try {
-          const data = results.data as any[][];
-          
-          if (data.length === 0) {
-            reject(new Error('CSV file is empty'));
+          console.log('FileReader loaded successfully');
+          const data = new Uint8Array(e.target?.result as ArrayBuffer);
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][];
+
+          if (jsonData.length === 0) {
+            reject(new Error('Excel file is empty'));
             return;
           }
+
+          console.log('Excel data loaded, total rows:', jsonData.length);
           
-          console.log('CSV data loaded, total rows:', data.length);
+          const { startRow, headers } = findDataStartRow(jsonData);
           
-          const { startRow, headers } = findDataStartRow(data);
-          
-          console.log('CSV Headers found:', headers);
+          console.log('Excel Headers found:', headers);
           console.log('Looking for columns:', COLUMN_MAPPINGS);
           
           const dateIndex = findColumnIndex(headers, COLUMN_MAPPINGS.date);
@@ -170,7 +264,7 @@ export async function parseCSV(file: File): Promise<{ transactions: ParsedTransa
           console.log('Column indices found:', { dateIndex, amountIndex, descIndex });
 
           if (dateIndex === -1 || amountIndex === -1 || descIndex === -1) {
-            reject(new Error(`Required columns not found. Found headers: ${headers.join(', ')}. Please ensure your CSV has Date, Amount, and Description columns.`));
+            reject(new Error(`Required columns not found. Found headers: ${headers.join(', ')}. Please ensure your Excel file has Date, Amount, and Description columns.`));
             return;
           }
 
@@ -181,7 +275,7 @@ export async function parseCSV(file: File): Promise<{ transactions: ParsedTransa
           console.log('Extra fields detected:', extraFields);
 
           // Skip the header row and process data
-          const dataRows = data.slice(startRow + 1);
+          const dataRows = jsonData.slice(startRow + 1);
           
           const transactions: ParsedTransaction[] = dataRows.map(row => {
             const transaction: ParsedTransaction = {
@@ -213,111 +307,42 @@ export async function parseCSV(file: File): Promise<{ transactions: ParsedTransa
           
           resolve({ transactions, detectedFields });
         } catch (error) {
-          reject(new Error('Failed to parse CSV file'));
+          console.error('Error processing Excel data:', error);
+          reject(new Error('Failed to parse Excel file: ' + (error as Error).message));
         }
-      },
-      error: (error) => {
-        reject(new Error(`CSV parsing error: ${error.message}`));
-      }
-    });
-  });
-}
+      };
 
-export async function parseExcel(file: File): Promise<{ transactions: ParsedTransaction[], detectedFields: string[] }> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    
-    reader.onload = (e) => {
-      try {
-        const data = new Uint8Array(e.target?.result as ArrayBuffer);
-        const workbook = XLSX.read(data, { type: 'array' });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 }) as any[][];
+      reader.onerror = () => {
+        console.error('FileReader error');
+        reject(new Error('Failed to read file'));
+      };
 
-        if (jsonData.length === 0) {
-          reject(new Error('Excel file is empty'));
-          return;
-        }
-
-        console.log('Excel data loaded, total rows:', jsonData.length);
-        
-        const { startRow, headers } = findDataStartRow(jsonData);
-        
-        console.log('Excel Headers found:', headers);
-        console.log('Looking for columns:', COLUMN_MAPPINGS);
-        
-        const dateIndex = findColumnIndex(headers, COLUMN_MAPPINGS.date);
-        const amountIndex = findColumnIndex(headers, COLUMN_MAPPINGS.amount);
-        const descIndex = findColumnIndex(headers, COLUMN_MAPPINGS.description);
-
-        console.log('Column indices found:', { dateIndex, amountIndex, descIndex });
-
-        if (dateIndex === -1 || amountIndex === -1 || descIndex === -1) {
-          reject(new Error(`Required columns not found. Found headers: ${headers.join(', ')}. Please ensure your Excel file has Date, Amount, and Description columns.`));
-          return;
-        }
-
-        // Detect extra fields
-        const extraFields = detectExtraFields(headers);
-        const detectedFields = Object.keys(extraFields);
-        
-        console.log('Extra fields detected:', extraFields);
-
-        // Skip the header row and process data
-        const dataRows = jsonData.slice(startRow + 1);
-        
-        const transactions: ParsedTransaction[] = dataRows.map(row => {
-          const transaction: ParsedTransaction = {
-            date: parseDate(row[dateIndex]),
-            amount: parseAmount(row[amountIndex]),
-            description: String(row[descIndex] || 'Unknown'),
-            category: 'UNCLASSIFIED'
-          };
-
-          // Add extra fields if detected
-          if (extraFields.mccCode !== undefined) {
-            transaction.mccCode = parseOptionalField(row[extraFields.mccCode]);
-          }
-          if (extraFields.transactionType !== undefined) {
-            transaction.transactionType = parseOptionalField(row[extraFields.transactionType]);
-          }
-          if (extraFields.location !== undefined) {
-            transaction.location = parseOptionalField(row[extraFields.location]);
-          }
-          if (extraFields.referenceNumber !== undefined) {
-            transaction.referenceNumber = parseOptionalField(row[extraFields.referenceNumber]);
-          }
-
-          return transaction;
-        }).filter(t => t.amount > 0);
-
-        console.log('Parsed transactions:', transactions.length);
-        console.log('Sample transaction with extra fields:', transactions[0]);
-        
-        resolve({ transactions, detectedFields });
-      } catch (error) {
-        reject(new Error('Failed to parse Excel file'));
-      }
-    };
-
-    reader.onerror = () => {
-      reject(new Error('Failed to read file'));
-    };
-
-    reader.readAsArrayBuffer(file);
+      reader.readAsArrayBuffer(file);
+    } catch (error) {
+      console.error('Error in parseExcel:', error);
+      reject(new Error('Failed to initialize Excel parsing: ' + (error as Error).message));
+    }
   });
 }
 
 export async function parseFile(file: File): Promise<{ transactions: ParsedTransaction[], detectedFields: string[] }> {
-  const extension = file.name.split('.').pop()?.toLowerCase();
-  
-  switch (extension) {
-    case 'csv':
-      return parseCSV(file);
-    case 'xlsx':
-    case 'xls':
-      return parseExcel(file);
-    default:
-      throw new Error('Unsupported file format. Please upload CSV or Excel files.');
+  try {
+    console.log('parseFile called with:', file.name, 'type:', file.type);
+    const extension = file.name.split('.').pop()?.toLowerCase();
+    
+    switch (extension) {
+      case 'csv':
+        console.log('Parsing as CSV');
+        return await parseCSV(file);
+      case 'xlsx':
+      case 'xls':
+        console.log('Parsing as Excel');
+        return await parseExcel(file);
+      default:
+        throw new Error('Unsupported file format. Please upload CSV or Excel files.');
+    }
+  } catch (error) {
+    console.error('Error in parseFile:', error);
+    throw error;
   }
 }

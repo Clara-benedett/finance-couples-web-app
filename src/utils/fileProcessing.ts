@@ -1,3 +1,4 @@
+
 import { parseFile } from "@/utils/fileParser";
 import { transactionStore } from "@/store/transactionStore";
 import { getCategoryNames } from "@/utils/categoryNames";
@@ -17,31 +18,42 @@ export const parseAllFiles = async (
     const file = files[i];
     const cardInfo = cardInfos[i];
     
-    // Update progress for parsing phase (0-60%)
-    updateProgress(i, 10);
-    
-    const { transactions: parsedTransactions } = await parseFile(file);
-    
-    // Update progress after parsing (60%)
-    updateProgress(i, 60);
-    
-    // Add card info to each transaction
-    const transactionsWithCardInfo = parsedTransactions.map(pt => ({
-      ...pt,
-      cardName: cardInfo.name,
-      paidBy: cardInfo.paidBy,
-      autoClassification: cardInfo.autoClassification
-    }));
-    
-    // Update progress after processing (80%)
-    updateProgress(i, 80);
-    
-    allParsedTransactions.push(...transactionsWithCardInfo);
-    
-    // Complete this file (100%)
-    updateProgress(i, 100);
+    try {
+      console.log(`Processing file ${i + 1}/${files.length}: ${file.name}`);
+      
+      // Update progress for parsing phase (0-60%)
+      updateProgress(i, 10);
+      
+      const parseResult = await parseFile(file);
+      console.log(`Successfully parsed file ${file.name}:`, parseResult);
+      
+      // Update progress after parsing (60%)
+      updateProgress(i, 60);
+      
+      // Add card info to each transaction
+      const transactionsWithCardInfo = parseResult.transactions.map(pt => ({
+        ...pt,
+        cardName: cardInfo.name,
+        paidBy: cardInfo.paidBy,
+        autoClassification: cardInfo.autoClassification
+      }));
+      
+      // Update progress after processing (80%)
+      updateProgress(i, 80);
+      
+      allParsedTransactions.push(...transactionsWithCardInfo);
+      
+      // Complete this file (100%)
+      updateProgress(i, 100);
+      
+      console.log(`Completed processing file ${file.name}, added ${transactionsWithCardInfo.length} transactions`);
+    } catch (error) {
+      console.error(`Error processing file ${file.name}:`, error);
+      throw new Error(`Failed to process ${file.name}: ${(error as Error).message}`);
+    }
   }
   
+  console.log(`All files processed successfully. Total transactions: ${allParsedTransactions.length}`);
   return allParsedTransactions;
 };
 
