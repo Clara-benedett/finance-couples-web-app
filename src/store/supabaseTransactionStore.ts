@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase';
 import { Transaction } from '@/types/transaction';
 import { categorizationRulesEngine } from '@/utils/categorizationRules';
@@ -7,6 +8,9 @@ export interface ProportionSettings {
   person1_percentage: number;
   person2_percentage: number;
 }
+
+// Since we have Supabase configured, this is always true
+const isSupabaseConfigured = true;
 
 class SupabaseTransactionStore {
   private transactions: Transaction[] = [];
@@ -351,7 +355,7 @@ class SupabaseTransactionStore {
     return appliedCount;
   }
 
-  // New method to migrate localStorage data to database
+  // Method to migrate localStorage data to database
   async migrateLocalStorageToDatabase(): Promise<boolean> {
     if (!isSupabaseConfigured) return false;
 
@@ -409,7 +413,7 @@ class SupabaseTransactionStore {
     }
   }
 
-  // New methods for proportion settings
+  // Methods for proportion settings
   async getProportionSettings(): Promise<ProportionSettings> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -463,63 +467,6 @@ class SupabaseTransactionStore {
       return true;
     } catch (error) {
       console.error('Error saving proportion settings:', error);
-      return false;
-    }
-  }
-
-  async migrateLocalStorageToDatabase(): Promise<boolean> {
-    if (!isSupabaseConfigured) return false;
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return false;
-
-    try {
-      const localData = localStorage.getItem('expense_tracker_transactions');
-      if (!localData) return true; // No data to migrate
-
-      const localTransactions = JSON.parse(localData);
-      if (!Array.isArray(localTransactions) || localTransactions.length === 0) {
-        return true; // No valid data to migrate
-      }
-
-      // Check if user already has transactions in database
-      const { data: existingTransactions } = await supabase
-        .from('transactions')
-        .select('id')
-        .eq('user_id', user.id)
-        .limit(1);
-
-      if (existingTransactions && existingTransactions.length > 0) {
-        console.log('User already has transactions in database, skipping migration');
-        return true;
-      }
-
-      // Migrate data
-      const dbTransactions = localTransactions.map((t: Transaction) => 
-        this.mapTransactionToDatabase(t, user.id)
-      );
-
-      const { error } = await supabase
-        .from('transactions')
-        .insert(dbTransactions);
-
-      if (error) {
-        console.error('Error migrating data to database:', error);
-        return false;
-      }
-
-      console.log(`Successfully migrated ${localTransactions.length} transactions to database`);
-      
-      // Clear localStorage after successful migration
-      localStorage.removeItem('expense_tracker_transactions');
-      localStorage.removeItem('expense_tracker_version');
-      
-      // Reload data from database
-      await this.loadFromDatabase();
-      
-      return true;
-    } catch (error) {
-      console.error('Error during migration:', error);
       return false;
     }
   }
