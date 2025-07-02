@@ -30,11 +30,7 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={
-                <div style={{background: 'blue', color: 'white', padding: '20px', fontSize: '24px'}}>
-                  SIMPLE ROUTE WORKING - TEST MODE
-                </div>
-              } />
+              <Route path="/" element={<Landing />} />
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
