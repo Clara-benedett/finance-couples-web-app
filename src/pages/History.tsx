@@ -8,7 +8,6 @@ import { Search, Filter, Download, Users, User } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from '@/contexts/AuthContext';
 import { supabaseTransactionStore } from '@/store/supabaseTransactionStore';
-import { transactionStore } from '@/store/transactionStore';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { Transaction } from '@/types/transaction';
 
@@ -20,7 +19,7 @@ const History = () => {
   const [filterMonth, setFilterMonth] = useState<string>("all");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  const activeStore = isSupabaseConfigured && user ? supabaseTransactionStore : transactionStore;
+  const activeStore = supabaseTransactionStore;
 
   useEffect(() => {
     const unsubscribe = activeStore.subscribe(() => {

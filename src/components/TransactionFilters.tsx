@@ -14,6 +14,7 @@ interface TransactionFiltersProps {
   onSelectAll: () => void;
   onClearSelection: () => void;
   onBulkCategoryClick: (category: CategoryType) => void;
+  onBulkDelete?: (ids: string[]) => void;
 }
 
 const TransactionFilters = ({
@@ -22,7 +23,8 @@ const TransactionFilters = ({
   selectedTransactions,
   onSelectAll,
   onClearSelection,
-  onBulkCategoryClick
+  onBulkCategoryClick,
+  onBulkDelete
 }: TransactionFiltersProps) => {
   const clearSearch = () => {
     setSearchTerm('');
@@ -79,6 +81,18 @@ const TransactionFilters = ({
                 onCategoryClick={onBulkCategoryClick}
                 isForBulk={true}
               />
+              {onBulkDelete && (
+                <>
+                  <span className="text-sm text-gray-600 mx-2">or</span>
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={() => onBulkDelete(Array.from(selectedTransactions))}
+                  >
+                    Delete Selected
+                  </Button>
+                </>
+              )}
             </div>
           )}
         </div>

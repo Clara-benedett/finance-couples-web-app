@@ -18,6 +18,7 @@ interface TransactionCategorizerProps {
   transactions: Transaction[];
   onUpdateTransaction: (id: string, category: CategoryType) => void;
   onBulkUpdate: (ids: string[], category: CategoryType) => void;
+  onBulkDelete?: (ids: string[]) => void;
   onRequestRuleSuggestion?: (merchantName: string, category: CategoryType, categoryDisplayName: string) => void;
 }
 
@@ -25,6 +26,7 @@ const TransactionCategorizer = ({
   transactions, 
   onUpdateTransaction, 
   onBulkUpdate,
+  onBulkDelete,
   onRequestRuleSuggestion
 }: TransactionCategorizerProps) => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -180,6 +182,7 @@ const TransactionCategorizer = ({
           onSelectAll={selectAllVisible}
           onClearSelection={clearSelection}
           onBulkCategoryClick={handleBulkCategoryClick}
+          onBulkDelete={onBulkDelete}
         />
 
         {/* Transactions Sections */}
