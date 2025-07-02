@@ -22,11 +22,14 @@ const queryClient = new QueryClient();
 const App = () => {
   console.log("App component is rendering");
   
-  // Simplified test version
   return (
-    <div style={{background: 'blue', color: 'white', padding: '20px', fontSize: '24px'}}>
-      APP IS LOADING - TEST MODE
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <div style={{background: 'orange', color: 'white', padding: '20px', fontSize: '24px'}}>
+          APP WITH AUTH PROVIDER - TEST MODE
+        </div>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 };
 
