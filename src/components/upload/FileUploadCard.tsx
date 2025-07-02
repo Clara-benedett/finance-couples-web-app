@@ -45,13 +45,13 @@ const FileUploadCard = ({
             Upload Files
           </h3>
           <p className="text-gray-500 mb-3">
-            Drop CSV or Excel files here or click to upload
+            Drop CSV, Excel, or PDF files here or click to upload
           </p>
           <input
             ref={fileInputRef}
             type="file"
             multiple
-            accept=".csv,.xlsx,.xls"
+            accept=".csv,.xlsx,.xls,.pdf"
             onChange={(e) => onFileSelection(e.target.files)}
             className="hidden"
             disabled={isProcessing}
