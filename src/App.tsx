@@ -29,9 +29,13 @@ const App = () => {
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <div style={{background: 'green', color: 'white', padding: '20px', fontSize: '24px'}}>
-              ROUTER ADDED - TEST MODE
-            </div>
+            <Routes>
+              <Route path="/" element={
+                <div style={{background: 'blue', color: 'white', padding: '20px', fontSize: '24px'}}>
+                  SIMPLE ROUTE WORKING - TEST MODE
+                </div>
+              } />
+            </Routes>
           </BrowserRouter>
         </TooltipProvider>
       </AuthProvider>
