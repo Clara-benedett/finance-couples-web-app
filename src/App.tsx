@@ -20,34 +20,13 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => {
+  console.log("App component is rendering");
+  
+  // Simplified test version
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Landing />} />
-              <Route path="/auth" element={<AuthForm />} />
-              <Route path="/app" element={
-                <ProtectedRoute>
-                  <AppLayout />
-                </ProtectedRoute>
-              }>
-                <Route index element={<Dashboard />} />
-                <Route path="upload" element={<Upload />} />
-                <Route path="categorize" element={<Categorize />} />
-                <Route path="history" element={<History />} />
-                <Route path="settings" element={<Settings />} />
-              </Route>
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+    <div style={{background: 'blue', color: 'white', padding: '20px', fontSize: '24px'}}>
+      APP IS LOADING - TEST MODE
+    </div>
   );
 };
 
