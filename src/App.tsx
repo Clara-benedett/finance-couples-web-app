@@ -13,6 +13,8 @@ import Upload from "./pages/Upload";
 import Categorize from "./pages/Categorize";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
+import Landing from "./pages/Landing";
+import AuthForm from "./components/auth/AuthForm";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,7 +28,9 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <Routes>
-              <Route path="/" element={
+              <Route path="/" element={<Landing />} />
+              <Route path="/auth" element={<AuthForm />} />
+              <Route path="/app" element={
                 <ProtectedRoute>
                   <AppLayout />
                 </ProtectedRoute>

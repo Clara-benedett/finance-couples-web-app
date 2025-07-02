@@ -28,11 +28,11 @@ const AppHeader = () => {
   };
 
   const navItems = [
-    { path: "/", icon: Home, label: "Dashboard" },
-    { path: "/upload", icon: Upload, label: "Upload" },
-    { path: "/categorize", icon: Tags, label: "Categorize" },
-    { path: "/history", icon: History, label: "History" },
-    { path: "/settings", icon: Settings, label: "Settings" },
+    { path: "/app", icon: Home, label: "Dashboard" },
+    { path: "/app/upload", icon: Upload, label: "Upload" },
+    { path: "/app/categorize", icon: Tags, label: "Categorize" },
+    { path: "/app/history", icon: History, label: "History" },
+    { path: "/app/settings", icon: Settings, label: "Settings" },
   ];
 
   return (

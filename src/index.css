@@ -37,6 +37,9 @@
     --gradient-secondary: linear-gradient(135deg, hsl(220 14.3% 95.9%), hsl(210 40% 98%));
     --gradient-background: linear-gradient(135deg, hsl(262 83% 58%) 0%, hsl(290 100% 75%) 50%, hsl(220 100% 80%) 100%);
     
+    /* Animation keyframes */
+    --animation-float: float 6s ease-in-out infinite;
+    
     /* Shadows */
     --shadow-glow: 0 8px 32px hsl(262 83% 58% / 0.3);
     --shadow-card: 0 10px 25px -5px hsl(220 13% 91% / 0.1), 0 8px 10px -6px hsl(220 13% 91% / 0.1);
@@ -107,4 +110,10 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Keyframe animations */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
 }

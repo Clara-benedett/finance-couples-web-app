@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { useNavigate } from 'react-router-dom';
 
 const AuthForm = () => {
   const [email, setEmail] = useState('');
@@ -19,6 +20,7 @@ const AuthForm = () => {
   const [activeTab, setActiveTab] = useState('signin');
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -34,7 +36,7 @@ const AuthForm = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/`
+          redirectTo: `${window.location.origin}/app`
         }
       });
 
@@ -112,6 +114,7 @@ const AuthForm = () => {
           title: "Welcome back!",
           description: "You have successfully signed in.",
         });
+        navigate('/app');
       }
     } catch (error) {
       toast({
