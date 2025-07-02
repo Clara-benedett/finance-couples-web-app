@@ -13,10 +13,6 @@ const Landing = () => {
   };
 
   return (
-    <>
-      <div style={{background: 'red', color: 'white', padding: '20px'}}>
-        TEST: Landing page is rendering!
-      </div>
     <div className="min-h-screen bg-gradient-background">
       {/* Navigation */}
       <nav className="fixed w-full z-50 bg-white/90 backdrop-blur-md border-b border-border">
@@ -413,7 +409,6 @@ const Landing = () => {
         </div>
       </footer>
     </div>
-    </>
   );
 };
 
