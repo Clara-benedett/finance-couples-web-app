@@ -18,7 +18,7 @@ interface ProportionSettings {
 
 const Settings = () => {
   const [proportions, setProportions] = useState<ProportionSettings>({ person1Percentage: 50, person2Percentage: 50 });
-  const [categoryNames, setCategoryNamesState] = useState<CategoryNames>(getCategoryNames());
+  const [categoryNames, setCategoryNamesState] = useState<CategoryNames>({ person1: 'Person A', person2: 'Person B', shared: 'Shared' });
   const [isEditingNames, setIsEditingNames] = useState(false);
   const [editedNames, setEditedNames] = useState<CategoryNames>(categoryNames);
   const [isClearing, setIsClearing] = useState(false);

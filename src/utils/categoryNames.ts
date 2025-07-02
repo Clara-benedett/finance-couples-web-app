@@ -8,6 +8,7 @@ export interface CategoryNames {
 const STORAGE_KEY = 'categoryNames';
 
 export const getCategoryNames = (): CategoryNames => {
+  // For non-authenticated users, fallback to localStorage
   const savedNames = localStorage.getItem(STORAGE_KEY);
   if (savedNames) {
     try {
@@ -33,6 +34,7 @@ export const getCategoryNamesFromProfile = (person1Name: string | null, person2N
 };
 
 export const setCategoryNames = (names: CategoryNames): void => {
+  // Only save to localStorage for non-authenticated users
   localStorage.setItem(STORAGE_KEY, JSON.stringify(names));
 };
 

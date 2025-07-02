@@ -16,6 +16,7 @@ class SupabaseTransactionStore {
   private transactions: Transaction[] = [];
   private listeners: (() => void)[] = [];
   private isInitialized = false;
+  public user: any = null;
 
   constructor() {
     this.initializeStore();
@@ -23,18 +24,31 @@ class SupabaseTransactionStore {
 
   private async initializeStore() {
     try {
-      await this.loadFromDatabase();
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      this.user = user;
+      
+      if (user) {
+        await this.loadFromDatabase();
+      } else {
+        // Only fallback to localStorage if no user is authenticated
+        this.loadFromLocalStorage();
+      }
       this.isInitialized = true;
     } catch (error) {
       console.error('Error initializing Supabase store:', error);
-      // Fallback to localStorage if database fails
       this.loadFromLocalStorage();
     }
   }
 
   private async loadFromDatabase() {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    this.user = user;
+    
+    if (!user) {
+      console.log('No authenticated user, skipping database load');
+      return;
+    }
 
     const { data, error } = await supabase
       .from('transactions')
@@ -48,7 +62,7 @@ class SupabaseTransactionStore {
     }
 
     this.transactions = data?.map(this.mapDatabaseToTransaction) || [];
-    console.log(`Loaded ${this.transactions.length} transactions from database`);
+    console.log(`Loaded ${this.transactions.length} transactions from database for user ${user.email}`);
   }
 
   private loadFromLocalStorage() {
@@ -110,9 +124,10 @@ class SupabaseTransactionStore {
 
   async addTransactions(newTransactions: Transaction[], skipDuplicateCheck: boolean = false) {
     const { data: { user } } = await supabase.auth.getUser();
+    this.user = user;
+    
     if (!user) {
-      // Fallback to localStorage behavior
-      this.addTransactionsLocal(newTransactions, skipDuplicateCheck);
+      console.warn('No authenticated user - transactions should not be added without authentication');
       return;
     }
 
@@ -180,13 +195,13 @@ class SupabaseTransactionStore {
   }
 
   async addManualTransaction(transaction: Transaction) {
-    if (!isSupabaseConfigured) {
-      this.addManualTransactionLocal(transaction);
+    const { data: { user } } = await supabase.auth.getUser();
+    this.user = user;
+    
+    if (!user) {
+      console.warn('No authenticated user - manual transactions should not be added without authentication');
       return;
     }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
 
     try {
       const dbTransaction = this.mapTransactionToDatabase(transaction, user.id);
@@ -229,13 +244,13 @@ class SupabaseTransactionStore {
   }
 
   async updateTransaction(id: string, updates: Partial<Transaction>) {
-    if (!isSupabaseConfigured) {
-      this.updateTransactionLocal(id, updates);
+    const { data: { user } } = await supabase.auth.getUser();
+    this.user = user;
+    
+    if (!user) {
+      console.warn('No authenticated user - transactions should not be updated without authentication');
       return;
     }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
 
     try {
       const dbUpdates = {
@@ -276,14 +291,13 @@ class SupabaseTransactionStore {
   }
 
   async clearTransactions() {
-    if (!isSupabaseConfigured) {
-      this.transactions = [];
-      this.notifyListeners();
+    const { data: { user } } = await supabase.auth.getUser();
+    this.user = user;
+    
+    if (!user) {
+      console.warn('No authenticated user - transactions should not be cleared without authentication');
       return;
     }
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
 
     try {
       const { error } = await supabase
@@ -416,10 +430,11 @@ class SupabaseTransactionStore {
   // Methods for proportion settings
   async getProportionSettings(): Promise<ProportionSettings> {
     const { data: { user } } = await supabase.auth.getUser();
+    this.user = user;
+    
     if (!user) {
-      // Fallback to localStorage
-      const stored = localStorage.getItem('expense_tracker_proportions');
-      return stored ? JSON.parse(stored) : { person1_percentage: 50, person2_percentage: 50 };
+      console.warn('No authenticated user - should not access proportion settings without authentication');
+      return { person1_percentage: 50, person2_percentage: 50 };
     }
 
     try {
@@ -443,10 +458,11 @@ class SupabaseTransactionStore {
 
   async saveProportionSettings(settings: ProportionSettings): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
+    this.user = user;
+    
     if (!user) {
-      // Fallback to localStorage
-      localStorage.setItem('expense_tracker_proportions', JSON.stringify(settings));
-      return true;
+      console.warn('No authenticated user - should not save proportion settings without authentication');
+      return false;
     }
 
     try {
