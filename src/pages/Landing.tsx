@@ -25,6 +25,9 @@ const Landing = () => {
               <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Features</a>
               <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">How It Works</a>
               <a href="#pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a>
+              <Button variant="ghost" onClick={handleGetStarted} className="text-muted-foreground hover:text-foreground">
+                Log In
+              </Button>
               <Button onClick={handleGetStarted}>
                 Start Free Trial
               </Button>
