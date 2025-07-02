@@ -470,6 +470,55 @@ class SupabaseTransactionStore {
       return false;
     }
   }
+
+  async saveCategoryNames(person1Name: string, person2Name: string): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          person1_name: person1Name,
+          person2_name: person2Name,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error saving category names:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error saving category names:', error);
+      return false;
+    }
+  }
+
+  async getCategoryNames(): Promise<{ person1_name: string | null; person2_name: string | null }> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { person1_name: null, person2_name: null };
+
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('person1_name, person2_name')
+        .eq('id', user.id)
+        .single();
+
+      if (error) {
+        console.error('Error loading category names:', error);
+        return { person1_name: null, person2_name: null };
+      }
+
+      return data || { person1_name: null, person2_name: null };
+    } catch (error) {
+      console.error('Error loading category names:', error);
+      return { person1_name: null, person2_name: null };
+    }
+  }
 }
 
 export const supabaseTransactionStore = new SupabaseTransactionStore();

@@ -26,24 +26,40 @@ const Settings = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Load proportion settings from Supabase
+  // Load settings from Supabase
   useEffect(() => {
-    const loadProportions = async () => {
+    const loadSettings = async () => {
       if (user) {
         try {
+          // Load proportion settings
           const settings = await supabaseTransactionStore.getProportionSettings();
           setProportions({
             person1Percentage: settings.person1_percentage,
             person2Percentage: settings.person2_percentage,
           });
+
+          // Load category names from database
+          const categoryData = await supabaseTransactionStore.getCategoryNames();
+          const dbCategoryNames = {
+            person1: categoryData.person1_name || 'Person A',
+            person2: categoryData.person2_name || 'Person B',
+            shared: 'Shared'
+          };
+          setCategoryNamesState(dbCategoryNames);
+          setEditedNames(dbCategoryNames);
         } catch (error) {
-          console.error('Error loading proportions:', error);
+          console.error('Error loading settings:', error);
         }
+      } else {
+        // Load from localStorage for non-authenticated users
+        const localNames = getCategoryNames();
+        setCategoryNamesState(localNames);
+        setEditedNames(localNames);
       }
       setLoading(false);
     };
 
-    loadProportions();
+    loadSettings();
   }, [user]);
 
   const handleSliderChange = (value: number[]) => {
@@ -110,7 +126,7 @@ const Settings = () => {
     setIsEditingNames(false);
   };
 
-  const handleSaveNames = () => {
+  const handleSaveNames = async () => {
     if (!editedNames.person1.trim() || !editedNames.person2.trim() || !editedNames.shared.trim()) {
       toast({
         title: "Validation Error",
@@ -120,7 +136,26 @@ const Settings = () => {
       return;
     }
 
-    setCategoryNames(editedNames);
+    // Save to database if authenticated
+    if (user) {
+      const success = await supabaseTransactionStore.saveCategoryNames(
+        editedNames.person1,
+        editedNames.person2
+      );
+      
+      if (!success) {
+        toast({
+          title: "Error saving names",
+          description: "There was an error saving your category names",
+          variant: "destructive",
+        });
+        return;
+      }
+    } else {
+      // Fallback to localStorage for non-authenticated users
+      setCategoryNames(editedNames);
+    }
+
     setCategoryNamesState(editedNames);
     setIsEditingNames(false);
     

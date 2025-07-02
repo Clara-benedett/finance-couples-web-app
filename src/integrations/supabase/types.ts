@@ -179,7 +179,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      update_profile_names: {
+        Args: { p_person1_name: string; p_person2_name: string }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never

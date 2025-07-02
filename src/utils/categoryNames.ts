@@ -24,6 +24,14 @@ export const getCategoryNames = (): CategoryNames => {
   };
 };
 
+export const getCategoryNamesFromProfile = (person1Name: string | null, person2Name: string | null): CategoryNames => {
+  return {
+    person1: person1Name || 'Person A',
+    person2: person2Name || 'Person B',
+    shared: 'Shared'
+  };
+};
+
 export const setCategoryNames = (names: CategoryNames): void => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(names));
 };
