@@ -64,13 +64,29 @@ const Dashboard = () => {
 
   // Update proportions when they change
   useEffect(() => {
+    const loadProportions = async () => {
+      if (isSupabaseConfigured && user) {
+        const dbProportions = await supabaseTransactionStore.getProportionSettings();
+        setProportions({
+          person1Percentage: dbProportions.person1_percentage,
+          person2Percentage: dbProportions.person2_percentage,
+        });
+      } else {
+        setProportions(getProportionSettings());
+      }
+    };
+
+    loadProportions();
+
     const handleStorageChange = () => {
-      setProportions(getProportionSettings());
+      if (!isSupabaseConfigured || !user) {
+        setProportions(getProportionSettings());
+      }
     };
     
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
+  }, [user]);
 
   const calculations = calculateExpenses(transactions, proportions);
   const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });

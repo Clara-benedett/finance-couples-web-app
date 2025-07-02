@@ -5,32 +5,39 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Filter, Download, Users, User } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useAuth } from '@/contexts/AuthContext';
+import { supabaseTransactionStore } from '@/store/supabaseTransactionStore';
+import { transactionStore } from '@/store/transactionStore';
+import { isSupabaseConfigured } from '@/lib/supabase';
+import { Transaction } from '@/types/transaction';
 
-interface HistoryExpense {
-  id: number;
-  description: string;
-  amount: number;
-  date: string;
-  category: "shared" | "personal";
-  month: string;
-}
 
 const History = () => {
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("all");
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  const expenses: HistoryExpense[] = [
-    { id: 1, description: "Whole Foods Market", amount: 127.50, date: "2024-01-15", category: "shared", month: "2024-01" },
-    { id: 2, description: "Starbucks Coffee", amount: 12.75, date: "2024-01-15", category: "personal", month: "2024-01" },
-    { id: 3, description: "Netflix Subscription", amount: 15.99, date: "2024-01-14", category: "shared", month: "2024-01" },
-    { id: 4, description: "Gas Station", amount: 45.20, date: "2024-01-14", category: "personal", month: "2024-01" },
-    { id: 5, description: "Target Store", amount: 89.99, date: "2024-01-13", category: "shared", month: "2024-01" },
-    { id: 6, description: "Restaurant Dinner", amount: 85.00, date: "2023-12-28", category: "shared", month: "2023-12" },
-    { id: 7, description: "Book Purchase", amount: 24.99, date: "2023-12-25", category: "personal", month: "2023-12" },
-    { id: 8, description: "Grocery Store", amount: 156.30, date: "2023-12-22", category: "shared", month: "2023-12" },
-  ];
+  const activeStore = isSupabaseConfigured && user ? supabaseTransactionStore : transactionStore;
+
+  useEffect(() => {
+    const unsubscribe = activeStore.subscribe(() => {
+      setTransactions(activeStore.getTransactions());
+    });
+    setTransactions(activeStore.getTransactions());
+    return unsubscribe;
+  }, [activeStore]);
+
+  const expenses = transactions.map(t => ({
+    id: t.id,
+    description: t.description,
+    amount: t.amount,
+    date: t.date,
+    category: t.category === 'person1' || t.category === 'person2' ? "personal" : "shared",
+    month: new Date(t.date).toISOString().substring(0, 7)
+  }));
 
   const filteredExpenses = expenses.filter(expense => {
     const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -193,7 +200,7 @@ const History = () => {
                   <div className="text-right">
                     <div className="font-medium text-gray-900">${expense.amount.toFixed(2)}</div>
                   </div>
-                  {getCategoryBadge(expense.category)}
+                  {getCategoryBadge(expense.category as "shared" | "personal")}
                 </div>
               </div>
             ))}

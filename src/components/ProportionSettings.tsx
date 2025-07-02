@@ -7,6 +7,9 @@ import { Slider } from "@/components/ui/slider";
 import { Settings, Users } from "lucide-react";
 import { getCategoryNames } from '@/utils/categoryNames';
 import { ProportionSettings, saveProportionSettings } from '@/utils/calculationEngine';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabaseTransactionStore } from '@/store/supabaseTransactionStore';
+import { isSupabaseConfigured } from '@/lib/supabase';
 
 interface ProportionSettingsProps {
   proportions: ProportionSettings;
@@ -15,6 +18,7 @@ interface ProportionSettingsProps {
 }
 
 const ProportionSettingsComponent = ({ proportions, onUpdate, onClose }: ProportionSettingsProps) => {
+  const { user } = useAuth();
   const [localProportions, setLocalProportions] = useState(proportions);
   const categoryNames = getCategoryNames();
 
@@ -44,8 +48,15 @@ const ProportionSettingsComponent = ({ proportions, onUpdate, onClose }: Proport
     }
   };
 
-  const handleSave = () => {
-    saveProportionSettings(localProportions);
+  const handleSave = async () => {
+    if (isSupabaseConfigured && user) {
+      await supabaseTransactionStore.saveProportionSettings({
+        person1_percentage: localProportions.person1Percentage,
+        person2_percentage: localProportions.person2Percentage,
+      });
+    } else {
+      saveProportionSettings(localProportions);
+    }
     onUpdate(localProportions);
     if (onClose) onClose();
   };
