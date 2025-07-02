@@ -125,11 +125,22 @@ const AuthForm = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Couply Finance</CardTitle>
-          <CardDescription>
+    <div className="min-h-screen flex items-center justify-center bg-gradient-background p-4 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-gradient-primary opacity-20 blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 rounded-full bg-gradient-primary opacity-20 blur-3xl"></div>
+      </div>
+      
+      <Card className="w-full max-w-md shadow-glow backdrop-blur-sm bg-card/95 border-0 relative z-10">
+        <CardHeader className="text-center space-y-4 pb-8">
+          <div className="mx-auto w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center mb-2">
+            <span className="text-2xl">💕</span>
+          </div>
+          <CardTitle className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+            Couply Finance
+          </CardTitle>
+          <CardDescription className="text-base">
             Manage your shared expenses together
           </CardDescription>
         </CardHeader>

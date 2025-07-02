@@ -9,7 +9,171 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      categorization_rules: {
+        Row: {
+          created_at: string
+          id: string
+          rule_data: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rule_data: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rule_data?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "categorization_rules_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          person1_name: string | null
+          person2_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          person1_name?: string | null
+          person2_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          person1_name?: string | null
+          person2_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      proportion_settings: {
+        Row: {
+          created_at: string
+          id: string
+          person1_percentage: number | null
+          person2_percentage: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          person1_percentage?: number | null
+          person2_percentage?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          person1_percentage?: number | null
+          person2_percentage?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proportion_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          amount: number
+          auto_applied_rule: boolean | null
+          card_name: string
+          category: string
+          created_at: string
+          date: string
+          description: string
+          id: string
+          is_classified: boolean | null
+          is_manual_entry: boolean | null
+          location: string | null
+          mcc_code: string | null
+          paid_by: string
+          payment_method: string | null
+          reference_number: string | null
+          transaction_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          auto_applied_rule?: boolean | null
+          card_name: string
+          category: string
+          created_at?: string
+          date: string
+          description: string
+          id: string
+          is_classified?: boolean | null
+          is_manual_entry?: boolean | null
+          location?: string | null
+          mcc_code?: string | null
+          paid_by: string
+          payment_method?: string | null
+          reference_number?: string | null
+          transaction_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          auto_applied_rule?: boolean | null
+          card_name?: string
+          category?: string
+          created_at?: string
+          date?: string
+          description?: string
+          id?: string
+          is_classified?: boolean | null
+          is_manual_entry?: boolean | null
+          location?: string | null
+          mcc_code?: string | null
+          paid_by?: string
+          payment_method?: string | null
+          reference_number?: string | null
+          transaction_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
