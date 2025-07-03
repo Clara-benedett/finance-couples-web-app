@@ -509,23 +509,32 @@ class SupabaseTransactionStore {
 
   async saveCategoryNames(person1Name: string, person2Name: string): Promise<boolean> {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return false;
+    if (!user) {
+      console.warn('🔍 saveCategoryNames: No authenticated user');
+      return false;
+    }
+
+    console.log('🔍 saveCategoryNames called with:', { user_id: user.id, person1Name, person2Name });
 
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('profiles')
         .update({
           person1_name: person1Name,
           person2_name: person2Name,
           updated_at: new Date().toISOString(),
         })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select();
+
+      console.log('📊 saveCategoryNames result:', { data, error });
 
       if (error) {
         console.error('Error saving category names:', error);
         return false;
       }
 
+      console.log('✅ Category names saved successfully:', data);
       return true;
     } catch (error) {
       console.error('Error saving category names:', error);
@@ -535,23 +544,38 @@ class SupabaseTransactionStore {
 
   async getCategoryNames(): Promise<{ person1_name: string | null; person2_name: string | null }> {
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { person1_name: null, person2_name: null };
+    if (!user) {
+      console.warn('🔍 getCategoryNames: No authenticated user');
+      return { person1_name: null, person2_name: null };
+    }
+
+    console.log('🔍 getCategoryNames called for user:', user.id);
 
     try {
       const { data, error } = await supabase
         .from('profiles')
         .select('person1_name, person2_name')
         .eq('id', user.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle() instead of single() to handle missing profiles
+
+      console.log('📊 getCategoryNames result:', { data, error });
 
       if (error) {
         console.error('Error loading category names:', error);
+        console.log('🔄 Returning null values due to error');
         return { person1_name: null, person2_name: null };
       }
 
-      return data || { person1_name: null, person2_name: null };
+      if (!data) {
+        console.log('🔄 No profile found, returning null values');
+        return { person1_name: null, person2_name: null };
+      }
+
+      console.log('✅ Returning category names:', data);
+      return data;
     } catch (error) {
       console.error('Error loading category names:', error);
+      console.log('🔄 Returning null values due to exception');
       return { person1_name: null, person2_name: null };
     }
   }

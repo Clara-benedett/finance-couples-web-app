@@ -29,13 +29,10 @@ const Settings = () => {
   // Load settings from Supabase
   useEffect(() => {
     const loadSettings = async () => {
-      console.log('🔄 Settings useEffect triggered, user:', user?.id);
-      
       if (user) {
         try {
           // Load proportion settings
           const settings = await supabaseTransactionStore.getProportionSettings();
-          console.log('📖 Loaded settings in useEffect:', settings);
           
           setProportions({
             person1Percentage: settings.person1_percentage,
@@ -55,7 +52,6 @@ const Settings = () => {
           console.error('Error loading settings:', error);
         }
       } else {
-        console.log('🔄 No user, loading from localStorage');
         // Load from localStorage for non-authenticated users
         const localNames = getCategoryNames();
         setCategoryNamesState(localNames);
@@ -98,14 +94,10 @@ const Settings = () => {
 
   const handleSaveProportions = async () => {
     try {
-      console.log('🔄 Saving proportions:', proportions);
-      
       const success = await supabaseTransactionStore.saveProportionSettings({
         person1_percentage: proportions.person1Percentage,
         person2_percentage: proportions.person2Percentage,
       });
-
-      console.log('💾 Save result:', success);
 
       if (success) {
         // Small delay to ensure database write is committed
@@ -113,7 +105,6 @@ const Settings = () => {
         
         // Reload the settings from database to confirm they were saved
         const updatedSettings = await supabaseTransactionStore.getProportionSettings();
-        console.log('📖 Loaded settings after save:', updatedSettings);
         
         // Only update state if we actually got valid data back
         if (updatedSettings && typeof updatedSettings.person1_percentage === 'number') {
@@ -121,9 +112,6 @@ const Settings = () => {
             person1Percentage: updatedSettings.person1_percentage,
             person2Percentage: updatedSettings.person2_percentage,
           });
-          console.log('✅ Updated local state with:', updatedSettings);
-        } else {
-          console.error('❌ Invalid data returned from database:', updatedSettings);
         }
         
         toast({
@@ -131,7 +119,6 @@ const Settings = () => {
           description: "Your expense split settings have been updated successfully",
         });
       } else {
-        console.error('❌ Save failed');
         toast({
           title: "Error saving settings",
           description: "There was an error saving your settings",
@@ -139,7 +126,6 @@ const Settings = () => {
         });
       }
     } catch (error) {
-      console.error('❌ Exception during save:', error);
       toast({
         title: "Error saving settings",
         description: "There was an error saving your settings",
