@@ -7,7 +7,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Transaction } from "@/types/transaction";
 import { categorizationRulesEngine } from "@/utils/categorizationRules";
-import { getCategoryNames } from "@/utils/categoryNames";
+import { useCategoryNames } from "@/hooks/useCategoryNames";
 import ProgressCard from "./ProgressCard";
 import TransactionFilters from "./TransactionFilters";
 import TransactionCard from "./TransactionCard";
@@ -31,7 +31,7 @@ const TransactionCategorizer = ({
   const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
   const [isAlreadyCategorizedExpanded, setIsAlreadyCategorizedExpanded] = useState(false);
   const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(null);
-  const categoryNames = getCategoryNames();
+  const { categoryNames } = useCategoryNames();
 
   const filteredTransactions = useMemo(() => {
     return transactions.filter(transaction =>

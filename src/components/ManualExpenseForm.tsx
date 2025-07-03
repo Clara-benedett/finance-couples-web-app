@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import CategoryButtons from "./CategoryButtons";
 import PaymentMethodSelect from "./PaymentMethodSelect";
-import { getCategoryNames } from "@/utils/categoryNames";
+import { useCategoryNames } from "@/hooks/useCategoryNames";
 
 type CategoryType = "person1" | "person2" | "shared" | "UNCLASSIFIED";
 
@@ -40,7 +40,7 @@ const ManualExpenseForm = ({ onSubmit, onAddAnother, onCancel, isSubmitting = fa
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const categoryNames = getCategoryNames();
+  const { categoryNames } = useCategoryNames();
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/[^\d]/g, '');

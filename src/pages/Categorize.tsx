@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { transactionStore } from "@/store/transactionStore";
 import { Transaction } from "@/types/transaction";
-import { getCategoryNames } from "@/utils/categoryNames";
+import { useCategoryNames } from "@/hooks/useCategoryNames";
 import { categorizationRulesEngine } from "@/utils/categorizationRules";
 import TransactionCategorizer from "@/components/TransactionCategorizer";
 import CategorizeHeader from "@/components/CategorizeHeader";
@@ -19,7 +19,7 @@ const Categorize = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showCategoryEdit, setShowCategoryEdit] = useState(false);
   const [showManualExpense, setShowManualExpense] = useState(false);
-  const [categoryNames, setCategoryNames] = useState(getCategoryNames());
+  const { categoryNames } = useCategoryNames();
   const [ruleSuggestion, setRuleSuggestion] = useState<{
     merchantName: string;
     category: CategoryType;
@@ -145,7 +145,8 @@ const Categorize = () => {
   };
 
   const handleCategoryUpdate = (names: any) => {
-    setCategoryNames(names);
+    // Category names are now handled by the useCategoryNames hook
+    // The hook will automatically update when database changes
     setShowCategoryEdit(false);
   };
 

@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
-import { getCategoryNames } from "@/utils/categoryNames";
+import { useCategoryNames } from "@/hooks/useCategoryNames";
 
 type CategoryType = "person1" | "person2" | "shared" | "UNCLASSIFIED";
 
@@ -18,7 +18,7 @@ const CategoryButtons = ({
   isForBulk = false, 
   isDisabled = false 
 }: CategoryButtonsProps) => {
-  const categoryNames = getCategoryNames();
+  const { categoryNames } = useCategoryNames();
 
   const getCategoryButtonClass = (category: CategoryType, currentCategory: string) => {
     const baseClass = "relative overflow-hidden transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg active:scale-95 min-w-[100px] touch-manipulation rounded-full";

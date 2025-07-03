@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Settings, Users, User, Share } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabaseTransactionStore } from "@/store/supabaseTransactionStore";
 
 interface CategoryNames {
   person1: string;
@@ -21,27 +23,50 @@ interface CategorySetupProps {
 const STORAGE_KEY = 'categoryNames';
 
 const CategorySetup = ({ onComplete, isEditing = false, onCancel }: CategorySetupProps) => {
+  const { user } = useAuth();
   const [names, setNames] = useState<CategoryNames>({
-    person1: 'Person A',
-    person2: 'Person B',
+    person1: 'Person 1',
+    person2: 'Person 2',
     shared: 'Shared'
   });
 
   useEffect(() => {
-    // Load saved names from localStorage
-    const savedNames = localStorage.getItem(STORAGE_KEY);
-    if (savedNames) {
-      try {
-        setNames(JSON.parse(savedNames));
-      } catch (error) {
-        console.error('Error loading category names:', error);
+    const loadNames = async () => {
+      if (user) {
+        try {
+          const categoryData = await supabaseTransactionStore.getCategoryNames();
+          setNames({
+            person1: categoryData.person1_name || 'Person 1',
+            person2: categoryData.person2_name || 'Person 2',
+            shared: 'Shared'
+          });
+        } catch (error) {
+          console.error('Error loading category names:', error);
+        }
+      } else {
+        // Load from localStorage for non-authenticated users
+        const savedNames = localStorage.getItem(STORAGE_KEY);
+        if (savedNames) {
+          try {
+            setNames(JSON.parse(savedNames));
+          } catch (error) {
+            console.error('Error loading category names:', error);
+          }
+        }
       }
-    }
-  }, []);
+    };
 
-  const handleSave = () => {
-    // Save to localStorage
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(names));
+    loadNames();
+  }, [user]);
+
+  const handleSave = async () => {
+    if (user) {
+      // Save to database for authenticated users
+      await supabaseTransactionStore.saveCategoryNames(names.person1, names.person2);
+    } else {
+      // Save to localStorage for non-authenticated users
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(names));
+    }
     onComplete(names);
   };
 

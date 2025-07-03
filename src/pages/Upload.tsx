@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CategoryNames, getCategoryNames } from "@/utils/categoryNames";
+import { useCategoryNames } from "@/hooks/useCategoryNames";
 import CategorySetup from "@/components/CategorySetup";
 import CardNameDialog from "@/components/CardNameDialog";
 import ManualExpenseDialog from "@/components/ManualExpenseDialog";
@@ -14,9 +14,9 @@ import { useUploadLogic } from "@/hooks/useUploadLogic";
 import { CardInfo } from "@/types/upload";
 
 const Upload = () => {
+  const { categoryNames } = useCategoryNames();
   const [showCardNameDialog, setShowCardNameDialog] = useState(false);
-  const [showCategorySetup, setShowCategorySetup] = useState(true);
-  const [categoryNames, setCategoryNames] = useState<CategoryNames | null>(null);
+  const [showCategorySetup, setShowCategorySetup] = useState(false);
   const [showManualExpense, setShowManualExpense] = useState(false);
 
   const {
@@ -53,8 +53,7 @@ const Upload = () => {
     setPendingFiles([]);
   };
 
-  const handleCategorySetupComplete = (names: CategoryNames) => {
-    setCategoryNames(names);
+  const handleCategorySetupComplete = () => {
     setShowCategorySetup(false);
   };
 
@@ -82,8 +81,8 @@ const Upload = () => {
         
         <CategorySetup 
           onComplete={handleCategorySetupComplete}
-          isEditing={categoryNames !== null}
-          onCancel={categoryNames ? () => setShowCategorySetup(false) : undefined}
+          isEditing={true}
+          onCancel={() => setShowCategorySetup(false)}
         />
       </div>
     );
@@ -93,9 +92,7 @@ const Upload = () => {
     <div className="space-y-4">
       <UploadHeader onEditCategories={handleEditCategories} />
 
-      {categoryNames && (
-        <CategoryDisplay categoryNames={categoryNames} />
-      )}
+      <CategoryDisplay categoryNames={categoryNames} />
 
       {/* File Upload Section */}
       <div className="space-y-3">
