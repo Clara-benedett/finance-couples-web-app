@@ -32,6 +32,18 @@ const App = () => {
             <Routes>
               <Route path="/" element={<Landing />} />
               <Route path="/auth" element={<AuthForm />} />
+              <Route path="/app" element={
+                <ProtectedRoute>
+                  <AppLayout />
+                </ProtectedRoute>
+              }>
+                <Route index element={<Dashboard />} />
+                <Route path="upload" element={<Upload />} />
+                <Route path="categorize" element={<Categorize />} />
+                <Route path="history" element={<History />} />
+                <Route path="settings" element={<Settings />} />
+              </Route>
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
