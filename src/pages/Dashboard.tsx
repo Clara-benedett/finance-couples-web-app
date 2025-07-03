@@ -88,6 +88,23 @@ const Dashboard = () => {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [user]);
 
+  // Add a listener for proportion changes when user navigates back from settings
+  useEffect(() => {
+    const handleProportionRefresh = async () => {
+      if (isSupabaseConfigured && user) {
+        const dbProportions = await supabaseTransactionStore.getProportionSettings();
+        setProportions({
+          person1Percentage: dbProportions.person1_percentage,
+          person2Percentage: dbProportions.person2_percentage,
+        });
+      }
+    };
+
+    // Listen for focus events to refresh proportions when user comes back from settings
+    window.addEventListener('focus', handleProportionRefresh);
+    return () => window.removeEventListener('focus', handleProportionRefresh);
+  }, [user]);
+
   const calculations = calculateExpenses(transactions, proportions);
   const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
