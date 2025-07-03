@@ -487,6 +487,8 @@ class SupabaseTransactionStore {
           person1_percentage: settings.person1_percentage,
           person2_percentage: settings.person2_percentage,
           updated_at: new Date().toISOString(),
+        }, {
+          onConflict: 'user_id'  // Specify which column to use for conflict resolution
         })
         .select();
 

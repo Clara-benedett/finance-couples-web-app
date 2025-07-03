@@ -97,7 +97,7 @@ export type Database = {
           {
             foreignKeyName: "proportion_settings_user_id_fkey"
             columns: ["user_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
