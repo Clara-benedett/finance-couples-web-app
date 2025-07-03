@@ -429,57 +429,41 @@ class SupabaseTransactionStore {
 
   // Methods for proportion settings
   async getProportionSettings(): Promise<ProportionSettings> {
-    const { data: { user } } = await supabase.auth.getUser();
-    this.user = user;
-    
-    if (!user) {
-      console.warn('No authenticated user - should not access proportion settings without authentication');
-      return { person1_percentage: 50, person2_percentage: 50 };
-    }
-
-    console.log('🔍 getProportionSettings called for user:', user.id);
-
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      this.user = user;
+      
+      if (!user) {
+        return { person1_percentage: 50, person2_percentage: 50 };
+      }
+
       const { data, error } = await supabase
         .from('proportion_settings')
         .select('person1_percentage, person2_percentage')
         .eq('user_id', user.id)
-        .maybeSingle(); // Use maybeSingle() instead of single() to handle no rows
-
-      console.log('📖 Database query result:', { data, error });
+        .maybeSingle();
 
       if (error) {
-        console.error('Error loading proportion settings:', error);
-        console.log('🔄 Returning default 50-50 due to error');
-        return { person1_percentage: 50, person2_percentage: 50 };
+        console.error('Database error:', error);
+        throw new Error(`Failed to load proportion settings: ${error.message}`);
       }
 
-      if (!data) {
-        console.log('🔄 No data found, returning default 50-50');
-        return { person1_percentage: 50, person2_percentage: 50 };
-      }
-
-      console.log('✅ Returning proportion settings:', data);
-      return data;
+      return data || { person1_percentage: 50, person2_percentage: 50 };
     } catch (error) {
-      console.error('Error getting proportion settings:', error);
-      console.log('🔄 Returning default 50-50 due to exception');
+      console.error('Operation failed:', error);
       return { person1_percentage: 50, person2_percentage: 50 };
     }
   }
 
   async saveProportionSettings(settings: ProportionSettings): Promise<boolean> {
-    const { data: { user } } = await supabase.auth.getUser();
-    this.user = user;
-    
-    if (!user) {
-      console.warn('No authenticated user - should not save proportion settings without authentication');
-      return false;
-    }
-
-    console.log('🔍 saveProportionSettings called with:', settings);
-
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      this.user = user;
+      
+      if (!user) {
+        return false;
+      }
+
       const { data, error } = await supabase
         .from('proportion_settings')
         .upsert({
@@ -488,35 +472,29 @@ class SupabaseTransactionStore {
           person2_percentage: settings.person2_percentage,
           updated_at: new Date().toISOString(),
         }, {
-          onConflict: 'user_id'  // Specify which column to use for conflict resolution
+          onConflict: 'user_id'
         })
         .select();
 
-      console.log('💾 Database upsert result:', { data, error });
-
       if (error) {
-        console.error('Error saving proportion settings:', error);
-        return false;
+        console.error('Database error:', error);
+        throw new Error(`Failed to save proportion settings: ${error.message}`);
       }
 
-      console.log('✅ Settings saved successfully:', data);
       return true;
     } catch (error) {
-      console.error('Error saving proportion settings:', error);
+      console.error('Operation failed:', error);
       return false;
     }
   }
 
   async saveCategoryNames(person1Name: string, person2Name: string): Promise<boolean> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      console.warn('🔍 saveCategoryNames: No authenticated user');
-      return false;
-    }
-
-    console.log('🔍 saveCategoryNames called with:', { user_id: user.id, person1Name, person2Name });
-
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return false;
+      }
+
       const { data, error } = await supabase
         .from('profiles')
         .update({
@@ -527,55 +505,39 @@ class SupabaseTransactionStore {
         .eq('id', user.id)
         .select();
 
-      console.log('📊 saveCategoryNames result:', { data, error });
-
       if (error) {
-        console.error('Error saving category names:', error);
-        return false;
+        console.error('Database error:', error);
+        throw new Error(`Failed to save category names: ${error.message}`);
       }
 
-      console.log('✅ Category names saved successfully:', data);
       return true;
     } catch (error) {
-      console.error('Error saving category names:', error);
+      console.error('Operation failed:', error);
       return false;
     }
   }
 
   async getCategoryNames(): Promise<{ person1_name: string | null; person2_name: string | null }> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      console.warn('🔍 getCategoryNames: No authenticated user');
-      return { person1_name: null, person2_name: null };
-    }
-
-    console.log('🔍 getCategoryNames called for user:', user.id);
-
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return { person1_name: null, person2_name: null };
+      }
+
       const { data, error } = await supabase
         .from('profiles')
         .select('person1_name, person2_name')
         .eq('id', user.id)
-        .maybeSingle(); // Use maybeSingle() instead of single() to handle missing profiles
-
-      console.log('📊 getCategoryNames result:', { data, error });
+        .maybeSingle();
 
       if (error) {
-        console.error('Error loading category names:', error);
-        console.log('🔄 Returning null values due to error');
-        return { person1_name: null, person2_name: null };
+        console.error('Database error:', error);
+        throw new Error(`Failed to load category names: ${error.message}`);
       }
 
-      if (!data) {
-        console.log('🔄 No profile found, returning null values');
-        return { person1_name: null, person2_name: null };
-      }
-
-      console.log('✅ Returning category names:', data);
-      return data;
+      return data || { person1_name: null, person2_name: null };
     } catch (error) {
-      console.error('Error loading category names:', error);
-      console.log('🔄 Returning null values due to exception');
+      console.error('Operation failed:', error);
       return { person1_name: null, person2_name: null };
     }
   }
