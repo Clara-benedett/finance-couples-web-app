@@ -1,6 +1,5 @@
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
-import * as pdfParse from 'pdf-parse';
 import { ParsedTransaction } from '@/types/transaction';
 
 // Common column name variations
@@ -326,107 +325,6 @@ export async function parseExcel(file: File): Promise<{ transactions: ParsedTran
   });
 }
 
-export async function parsePDF(file: File): Promise<{ transactions: ParsedTransaction[], detectedFields: string[] }> {
-  return new Promise((resolve, reject) => {
-    try {
-      console.log('Starting PDF parse for file:', file.name);
-      const reader = new FileReader();
-      
-      reader.onload = async (e) => {
-        try {
-          console.log('FileReader loaded successfully');
-          const arrayBuffer = e.target?.result as ArrayBuffer;
-          const data = await pdfParse(new Uint8Array(arrayBuffer));
-          
-          console.log('PDF text extracted:', data.text.substring(0, 500) + '...');
-          
-          // Split text into lines and look for transaction patterns
-          const lines = data.text.split('\n').map(line => line.trim()).filter(line => line);
-          const transactions: ParsedTransaction[] = [];
-          
-          // Look for transaction patterns - date, description, amount
-          // This is a basic parser that looks for common bank statement patterns
-          for (let i = 0; i < lines.length; i++) {
-            const line = lines[i];
-            
-            // Skip header lines and other non-transaction content
-            if (line.includes('Summary of Account') || 
-                line.includes('Previous Balance') || 
-                line.includes('Credit Limit') ||
-                line.includes('Trans Date') ||
-                line.includes('Important Information') ||
-                line.length < 10) {
-              continue;
-            }
-            
-            // Look for transaction lines with date pattern (MM/DD, DD/MM, etc.)
-            const dateMatch = line.match(/(\d{2}\/\d{2}|\d{1,2}\/\d{1,2})/);
-            if (dateMatch) {
-              // Try to extract amount (look for $ followed by number)
-              const amountMatch = line.match(/\$?\s*(\d+\.?\d*)/g);
-              if (amountMatch && amountMatch.length > 0) {
-                // Get the last amount match (usually the transaction amount)
-                const amount = parseFloat(amountMatch[amountMatch.length - 1].replace('$', '').trim());
-                
-                if (amount > 0) {
-                  // Extract description (everything between date and amount)
-                  let description = line;
-                  
-                  // Remove date from description
-                  description = description.replace(/\d{2}\/\d{2}|\d{1,2}\/\d{1,2}/g, '').trim();
-                  
-                  // Remove amount from description
-                  description = description.replace(/\$?\s*\d+\.?\d*/g, '').trim();
-                  
-                  // Remove reference numbers and codes
-                  description = description.replace(/\b\d{8,}\b/g, '').trim();
-                  
-                  // Clean up description
-                  description = description.replace(/\s+/g, ' ').trim();
-                  
-                  if (description && description.length > 2) {
-                    const transaction: ParsedTransaction = {
-                      date: parseDate(dateMatch[0] + '/2024'), // Assume current year
-                      amount: amount,
-                      description: description,
-                      category: 'UNCLASSIFIED'
-                    };
-                    
-                    transactions.push(transaction);
-                  }
-                }
-              }
-            }
-          }
-          
-          console.log('Parsed PDF transactions:', transactions.length);
-          console.log('Sample transactions:', transactions.slice(0, 3));
-          
-          if (transactions.length === 0) {
-            reject(new Error('No transactions found in PDF. Please ensure the PDF contains a readable bank statement with transaction data.'));
-            return;
-          }
-          
-          resolve({ transactions, detectedFields: [] });
-        } catch (error) {
-          console.error('Error processing PDF data:', error);
-          reject(new Error('Failed to parse PDF file: ' + (error as Error).message));
-        }
-      };
-      
-      reader.onerror = () => {
-        console.error('FileReader error');
-        reject(new Error('Failed to read PDF file'));
-      };
-      
-      reader.readAsArrayBuffer(file);
-    } catch (error) {
-      console.error('Error in parsePDF:', error);
-      reject(new Error('Failed to initialize PDF parsing: ' + (error as Error).message));
-    }
-  });
-}
-
 export async function parseFile(file: File): Promise<{ transactions: ParsedTransaction[], detectedFields: string[] }> {
   try {
     console.log('parseFile called with:', file.name, 'type:', file.type);
@@ -440,11 +338,8 @@ export async function parseFile(file: File): Promise<{ transactions: ParsedTrans
       case 'xls':
         console.log('Parsing as Excel');
         return await parseExcel(file);
-      case 'pdf':
-        console.log('Parsing as PDF');
-        return await parsePDF(file);
       default:
-        throw new Error('Unsupported file format. Please upload CSV, Excel, or PDF files.');
+        throw new Error('Unsupported file format. Please upload CSV or Excel files.');
     }
   } catch (error) {
     console.error('Error in parseFile:', error);

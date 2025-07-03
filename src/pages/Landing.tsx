@@ -5,10 +5,7 @@ import { Upload, Zap, TrendingUp, Lock, CreditCard, RotateCcw } from "lucide-rea
 const Landing = () => {
   const navigate = useNavigate();
 
-  console.log("Landing component rendering");
-
   const handleGetStarted = () => {
-    console.log("Get started clicked, navigating to /auth");
     navigate("/auth");
   };
 

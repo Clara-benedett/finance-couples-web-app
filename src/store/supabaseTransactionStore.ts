@@ -290,34 +290,6 @@ class SupabaseTransactionStore {
     }
   }
 
-  async deleteTransaction(id: string) {
-    const { data: { user } } = await supabase.auth.getUser();
-    this.user = user;
-    
-    if (!user) {
-      console.warn('No authenticated user - transactions should not be deleted without authentication');
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('transactions')
-        .delete()
-        .eq('id', id)
-        .eq('user_id', user.id);
-
-      if (error) {
-        console.error('Error deleting transaction:', error);
-        return;
-      }
-
-      this.transactions = this.transactions.filter(t => t.id !== id);
-      this.notifyListeners();
-    } catch (error) {
-      console.error('Error deleting transaction from database:', error);
-    }
-  }
-
   async clearTransactions() {
     const { data: { user } } = await supabase.auth.getUser();
     this.user = user;

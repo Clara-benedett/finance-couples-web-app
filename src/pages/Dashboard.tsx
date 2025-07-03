@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { supabaseTransactionStore } from '@/store/supabaseTransactionStore';
+import { transactionStore } from '@/store/transactionStore';
 import { calculateExpenses, getProportionSettings, ProportionSettings } from '@/utils/calculationEngine';
 import { useAuth } from '@/contexts/AuthContext';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -18,14 +19,16 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [transactions, setTransactions] = useState(
-    supabaseTransactionStore.getTransactions()
+    isSupabaseConfigured && user 
+      ? supabaseTransactionStore.getTransactions()
+      : transactionStore.getTransactions()
   );
   const [proportions, setProportions] = useState<ProportionSettings>(getProportionSettings());
   const [showCalculationDetails, setShowCalculationDetails] = useState(false);
   const [migrationStatus, setMigrationStatus] = useState<'checking' | 'migrating' | 'complete' | 'error'>('checking');
   const { isDebugMode, toggleDebugMode } = useDebugMode();
 
-  const activeStore = supabaseTransactionStore;
+  const activeStore = isSupabaseConfigured && user ? supabaseTransactionStore : transactionStore;
 
   useEffect(() => {
     const unsubscribe = activeStore.subscribe(() => {

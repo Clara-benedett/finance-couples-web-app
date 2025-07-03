@@ -1,6 +1,6 @@
 
 import { parseFile } from "@/utils/fileParser";
-import { supabaseTransactionStore } from "@/store/supabaseTransactionStore";
+import { transactionStore } from "@/store/transactionStore";
 import { getCategoryNames } from "@/utils/categoryNames";
 import { cardClassificationEngine } from "@/utils/cardClassificationRules";
 import { UploadedFile, CardInfo } from "@/types/upload";

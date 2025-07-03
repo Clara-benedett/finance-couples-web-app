@@ -1,5 +1,5 @@
 
-import { supabaseTransactionStore } from "@/store/supabaseTransactionStore";
+import { transactionStore } from "@/store/transactionStore";
 import { DuplicateReviewDecision } from "@/types/duplicateDetection";
 import { CardInfo, DuplicateReviewState } from "@/types/upload";
 
@@ -7,7 +7,7 @@ export const handleDuplicateDetection = (
   allParsedTransactions: any[],
   cardInfos: CardInfo[]
 ): { hasDuplicates: boolean; duplicateResult?: DuplicateReviewState } => {
-  const duplicateResult = supabaseTransactionStore.checkForDuplicates(allParsedTransactions);
+  const duplicateResult = transactionStore.checkForDuplicates(allParsedTransactions);
   
   if (duplicateResult.duplicates.length > 0) {
     return {

@@ -6,11 +6,11 @@ export const validateFiles = (files: FileList | null) => {
 
   const validFiles = Array.from(files).filter(file => {
     const extension = file.name.split('.').pop()?.toLowerCase();
-    return ['csv', 'xlsx', 'xls', 'pdf'].includes(extension || '');
+    return ['csv', 'xlsx', 'xls'].includes(extension || '');
   });
 
   if (validFiles.length === 0) {
-    return { valid: false, files: [], error: "Please upload CSV, Excel, or PDF files only." };
+    return { valid: false, files: [], error: "Please upload CSV or Excel files only." };
   }
 
   if (validFiles.length > 5) {

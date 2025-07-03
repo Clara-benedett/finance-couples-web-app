@@ -9,6 +9,7 @@ import {
 import ManualExpenseForm from "./ManualExpenseForm";
 import { Transaction } from "@/types/transaction";
 import { supabaseTransactionStore } from "@/store/supabaseTransactionStore";
+import { transactionStore } from "@/store/transactionStore";
 import { useAuth } from "@/contexts/AuthContext";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
@@ -36,7 +37,7 @@ const ManualExpenseDialog = ({ open, onOpenChange }: ManualExpenseDialogProps) =
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const activeStore = supabaseTransactionStore;
+  const activeStore = isSupabaseConfigured && user ? supabaseTransactionStore : transactionStore;
 
   const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -58,7 +59,11 @@ const ManualExpenseDialog = ({ open, onOpenChange }: ManualExpenseDialogProps) =
         autoAppliedRule: false
       };
 
-      await activeStore.addManualTransaction(transaction);
+      if (isSupabaseConfigured && user) {
+        await activeStore.addManualTransaction(transaction);
+      } else {
+        activeStore.addTransactions([transaction]);
+      }
       
       toast({
         title: "Expense added successfully",

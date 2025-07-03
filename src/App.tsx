@@ -20,8 +20,6 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const App = () => {
-  console.log("App component is rendering");
-  
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -43,6 +41,7 @@ const App = () => {
                 <Route path="history" element={<History />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

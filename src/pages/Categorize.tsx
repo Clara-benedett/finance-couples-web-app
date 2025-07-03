@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { supabaseTransactionStore } from "@/store/supabaseTransactionStore";
+import { transactionStore } from "@/store/transactionStore";
 import { Transaction } from "@/types/transaction";
 import { getCategoryNames } from "@/utils/categoryNames";
 import { categorizationRulesEngine } from "@/utils/categorizationRules";
@@ -29,28 +29,25 @@ const Categorize = () => {
 
   useEffect(() => {
     const updateTransactions = () => {
-      setTransactions(supabaseTransactionStore.getTransactions());
-    };
-
-    const applyRules = async () => {
-      // Auto-apply rules to existing transactions on page load
-      const appliedCount = await supabaseTransactionStore.applyRulesToExistingTransactions();
-      if (appliedCount > 0) {
-        toast({
-          title: "Auto-categorization applied",
-          description: `Applied existing rules to ${appliedCount} transactions`,
-        });
-      }
+      setTransactions(transactionStore.getTransactions());
     };
 
     updateTransactions();
-    applyRules();
     
-    const unsubscribe = supabaseTransactionStore.subscribe(updateTransactions);
+    // Auto-apply rules to existing transactions on page load
+    const appliedCount = transactionStore.applyRulesToExistingTransactions();
+    if (appliedCount > 0) {
+      toast({
+        title: "Auto-categorization applied",
+        description: `Applied existing rules to ${appliedCount} transactions`,
+      });
+    }
+    
+    const unsubscribe = transactionStore.subscribe(updateTransactions);
     return unsubscribe;
   }, [toast]);
 
-  const handleUpdateTransaction = async (id: string, category: CategoryType) => {
+  const handleUpdateTransaction = (id: string, category: CategoryType) => {
     // Map the category types to the transaction store format
     const categoryMap: Record<CategoryType, string> = {
       person1: 'person1',
@@ -78,27 +75,15 @@ const Categorize = () => {
     }
 
     // Update transaction and clear autoAppliedRule flag when manually categorizing
-    await supabaseTransactionStore.updateTransaction(id, { 
+    transactionStore.updateTransaction(id, { 
       category: categoryMap[category],
       isClassified: category !== 'UNCLASSIFIED',
       autoAppliedRule: false // Clear auto-applied flag to indicate manual override
     });
   };
 
-  const handleBulkUpdate = async (ids: string[], category: CategoryType) => {
-    for (const id of ids) {
-      await handleUpdateTransaction(id, category);
-    }
-  };
-
-  const handleBulkDelete = async (ids: string[]) => {
-    for (const id of ids) {
-      await supabaseTransactionStore.deleteTransaction(id);
-    }
-    toast({
-      title: "Transactions deleted",
-      description: `Deleted ${ids.length} transaction${ids.length > 1 ? 's' : ''}`,
-    });
+  const handleBulkUpdate = (ids: string[], category: CategoryType) => {
+    ids.forEach(id => handleUpdateTransaction(id, category));
   };
 
   const handleRequestRuleSuggestion = (merchantName: string, category: CategoryType, categoryDisplayName: string) => {
@@ -110,7 +95,7 @@ const Categorize = () => {
     });
   };
 
-  const handleAcceptRule = async () => {
+  const handleAcceptRule = () => {
     if (!ruleSuggestion) return;
     
     const categoryMap: Record<CategoryType, string> = {
@@ -132,13 +117,13 @@ const Categorize = () => {
       t.description.toUpperCase().trim() === ruleSuggestion.merchantName.toUpperCase().trim()
     );
     
-    for (const transaction of unclassifiedSameMerchant) {
-      await supabaseTransactionStore.updateTransaction(transaction.id, {
+    unclassifiedSameMerchant.forEach(transaction => {
+      transactionStore.updateTransaction(transaction.id, {
         category: categoryMap[ruleSuggestion.category],
         isClassified: true,
         autoAppliedRule: true
       });
-    }
+    });
     
     if (unclassifiedSameMerchant.length > 0) {
       toast({
@@ -202,7 +187,6 @@ const Categorize = () => {
         transactions={transactions}
         onUpdateTransaction={handleUpdateTransaction}
         onBulkUpdate={handleBulkUpdate}
-        onBulkDelete={handleBulkDelete}
         onRequestRuleSuggestion={handleRequestRuleSuggestion}
       />
 

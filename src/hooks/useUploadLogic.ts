@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { supabaseTransactionStore } from "@/store/supabaseTransactionStore";
+import { transactionStore } from "@/store/transactionStore";
 import { getCategoryNames } from "@/utils/categoryNames";
 import { DuplicateReviewDecision } from "@/types/duplicateDetection";
 import { UploadedFile, CardInfo, DuplicateReviewState } from "@/types/upload";
@@ -91,7 +91,7 @@ export const useUploadLogic = () => {
     saveCardClassificationRules(cardInfos);
 
     // Add transactions to store
-    await supabaseTransactionStore.addTransactions(processedTransactions, true);
+    transactionStore.addTransactions(processedTransactions, true);
 
     // Update file statuses
     updateFileStatuses(fileUploads, processedTransactions, cardInfos, setUploadedFiles);

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PlayCircle, RotateCcw } from "lucide-react";
 import { Transaction } from "@/types/transaction";
-import { supabaseTransactionStore } from "@/store/supabaseTransactionStore";
+import { transactionStore } from "@/store/transactionStore";
 import { calculateExpenses } from "@/utils/calculationEngine";
 
 const TestScenarios = () => {
@@ -90,16 +90,16 @@ const TestScenarios = () => {
     ];
   };
 
-  const runTestScenario = async () => {
+  const runTestScenario = () => {
     const sampleData = createSampleData();
     
     // Clear existing data and add sample data
-    await supabaseTransactionStore.clearTransactions();
-    await supabaseTransactionStore.addTransactions(sampleData);
+    transactionStore.clearTransactions();
+    transactionStore.addTransactions(sampleData);
   };
 
-  const clearTestData = async () => {
-    await supabaseTransactionStore.clearTransactions();
+  const clearTestData = () => {
+    transactionStore.clearTransactions();
   };
 
   // Calculate expected results for the test scenario
