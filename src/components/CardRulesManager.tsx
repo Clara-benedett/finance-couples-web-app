@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { cardClassificationEngine, CardClassificationRule } from "@/utils/cardClassificationRules";
-import { getCategoryNames } from "@/utils/categoryNames";
+import { useCategoryNames } from "@/hooks/useCategoryNames";
 import { useToast } from "@/hooks/use-toast";
 import CardRulesTable from "./CardRulesTable";
 import AddCardRuleDialog from "./AddCardRuleDialog";
@@ -22,7 +22,7 @@ const CardRulesManager = () => {
   const [newClassification, setNewClassification] = useState<'person1' | 'person2' | 'shared'>('person1');
   const [mergeTarget, setMergeTarget] = useState('');
   
-  const categoryNames = getCategoryNames();
+  const { categoryNames } = useCategoryNames();
   const { toast } = useToast();
 
   useEffect(() => {

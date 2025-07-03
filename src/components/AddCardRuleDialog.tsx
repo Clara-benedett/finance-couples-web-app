@@ -9,9 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { User, Share } from "lucide-react";
-import { getCategoryNames } from "@/utils/categoryNames";
+import { useCategoryNames } from "@/hooks/useCategoryNames";
 import SmartCardInput from "./SmartCardInput";
 
 interface AddCardRuleDialogProps {
@@ -33,7 +34,7 @@ const AddCardRuleDialog = ({
   onClassificationChange,
   onAdd
 }: AddCardRuleDialogProps) => {
-  const categoryNames = getCategoryNames();
+  const { categoryNames } = useCategoryNames();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

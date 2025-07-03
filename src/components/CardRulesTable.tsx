@@ -8,9 +8,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Edit, Trash2, Merge, User, Share } from "lucide-react";
+import { Edit, Trash2, GitMerge, User, Share } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { useCategoryNames } from "@/hooks/useCategoryNames";
 import { CardClassificationRule } from "@/utils/cardClassificationRules";
-import { getCategoryNames } from "@/utils/categoryNames";
 
 interface CardRulesTableProps {
   rules: CardClassificationRule[];
@@ -20,7 +21,7 @@ interface CardRulesTableProps {
 }
 
 const CardRulesTable = ({ rules, onEdit, onDelete, onMerge }: CardRulesTableProps) => {
-  const categoryNames = getCategoryNames();
+  const { categoryNames } = useCategoryNames();
 
   const getCategoryDisplay = (classification: string) => {
     switch (classification) {
@@ -87,7 +88,7 @@ const CardRulesTable = ({ rules, onEdit, onDelete, onMerge }: CardRulesTableProp
                     size="sm"
                     onClick={() => onMerge(rule)}
                   >
-                    <Merge className="w-4 h-4" />
+                    <GitMerge className="w-4 h-4" />
                   </Button>
                   <Button
                     variant="ghost"

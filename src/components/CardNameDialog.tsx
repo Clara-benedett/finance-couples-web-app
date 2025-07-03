@@ -11,10 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CreditCard, User, Share, SkipForward } from "lucide-react";
-import { getCategoryNames } from "@/utils/categoryNames";
+import { useCategoryNames } from "@/hooks/useCategoryNames";
 import SmartCardInput from "./SmartCardInput";
 
-interface CardInfo {
+interface CardNameDialogCardInfo {
   name: string;
   paidBy: 'person1' | 'person2';
   autoClassification?: 'person1' | 'person2' | 'shared' | 'skip';
@@ -22,15 +22,15 @@ interface CardInfo {
 
 interface CardNameDialogProps {
   isOpen: boolean;
-  onConfirm: (cardInfos: CardInfo[]) => void;
+  onConfirm: (cardInfos: CardNameDialogCardInfo[]) => void;
   onCancel: () => void;
   fileNames: string[];
 }
 
 const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDialogProps) => {
   const [step, setStep] = useState<'names' | 'classification'>('names');
-  const [cardInfos, setCardInfos] = useState<CardInfo[]>([]);
-  const categoryNames = getCategoryNames();
+  const [cardInfos, setCardInfos] = useState<CardNameDialogCardInfo[]>([]);
+  const { categoryNames } = useCategoryNames();
 
   // Initialize card infos array when dialog opens or fileNames change
   useEffect(() => {

@@ -1,7 +1,7 @@
 
 import { Check, Plus } from "lucide-react";
 import { CardClassificationRule } from "@/utils/cardClassificationRules";
-import { getCategoryNames } from "@/utils/categoryNames";
+import { useCategoryNames } from "@/hooks/useCategoryNames";
 
 interface SmartCardStatusProps {
   value: string;
@@ -9,7 +9,7 @@ interface SmartCardStatusProps {
 }
 
 const SmartCardStatus = ({ value, existingRule }: SmartCardStatusProps) => {
-  const categoryNames = getCategoryNames();
+  const { categoryNames } = useCategoryNames();
 
   const getCategoryDisplay = (classification: string) => {
     switch (classification) {

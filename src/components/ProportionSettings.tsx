@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Settings, Users } from "lucide-react";
-import { getCategoryNames } from '@/utils/categoryNames';
+import { useCategoryNames } from "@/hooks/useCategoryNames";
 import { ProportionSettings, saveProportionSettings } from '@/utils/calculationEngine';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabaseTransactionStore } from '@/store/supabaseTransactionStore';
@@ -20,7 +20,7 @@ interface ProportionSettingsProps {
 const ProportionSettingsComponent = ({ proportions, onUpdate, onClose }: ProportionSettingsProps) => {
   const { user } = useAuth();
   const [localProportions, setLocalProportions] = useState(proportions);
-  const categoryNames = getCategoryNames();
+  const { categoryNames } = useCategoryNames();
 
   const handleSliderChange = (value: number[]) => {
     const person1Percentage = value[0];

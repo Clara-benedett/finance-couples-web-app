@@ -42,7 +42,7 @@ const Upload = () => {
     }
   };
 
-  const handleCardNameConfirm = async (cardInfos: CardInfo[]) => {
+  const handleCardNameConfirm = async (cardInfos: any[]) => {
     setShowCardNameDialog(false);
     await processFiles(pendingFiles, cardInfos);
     setPendingFiles([]);

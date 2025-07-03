@@ -7,7 +7,7 @@ import { ChevronDown, ChevronUp, Copy, AlertTriangle } from "lucide-react";
 import { useState } from "react";
 import { Transaction } from "@/types/transaction";
 import { CalculationResults } from "@/utils/calculationEngine";
-import { getCategoryNames } from "@/utils/categoryNames";
+import { useCategoryNames } from "@/hooks/useCategoryNames";
 
 interface DebugCalculationProps {
   calculations: CalculationResults;
@@ -17,7 +17,7 @@ interface DebugCalculationProps {
 const DebugCalculation = ({ calculations, transactions }: DebugCalculationProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
-  const categoryNames = getCategoryNames();
+  const { categoryNames } = useCategoryNames();
 
   const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
 

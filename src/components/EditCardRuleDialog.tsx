@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { User, Share, Info } from "lucide-react";
-import { getCategoryNames } from "@/utils/categoryNames";
+import { useCategoryNames } from "@/hooks/useCategoryNames";
 
 interface EditCardRuleDialogProps {
   open: boolean;
@@ -33,7 +33,7 @@ const EditCardRuleDialog = ({
   onClassificationChange,
   onUpdate
 }: EditCardRuleDialogProps) => {
-  const categoryNames = getCategoryNames();
+  const { categoryNames } = useCategoryNames();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

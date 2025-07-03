@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Check } from "lucide-react";
-import { getCategoryNames } from "@/utils/categoryNames";
+import { useCategoryNames } from "@/hooks/useCategoryNames";
 import { useSmartCardInput } from "@/hooks/useSmartCardInput";
 import SmartCardDropdown from "./SmartCardDropdown";
 import SmartCardStatus from "./SmartCardStatus";
@@ -17,7 +17,7 @@ const SmartCardInput = ({
   onChange, 
   placeholder = "e.g., Chase Sapphire, AMEX Gold, BILT Card"
 }: SmartCardInputProps) => {
-  const categoryNames = getCategoryNames();
+  const { categoryNames } = useCategoryNames();
   
   const {
     isOpen,
