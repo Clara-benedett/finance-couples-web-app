@@ -444,11 +444,11 @@ class SupabaseTransactionStore {
         .from('proportion_settings')
         .select('person1_percentage, person2_percentage')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle() instead of single() to handle no rows
 
       console.log('📖 Database query result:', { data, error });
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      if (error) {
         console.error('Error loading proportion settings:', error);
         console.log('🔄 Returning default 50-50 due to error');
         return { person1_percentage: 50, person2_percentage: 50 };
