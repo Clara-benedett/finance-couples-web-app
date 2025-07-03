@@ -1,14 +1,14 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { CalculationResults } from "@/utils/calculationEngine";
-import { getCategoryNames } from "@/utils/categoryNames";
+import { useCategoryNames } from "@/hooks/useCategoryNames";
 
 interface OverviewCardsProps {
   calculations: CalculationResults;
 }
 
 const OverviewCards = ({ calculations }: OverviewCardsProps) => {
-  const categoryNames = getCategoryNames();
+  const { categoryNames } = useCategoryNames();
   const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
 
   return (

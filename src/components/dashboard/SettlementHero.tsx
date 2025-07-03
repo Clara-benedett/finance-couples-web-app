@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, RefreshCw, Calendar } from "lucide-react";
 import { CalculationResults } from "@/utils/calculationEngine";
-import { getCategoryNames } from "@/utils/categoryNames";
+import { useCategoryNames } from "@/hooks/useCategoryNames";
 
 interface SettlementHeroProps {
   calculations: CalculationResults;
@@ -12,7 +12,7 @@ interface SettlementHeroProps {
 }
 
 const SettlementHero = ({ calculations, proportions, currentMonth }: SettlementHeroProps) => {
-  const categoryNames = getCategoryNames();
+  const { categoryNames } = useCategoryNames();
   const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
 
   return (

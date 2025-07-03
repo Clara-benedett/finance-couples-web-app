@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronUp, Target, CreditCard } from "lucide-react";
 import { CalculationResults } from "@/utils/calculationEngine";
-import { getCategoryNames } from "@/utils/categoryNames";
+import { useCategoryNames } from "@/hooks/useCategoryNames";
 
 interface CalculationDetailsProps {
   calculations: CalculationResults;
@@ -12,7 +12,7 @@ interface CalculationDetailsProps {
 }
 
 const CalculationDetails = ({ calculations, showCalculationDetails, onToggle }: CalculationDetailsProps) => {
-  const categoryNames = getCategoryNames();
+  const { categoryNames } = useCategoryNames();
   const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
 
   return (
