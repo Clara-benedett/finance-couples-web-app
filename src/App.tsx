@@ -31,6 +31,7 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Landing />} />
+              <Route path="/auth" element={<AuthForm />} />
             </Routes>
           </BrowserRouter>
         </TooltipProvider>
