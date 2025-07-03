@@ -19,16 +19,16 @@ export const getCategoryNames = (): CategoryNames => {
   }
   
   return {
-    person1: 'Person A',
-    person2: 'Person B',
+    person1: 'Person 1',
+    person2: 'Person 2',
     shared: 'Shared'
   };
 };
 
 export const getCategoryNamesFromProfile = (person1Name: string | null, person2Name: string | null): CategoryNames => {
   return {
-    person1: person1Name || 'Person A',
-    person2: person2Name || 'Person B',
+    person1: person1Name || 'Person 1',
+    person2: person2Name || 'Person 2',
     shared: 'Shared'
   };
 };

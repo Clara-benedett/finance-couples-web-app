@@ -47,8 +47,8 @@ export interface CalculationResults {
 const PROPORTION_STORAGE_KEY = 'expenseProportions';
 
 export const getDefaultProportions = (): ProportionSettings => ({
-  person1Percentage: 45,
-  person2Percentage: 55,
+  person1Percentage: 50,
+  person2Percentage: 50,
 });
 
 export const getProportionSettings = (): ProportionSettings => {
