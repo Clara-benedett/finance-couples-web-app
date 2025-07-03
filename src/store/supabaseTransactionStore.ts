@@ -488,20 +488,26 @@ class SupabaseTransactionStore {
     }
   }
 
-  async saveCategoryNames(person1Name: string, person2Name: string): Promise<boolean> {
+  async saveCategoryNames(person1Name: string, person2Name: string, sharedName?: string): Promise<boolean> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         return false;
       }
 
+      const updateData: any = {
+        person1_name: person1Name,
+        person2_name: person2Name,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (sharedName !== undefined) {
+        updateData.shared_name = sharedName;
+      }
+
       const { data, error } = await supabase
         .from('profiles')
-        .update({
-          person1_name: person1Name,
-          person2_name: person2Name,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', user.id)
         .select();
 
@@ -517,16 +523,16 @@ class SupabaseTransactionStore {
     }
   }
 
-  async getCategoryNames(): Promise<{ person1_name: string | null; person2_name: string | null }> {
+  async getCategoryNames(): Promise<{ person1_name: string | null; person2_name: string | null; shared_name: string | null }> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        return { person1_name: null, person2_name: null };
+        return { person1_name: null, person2_name: null, shared_name: null };
       }
 
       const { data, error } = await supabase
         .from('profiles')
-        .select('person1_name, person2_name')
+        .select('person1_name, person2_name, shared_name')
         .eq('id', user.id)
         .maybeSingle();
 
@@ -535,10 +541,10 @@ class SupabaseTransactionStore {
         throw new Error(`Failed to load category names: ${error.message}`);
       }
 
-      return data || { person1_name: null, person2_name: null };
+      return data || { person1_name: null, person2_name: null, shared_name: null };
     } catch (error) {
       console.error('Operation failed:', error);
-      return { person1_name: null, person2_name: null };
+      return { person1_name: null, person2_name: null, shared_name: null };
     }
   }
 }

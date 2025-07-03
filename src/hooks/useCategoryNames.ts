@@ -15,7 +15,8 @@ export const useCategoryNames = () => {
           const categoryData = await supabaseTransactionStore.getCategoryNames();
           const dbCategoryNames = getCategoryNamesFromProfile(
             categoryData.person1_name,
-            categoryData.person2_name
+            categoryData.person2_name,
+            categoryData.shared_name
           );
           setCategoryNamesState(dbCategoryNames);
         } catch (error) {

@@ -25,11 +25,11 @@ export const getCategoryNames = (): CategoryNames => {
   };
 };
 
-export const getCategoryNamesFromProfile = (person1Name: string | null, person2Name: string | null): CategoryNames => {
+export const getCategoryNamesFromProfile = (person1Name: string | null, person2Name: string | null, sharedName: string | null): CategoryNames => {
   return {
     person1: person1Name || 'Person 1',
     person2: person2Name || 'Person 2',
-    shared: 'Shared'
+    shared: sharedName || 'Shared'
   };
 };
 

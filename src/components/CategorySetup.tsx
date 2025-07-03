@@ -38,7 +38,7 @@ const CategorySetup = ({ onComplete, isEditing = false, onCancel }: CategorySetu
           setNames({
             person1: categoryData.person1_name || 'Person 1',
             person2: categoryData.person2_name || 'Person 2',
-            shared: 'Shared'
+            shared: categoryData.shared_name || 'Shared'
           });
         } catch (error) {
           console.error('Error loading category names:', error);
@@ -62,7 +62,7 @@ const CategorySetup = ({ onComplete, isEditing = false, onCancel }: CategorySetu
   const handleSave = async () => {
     if (user) {
       // Save to database for authenticated users
-      await supabaseTransactionStore.saveCategoryNames(names.person1, names.person2);
+      await supabaseTransactionStore.saveCategoryNames(names.person1, names.person2, names.shared);
     } else {
       // Save to localStorage for non-authenticated users
       localStorage.setItem(STORAGE_KEY, JSON.stringify(names));
