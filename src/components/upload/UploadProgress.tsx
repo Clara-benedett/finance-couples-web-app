@@ -115,7 +115,7 @@ const UploadProgress = ({ uploadedFiles }: UploadProgressProps) => {
                 </div>
               </div>
               <Button 
-                onClick={() => navigate('/categorize')}
+                onClick={() => navigate('/app/categorize')}
                 className="bg-green-600 hover:bg-green-700"
               >
                 Categorize Expenses

@@ -127,8 +127,8 @@ const Dashboard = () => {
         currentMonth={currentMonth}
         isDebugMode={isDebugMode}
         toggleDebugMode={toggleDebugMode}
-        onUploadClick={() => navigate("/upload")}
-        onSettingsClick={() => navigate("/settings")}
+        onUploadClick={() => navigate("/app/upload")}
+        onSettingsClick={() => navigate("/app/settings")}
       />
 
       {/* Debug Mode Sections */}
@@ -159,8 +159,8 @@ const Dashboard = () => {
       {/* ACTION ITEMS */}
       <ActionItems
         calculations={calculations}
-        onCategorizeClick={() => navigate("/categorize")}
-        onUploadClick={() => navigate("/upload")}
+        onCategorizeClick={() => navigate("/app/categorize")}
+        onUploadClick={() => navigate("/app/upload")}
       />
     </div>
   );
