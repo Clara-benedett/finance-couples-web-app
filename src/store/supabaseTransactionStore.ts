@@ -437,6 +437,8 @@ class SupabaseTransactionStore {
       return { person1_percentage: 50, person2_percentage: 50 };
     }
 
+    console.log('🔍 getProportionSettings called for user:', user.id);
+
     try {
       const { data, error } = await supabase
         .from('proportion_settings')
@@ -444,14 +446,24 @@ class SupabaseTransactionStore {
         .eq('user_id', user.id)
         .single();
 
+      console.log('📖 Database query result:', { data, error });
+
       if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
         console.error('Error loading proportion settings:', error);
+        console.log('🔄 Returning default 50-50 due to error');
         return { person1_percentage: 50, person2_percentage: 50 };
       }
 
-      return data || { person1_percentage: 50, person2_percentage: 50 };
+      if (!data) {
+        console.log('🔄 No data found, returning default 50-50');
+        return { person1_percentage: 50, person2_percentage: 50 };
+      }
+
+      console.log('✅ Returning proportion settings:', data);
+      return data;
     } catch (error) {
       console.error('Error getting proportion settings:', error);
+      console.log('🔄 Returning default 50-50 due to exception');
       return { person1_percentage: 50, person2_percentage: 50 };
     }
   }
@@ -465,21 +477,27 @@ class SupabaseTransactionStore {
       return false;
     }
 
+    console.log('🔍 saveProportionSettings called with:', settings);
+
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('proportion_settings')
         .upsert({
           user_id: user.id,
           person1_percentage: settings.person1_percentage,
           person2_percentage: settings.person2_percentage,
           updated_at: new Date().toISOString(),
-        });
+        })
+        .select();
+
+      console.log('💾 Database upsert result:', { data, error });
 
       if (error) {
         console.error('Error saving proportion settings:', error);
         return false;
       }
 
+      console.log('✅ Settings saved successfully:', data);
       return true;
     } catch (error) {
       console.error('Error saving proportion settings:', error);
