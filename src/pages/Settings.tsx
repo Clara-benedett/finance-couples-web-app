@@ -96,6 +96,13 @@ const Settings = () => {
       });
 
       if (success) {
+        // Reload the settings from database to confirm they were saved
+        const updatedSettings = await supabaseTransactionStore.getProportionSettings();
+        setProportions({
+          person1Percentage: updatedSettings.person1_percentage,
+          person2Percentage: updatedSettings.person2_percentage,
+        });
+        
         toast({
           title: "Settings saved",
           description: "Your expense split settings have been updated successfully",
