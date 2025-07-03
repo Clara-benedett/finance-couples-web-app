@@ -32,24 +32,32 @@ const CardNameDialog = ({ isOpen, onConfirm, onCancel, fileNames }: CardNameDial
   const [cardInfos, setCardInfos] = useState<CardNameDialogCardInfo[]>([]);
   const { categoryNames } = useCategoryNames();
 
-  // Initialize card infos array when dialog opens or fileNames change
+  // ✅ FIXED: Only initialize when needed, don't reset user input
   useEffect(() => {
     if (isOpen && fileNames.length > 0) {
-      console.log('CardNameDialog: Initializing cardInfos for', fileNames.length, 'files');
-      const initialCardInfos = fileNames.map(() => ({
-        name: '',
-        paidBy: 'person1' as const,
-        autoClassification: 'skip' as const
-      }));
-      setCardInfos(initialCardInfos);
+      // Only initialize if we don't have the right number of cardInfos
+      // This prevents resetting when user has already filled data
+      if (cardInfos.length !== fileNames.length) {
+        console.log('CardNameDialog: Initializing cardInfos for', fileNames.length, 'files');
+        const initialCardInfos = fileNames.map(() => ({
+          name: '',
+          paidBy: 'person1' as const,
+          autoClassification: 'skip' as const
+        }));
+        setCardInfos(initialCardInfos);
+        console.log('CardNameDialog: Initial cardInfos set to:', initialCardInfos);
+      }
       setStep('names');
-      console.log('CardNameDialog: Initial cardInfos set to:', initialCardInfos);
-    } else if (!isOpen) {
-      // Reset when dialog closes
+    }
+  }, [isOpen, fileNames.length]); // Only depend on fileNames.length, not the full array
+
+  // Reset state when dialog closes to ensure fresh start next time
+  useEffect(() => {
+    if (!isOpen) {
       setCardInfos([]);
       setStep('names');
     }
-  }, [isOpen, fileNames]);
+  }, [isOpen]);
 
   const handleCardNameChange = (index: number, value: string) => {
     console.log('CardNameDialog: handleCardNameChange called with index:', index, 'value:', value);
