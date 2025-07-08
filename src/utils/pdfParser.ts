@@ -15,12 +15,31 @@ export async function parsePDF(file: File): Promise<{ transactions: ParsedTransa
     
     let fullText = '';
     
-    // Extract text from all pages
+    // Extract text from all pages with better structure preservation
     for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
       const page = await pdf.getPage(pageNum);
       const textContent = await page.getTextContent();
-      const pageText = textContent.items.map((item: any) => item.str).join(' ');
-      fullText += pageText + '\n';
+      
+      // Group text items by their Y position to preserve line structure
+      const lines: Map<number, string[]> = new Map();
+      
+      textContent.items.forEach((item: any) => {
+        if (item.str && item.str.trim()) {
+          const y = Math.round(item.transform[5]); // Y position
+          if (!lines.has(y)) {
+            lines.set(y, []);
+          }
+          lines.get(y)!.push(item.str);
+        }
+      });
+      
+      // Sort by Y position (descending, as PDF coordinates start from bottom)
+      const sortedLines = Array.from(lines.entries())
+        .sort(([a], [b]) => b - a)
+        .map(([, texts]) => texts.join(' ').trim())
+        .filter(line => line.length > 0);
+      
+      fullText += sortedLines.join('\n') + '\n';
     }
     
     if (!fullText || fullText.trim().length === 0) {
@@ -99,9 +118,43 @@ function parseTransactionsFromText(text: string): ParsedTransaction[] {
 }
 
 function parseTransactionLine(line: string): ParsedTransaction | null {
+  console.log('Parsing line:', line);
+  
   // Skip header lines and empty lines
-  if (!line || line.includes('Trans Date') || line.includes('Post Date') || line.includes('Reference Number') || line.includes('Description') || line.includes('Amount')) {
+  if (!line || line.includes('Trans Date') || line.includes('Post Date') || line.includes('Reference Number') || line.includes('Description') || line.includes('Amount') || line.includes('PAGE') || line.includes('NOTICE') || line.includes('CHASE')) {
+    console.log('Skipping header/noise line');
     return null;
+  }
+
+  // BILT specific patterns - handle the actual format from the console logs
+  // Pattern from logs: "5596 AWJ 1 7 11 250518 0 PAGE 3 of 3 1 0 2290 1000 MC03 01EG5596"
+  // This looks like: RefNumber Month Day Year Amount Description
+  
+  // Try to extract date and amount from the mangled line
+  // Look for date patterns like MM/DD or MMDDYY embedded in the text
+  const dateAmountPattern = /(\d{1,2})\/(\d{1,2})\/(\d{2,4})[^$]*\$?([\d,]+\.?\d*)/;
+  const dateAmountMatch = line.match(dateAmountPattern);
+  
+  if (dateAmountMatch) {
+    const [, month, day, year, amountStr] = dateAmountMatch;
+    const amount = parseAmount(amountStr);
+    
+    if (amount > 0) {
+      const fullYear = year.length === 2 ? 2000 + parseInt(year) : parseInt(year);
+      const dateStr = `${month}/${day}/${fullYear}`;
+      
+      // Extract description - everything between date and amount
+      const beforeAmount = line.substring(0, line.indexOf(amountStr));
+      const afterDate = beforeAmount.substring(beforeAmount.lastIndexOf(year) + year.length).trim();
+      
+      return {
+        date: parseDate(dateStr),
+        amount: amount,
+        description: afterDate || 'Transaction',
+        category: 'UNCLASSIFIED',
+        location: parseOptionalField(extractLocation(afterDate))
+      };
+    }
   }
 
   // BILT Statement Pattern: MM/DD MM/DD ReferenceNumber Description $Amount
