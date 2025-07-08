@@ -107,6 +107,26 @@ class TransactionStore {
     }
   }
 
+  deleteTransactions(ids: string[]): boolean {
+    try {
+      const initialCount = this.transactions.length;
+      this.transactions = this.transactions.filter(t => !ids.includes(t.id));
+      const deletedCount = initialCount - this.transactions.length;
+      
+      if (deletedCount > 0) {
+        this.saveToStorage();
+        this.notifyListeners();
+        console.log(`Deleted ${deletedCount} transactions`);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Error deleting transactions:', error);
+      return false;
+    }
+  }
+
   clearTransactions() {
     this.transactions = [];
     this.notifyListeners();

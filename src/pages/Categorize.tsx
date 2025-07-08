@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { transactionStore } from "@/store/transactionStore";
 import { Transaction } from "@/types/transaction";
@@ -11,6 +10,7 @@ import EmptyTransactionsState from "@/components/EmptyTransactionsState";
 import RuleSuggestionDialog from "@/components/RuleSuggestionDialog";
 import ManualExpenseDialog from "@/components/ManualExpenseDialog";
 import ManualExpenseFAB from "@/components/ManualExpenseFAB";
+import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog";
 import { useToast } from "@/hooks/use-toast";
 
 type CategoryType = "person1" | "person2" | "shared" | "UNCLASSIFIED";
@@ -19,6 +19,8 @@ const Categorize = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [showCategoryEdit, setShowCategoryEdit] = useState(false);
   const [showManualExpense, setShowManualExpense] = useState(false);
+  const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const { categoryNames } = useCategoryNames();
   const [ruleSuggestion, setRuleSuggestion] = useState<{
     merchantName: string;
@@ -93,6 +95,35 @@ const Categorize = () => {
       category,
       categoryDisplayName
     });
+  };
+
+  const handleDeleteSelected = () => {
+    setShowDeleteConfirmation(true);
+  };
+
+  const handleConfirmDelete = () => {
+    const selectedIds = Array.from(selectedTransactions);
+    const success = transactionStore.deleteTransactions(selectedIds);
+    
+    if (success) {
+      toast({
+        title: "Transactions deleted",
+        description: `Successfully deleted ${selectedIds.length} transaction${selectedIds.length === 1 ? '' : 's'} permanently`,
+      });
+      setSelectedTransactions(new Set());
+    } else {
+      toast({
+        title: "Delete failed",
+        description: "Failed to delete transactions. Please try again.",
+        variant: "destructive",
+      });
+    }
+    
+    setShowDeleteConfirmation(false);
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteConfirmation(false);
   };
 
   const handleAcceptRule = () => {
@@ -172,6 +203,14 @@ const Categorize = () => {
         onOpenChange={setShowManualExpense}
       />
 
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        isOpen={showDeleteConfirmation}
+        transactionCount={selectedTransactions.size}
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+
       {/* Rule Suggestion Dialog - Used for both automatic suggestions and auto-rule button clicks */}
       {ruleSuggestion && (
         <RuleSuggestionDialog
@@ -189,6 +228,7 @@ const Categorize = () => {
         onUpdateTransaction={handleUpdateTransaction}
         onBulkUpdate={handleBulkUpdate}
         onRequestRuleSuggestion={handleRequestRuleSuggestion}
+        onDeleteSelected={handleDeleteSelected}
       />
 
       {/* Floating Action Button */}

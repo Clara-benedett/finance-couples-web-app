@@ -2,7 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, X } from "lucide-react";
+import { Search, X, Trash2 } from "lucide-react";
 import CategoryButtons from "./CategoryButtons";
 
 type CategoryType = "person1" | "person2" | "shared" | "UNCLASSIFIED";
@@ -14,6 +14,7 @@ interface TransactionFiltersProps {
   onSelectAll: () => void;
   onClearSelection: () => void;
   onBulkCategoryClick: (category: CategoryType) => void;
+  onDeleteSelected: () => void;
 }
 
 const TransactionFilters = ({
@@ -22,7 +23,8 @@ const TransactionFilters = ({
   selectedTransactions,
   onSelectAll,
   onClearSelection,
-  onBulkCategoryClick
+  onBulkCategoryClick,
+  onDeleteSelected
 }: TransactionFiltersProps) => {
   const clearSearch = () => {
     setSearchTerm('');
@@ -73,6 +75,18 @@ const TransactionFilters = ({
           {/* Bulk Action Buttons */}
           {selectedTransactions.size > 0 && (
             <div className="flex gap-3 flex-wrap items-center">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={onDeleteSelected}
+                  className="flex items-center gap-1"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete Selected
+                </Button>
+                <div className="w-px h-6 bg-gray-300" />
+              </div>
               <span className="text-sm text-gray-600 mr-2">Categorize selected as:</span>
               <CategoryButtons
                 currentCategory="UNCLASSIFIED"

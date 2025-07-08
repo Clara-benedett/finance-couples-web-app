@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,13 +18,15 @@ interface TransactionCategorizerProps {
   onUpdateTransaction: (id: string, category: CategoryType) => void;
   onBulkUpdate: (ids: string[], category: CategoryType) => void;
   onRequestRuleSuggestion?: (merchantName: string, category: CategoryType, categoryDisplayName: string) => void;
+  onDeleteSelected: () => void;
 }
 
 const TransactionCategorizer = ({ 
   transactions, 
   onUpdateTransaction, 
   onBulkUpdate,
-  onRequestRuleSuggestion
+  onRequestRuleSuggestion,
+  onDeleteSelected
 }: TransactionCategorizerProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
@@ -180,6 +181,7 @@ const TransactionCategorizer = ({
           onSelectAll={selectAllVisible}
           onClearSelection={clearSelection}
           onBulkCategoryClick={handleBulkCategoryClick}
+          onDeleteSelected={onDeleteSelected}
         />
 
         {/* Transactions Sections */}
