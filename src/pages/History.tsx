@@ -253,10 +253,10 @@ const History = () => {
                         {transaction.description}
                       </h3>
                       {transaction.autoAppliedRule && (
-                        <Zap className="w-4 h-4 text-yellow-500" title="Auto-categorized" />
+                        <Zap className="w-4 h-4 text-yellow-500" />
                       )}
                       {transaction.isManualEntry && (
-                        <Hand className="w-4 h-4 text-blue-500" title="Manual entry" />
+                        <Hand className="w-4 h-4 text-blue-500" />
                       )}
                     </div>
                     
