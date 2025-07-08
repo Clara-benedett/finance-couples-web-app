@@ -2,6 +2,7 @@
 import { ParsedTransaction } from '@/types/transaction';
 import { parseCSV } from './csvParser';
 import { parseExcel } from './excelParser';
+import { parsePDF } from './pdfParser';
 
 export async function parseFile(file: File): Promise<{ transactions: ParsedTransaction[], detectedFields: string[] }> {
   try {
@@ -16,8 +17,11 @@ export async function parseFile(file: File): Promise<{ transactions: ParsedTrans
       case 'xls':
         console.log('Parsing as Excel');
         return await parseExcel(file);
+      case 'pdf':
+        console.log('Parsing as PDF');
+        return await parsePDF(file);
       default:
-        throw new Error('Unsupported file format. Please upload CSV or Excel files.');
+        throw new Error('Unsupported file format. Please upload CSV, Excel, or PDF files.');
     }
   } catch (error) {
     console.error('Error in parseFile:', error);
