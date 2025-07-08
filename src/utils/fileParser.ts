@@ -71,6 +71,19 @@ function parseDate(dateString: string): string {
   // Add debugging for date parsing
   console.log('parseDate input:', dateString, 'typeof:', typeof dateString);
   
+  // Handle Excel serial numbers FIRST
+  const numericValue = Number(dateString);
+  if (!isNaN(numericValue) && Number.isInteger(numericValue) && numericValue >= 43831 && numericValue <= 50000) {
+    // This is an Excel serial date (2020-2037 range)
+    console.log('Detected Excel serial number:', numericValue);
+    const excelEpoch = new Date(1900, 0, 1);
+    const millisecondsPerDay = 24 * 60 * 60 * 1000;
+    const jsDate = new Date(excelEpoch.getTime() + (numericValue - 2) * millisecondsPerDay);
+    const result = jsDate.toISOString().split('T')[0];
+    console.log('Excel serial number converted to:', result);
+    return result;
+  }
+  
   // Handle various date formats
   const cleanDate = String(dateString || '').trim();
   
