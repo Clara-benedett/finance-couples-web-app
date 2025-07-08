@@ -4,11 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, Download, Users, User } from "lucide-react";
+import { Search, Filter, Download, Users, User, Zap, Hand } from "lucide-react";
 import { useState, useEffect } from "react";
 import { unifiedTransactionStore } from '@/store/unifiedTransactionStore';
 import { Transaction } from '@/types/transaction';
-
+import TransactionMCCEmoji from '@/components/TransactionMCCEmoji';
+import { getCategoryNames } from '@/utils/categoryNames';
 
 const History = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,40 +34,66 @@ const History = () => {
     return unsubscribe;
   }, []);
 
-  const expenses = transactions.map(t => ({
-    id: t.id,
-    description: t.description,
-    amount: t.amount,
-    date: t.date,
-    category: t.category === 'person1' || t.category === 'person2' ? "personal" : "shared",
-    month: new Date(t.date).toISOString().substring(0, 7)
-  }));
+  const categoryNames = getCategoryNames();
 
-  const filteredExpenses = expenses.filter(expense => {
-    const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = filterCategory === "all" || expense.category === filterCategory;
-    const matchesMonth = filterMonth === "all" || expense.month === filterMonth;
+  const filteredTransactions = transactions.filter(transaction => {
+    const matchesSearch = transaction.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = filterCategory === "all" || 
+      (filterCategory === "shared" && transaction.category === "shared") ||
+      (filterCategory === "personal" && (transaction.category === "person1" || transaction.category === "person2")) ||
+      (filterCategory === "unclassified" && transaction.category === "UNCLASSIFIED");
+    const transactionMonth = new Date(transaction.date).toISOString().substring(0, 7);
+    const matchesMonth = filterMonth === "all" || transactionMonth === filterMonth;
     return matchesSearch && matchesCategory && matchesMonth;
   });
 
-  const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const sharedAmount = filteredExpenses.filter(e => e.category === "shared").reduce((sum, expense) => sum + expense.amount, 0);
-  const personalAmount = filteredExpenses.filter(e => e.category === "personal").reduce((sum, expense) => sum + expense.amount, 0);
+  const totalAmount = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
+  const sharedAmount = filteredTransactions.filter(t => t.category === "shared").reduce((sum, t) => sum + t.amount, 0);
+  const personalAmount = filteredTransactions.filter(t => t.category === "person1" || t.category === "person2").reduce((sum, t) => sum + t.amount, 0);
+  const unclassifiedAmount = filteredTransactions.filter(t => t.category === "UNCLASSIFIED").reduce((sum, t) => sum + t.amount, 0);
 
-  const getCategoryBadge = (category: "shared" | "personal") => {
-    const Icon = category === "shared" ? Users : User;
+  const getCategoryBadge = (transaction: Transaction) => {
+    if (transaction.category === "shared") {
+      return (
+        <Badge variant="default" className="flex items-center">
+          <Users className="w-3 h-3 mr-1" />
+          {categoryNames.shared}
+        </Badge>
+      );
+    } else if (transaction.category === "person1") {
+      return (
+        <Badge variant="secondary" className="flex items-center">
+          <User className="w-3 h-3 mr-1" />
+          {categoryNames.person1}
+        </Badge>
+      );
+    } else if (transaction.category === "person2") {
+      return (
+        <Badge variant="secondary" className="flex items-center">
+          <User className="w-3 h-3 mr-1" />
+          {categoryNames.person2}
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge variant="outline" className="flex items-center">
+          <Filter className="w-3 h-3 mr-1" />
+          Unclassified
+        </Badge>
+      );
+    }
+  };
+
+  const getPaidByBadge = (transaction: Transaction) => {
+    const paidByName = transaction.paidBy === "person1" ? categoryNames.person1 : categoryNames.person2;
     return (
-      <Badge 
-        variant={category === "shared" ? "default" : "secondary"} 
-        className="flex items-center"
-      >
-        <Icon className="w-3 h-3 mr-1" />
-        {category === "shared" ? "Shared" : "Personal"}
+      <Badge variant="outline" className="text-xs">
+        Paid by {paidByName}
       </Badge>
     );
   };
 
-  const months = Array.from(new Set(expenses.map(e => e.month))).sort().reverse();
+  const months = Array.from(new Set(transactions.map(t => new Date(t.date).toISOString().substring(0, 7)))).sort().reverse();
 
   return (
     <div className="space-y-6">
@@ -79,14 +106,14 @@ const History = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Total Expenses</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-900">${totalAmount.toFixed(2)}</div>
-            <p className="text-xs text-gray-500 mt-1">{filteredExpenses.length} transactions</p>
+            <p className="text-xs text-gray-500 mt-1">{filteredTransactions.length} transactions</p>
           </CardContent>
         </Card>
 
@@ -110,6 +137,18 @@ const History = () => {
             <div className="text-2xl font-bold text-purple-600">${personalAmount.toFixed(2)}</div>
             <p className="text-xs text-gray-500 mt-1">
               {totalAmount > 0 ? Math.round((personalAmount / totalAmount) * 100) : 0}% of total
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-gray-600">Unclassified</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">${unclassifiedAmount.toFixed(2)}</div>
+            <p className="text-xs text-gray-500 mt-1">
+              {totalAmount > 0 ? Math.round((unclassifiedAmount / totalAmount) * 100) : 0}% of total
             </p>
           </CardContent>
         </Card>
@@ -152,6 +191,12 @@ const History = () => {
                     Personal
                   </div>
                 </SelectItem>
+                <SelectItem value="unclassified">
+                  <div className="flex items-center">
+                    <Filter className="w-4 h-4 mr-2" />
+                    Unclassified
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
 
@@ -177,41 +222,90 @@ const History = () => {
         </CardContent>
       </Card>
 
-      {/* Expenses List */}
+      {/* Enhanced Transactions List */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg text-gray-900">Transactions</CardTitle>
+          <CardTitle className="text-lg text-gray-900">Transaction Details</CardTitle>
           <CardDescription>
-            {filteredExpenses.length} transactions found
+            {filteredTransactions.length} transactions found
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {filteredExpenses.map((expense) => (
+          <div className="space-y-4">
+            {filteredTransactions.map((transaction) => (
               <div 
-                key={expense.id} 
-                className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                key={transaction.id} 
+                className="flex items-start justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border"
               >
-                <div className="flex items-center space-x-4">
-                  <div>
-                    <h3 className="font-medium text-gray-900">{expense.description}</h3>
-                    <p className="text-sm text-gray-500">{expense.date}</p>
+                <div className="flex items-start space-x-4 flex-1">
+                  {/* MCC Emoji or Manual Entry Icon */}
+                  <div className="flex-shrink-0 mt-1">
+                    <TransactionMCCEmoji 
+                      mccCode={transaction.mccCode} 
+                      isManualEntry={transaction.isManualEntry}
+                    />
+                  </div>
+
+                  {/* Transaction Details */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="font-medium text-gray-900 truncate">
+                        {transaction.description}
+                      </h3>
+                      {transaction.autoAppliedRule && (
+                        <Zap className="w-4 h-4 text-yellow-500" title="Auto-categorized" />
+                      )}
+                      {transaction.isManualEntry && (
+                        <Hand className="w-4 h-4 text-blue-500" title="Manual entry" />
+                      )}
+                    </div>
+                    
+                    {/* Metadata Row */}
+                    <div className="flex items-center gap-3 text-sm text-gray-500 mb-2 flex-wrap">
+                      <span>{transaction.date}</span>
+                      <span>•</span>
+                      <span className="font-medium">{transaction.cardName}</span>
+                      <span>•</span>
+                      <span className="font-semibold text-gray-900">
+                        ${transaction.amount.toFixed(2)}
+                      </span>
+                      {transaction.location && (
+                        <>
+                          <span>•</span>
+                          <span className="text-blue-600">{transaction.location}</span>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Additional metadata if available */}
+                    <div className="flex items-center gap-3 text-xs text-gray-400 flex-wrap">
+                      {transaction.transactionType && (
+                        <span>Type: {transaction.transactionType}</span>
+                      )}
+                      {transaction.referenceNumber && (
+                        <span>Ref: {transaction.referenceNumber}</span>
+                      )}
+                      {transaction.mccCode && (
+                        <span>MCC: {transaction.mccCode}</span>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
-                <div className="flex items-center space-x-4">
-                  <div className="text-right">
-                    <div className="font-medium text-gray-900">${expense.amount.toFixed(2)}</div>
+                {/* Right side - Categories and Payment Info */}
+                <div className="flex flex-col items-end space-y-2 ml-4">
+                  <div className="flex items-center space-x-2">
+                    {getCategoryBadge(transaction)}
                   </div>
-                  {getCategoryBadge(expense.category as "shared" | "personal")}
+                  {getPaidByBadge(transaction)}
                 </div>
               </div>
             ))}
             
-            {filteredExpenses.length === 0 && (
+            {filteredTransactions.length === 0 && (
               <div className="text-center py-8">
                 <Filter className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No expenses found</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No transactions found</h3>
                 <p className="text-gray-500">
                   Try adjusting your search criteria or filters
                 </p>
