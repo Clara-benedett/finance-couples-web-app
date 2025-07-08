@@ -1,3 +1,4 @@
+
 import Papa from 'papaparse';
 import * as XLSX from 'xlsx';
 import { ParsedTransaction } from '@/types/transaction';
@@ -67,10 +68,18 @@ function findDataStartRow(data: any[]): { startRow: number, headers: string[] } 
 }
 
 function parseDate(dateString: string): string {
+  // Add debugging for date parsing
+  console.log('parseDate input:', dateString, 'typeof:', typeof dateString);
+  
   // Handle various date formats
   const cleanDate = String(dateString || '').trim();
   
-  if (!cleanDate) return new Date().toISOString().split('T')[0];
+  if (!cleanDate) {
+    console.log('Empty date string, using current date');
+    return new Date().toISOString().split('T')[0];
+  }
+  
+  console.log('Clean date string:', cleanDate);
   
   // Try different date formats
   const formats = [
@@ -84,27 +93,36 @@ function parseDate(dateString: string): string {
     const match = cleanDate.match(format);
     if (match) {
       const [, part1, part2, part3] = match;
+      console.log('Date format matched:', format, 'parts:', part1, part2, part3);
       
       // Assume YYYY-MM-DD format for the first regex
       if (format === formats[0]) {
-        return `${part1}-${part2.padStart(2, '0')}-${part3.padStart(2, '0')}`;
+        const result = `${part1}-${part2.padStart(2, '0')}-${part3.padStart(2, '0')}`;
+        console.log('YYYY-MM-DD format result:', result);
+        return result;
       }
       
       // For other formats, assume MM/DD/YYYY (US format)
       const year = part3;
       const month = part1.padStart(2, '0');
       const day = part2.padStart(2, '0');
-      return `${year}-${month}-${day}`;
+      const result = `${year}-${month}-${day}`;
+      console.log('US format result:', result);
+      return result;
     }
   }
 
   // Fallback: try to parse with Date constructor
+  console.log('No regex match, trying Date constructor');
   const date = new Date(cleanDate);
   if (!isNaN(date.getTime())) {
-    return date.toISOString().split('T')[0];
+    const result = date.toISOString().split('T')[0];
+    console.log('Date constructor result:', result);
+    return result;
   }
 
   // Return current date as fallback
+  console.log('All parsing failed, using current date as fallback');
   return new Date().toISOString().split('T')[0];
 }
 
@@ -159,6 +177,7 @@ export async function parseCSV(file: File): Promise<{ transactions: ParsedTransa
             }
             
             console.log('CSV data loaded, total rows:', data.length);
+            console.log('First few rows of raw CSV data:', data.slice(0, 3));
             
             const { startRow, headers } = findDataStartRow(data);
             
@@ -184,6 +203,7 @@ export async function parseCSV(file: File): Promise<{ transactions: ParsedTransa
 
             // Skip the header row and process data
             const dataRows = data.slice(startRow + 1);
+            console.log('Date column values from first 5 rows:', dataRows.slice(0, 5).map(row => row[dateIndex]));
             
             const transactions: ParsedTransaction[] = dataRows.map(row => {
               const transaction: ParsedTransaction = {
@@ -251,6 +271,7 @@ export async function parseExcel(file: File): Promise<{ transactions: ParsedTran
           }
 
           console.log('Excel data loaded, total rows:', jsonData.length);
+          console.log('First few rows of raw Excel data:', jsonData.slice(0, 3));
           
           const { startRow, headers } = findDataStartRow(jsonData);
           
@@ -276,6 +297,7 @@ export async function parseExcel(file: File): Promise<{ transactions: ParsedTran
 
           // Skip the header row and process data
           const dataRows = jsonData.slice(startRow + 1);
+          console.log('Date column values from first 5 rows:', dataRows.slice(0, 5).map(row => row[dateIndex]));
           
           const transactions: ParsedTransaction[] = dataRows.map(row => {
             const transaction: ParsedTransaction = {
