@@ -8,6 +8,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { Transaction } from "@/types/transaction";
 import { categorizationRulesEngine } from "@/utils/categorizationRules";
 import { useCategoryNames } from "@/hooks/useCategoryNames";
+import { filterTransactionsForCategorization } from "@/utils/billPaymentFilter";
 import ProgressCard from "./ProgressCard";
 import TransactionFilters from "./TransactionFilters";
 import TransactionCard from "./TransactionCard";
@@ -39,7 +40,11 @@ const TransactionCategorizer = ({
   const { categoryNames } = useCategoryNames();
 
   const filteredTransactions = useMemo(() => {
-    return transactions.filter(transaction =>
+    // First filter out bill payments from categorization
+    const categorizableTransactions = filterTransactionsForCategorization(transactions);
+    
+    // Then apply search filter
+    return categorizableTransactions.filter(transaction =>
       transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       transaction.cardName.toLowerCase().includes(searchTerm.toLowerCase())
     );
