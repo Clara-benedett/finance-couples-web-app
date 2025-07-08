@@ -28,7 +28,14 @@ export async function parsePDF(file: File): Promise<{ transactions: ParsedTransa
     }
 
     console.log('PDF text extracted, length:', fullText.length);
-    console.log('First 500 characters:', fullText.substring(0, 500));
+    console.log('First 1000 characters:', fullText.substring(0, 1000));
+    console.log('Looking for Transaction Summary...');
+    console.log('Contains Transaction Summary:', fullText.includes('Transaction Summary'));
+    console.log('Contains Trans Date:', fullText.includes('Trans Date'));
+    
+    // Let's also search for other possible section headers
+    console.log('Contains transaction:', fullText.toLowerCase().includes('transaction'));
+    console.log('Contains statement:', fullText.toLowerCase().includes('statement'));
 
     // Parse transactions from the extracted text
     const transactions = parseTransactionsFromText(fullText);
@@ -55,6 +62,9 @@ function parseTransactionsFromText(text: string): ParsedTransaction[] {
   const transactions: ParsedTransaction[] = [];
   const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
   
+  console.log('Total lines to process:', lines.length);
+  console.log('Sample lines:', lines.slice(0, 10));
+  
   let inTransactionSection = false;
   
   for (let i = 0; i < lines.length; i++) {
@@ -74,9 +84,13 @@ function parseTransactionsFromText(text: string): ParsedTransaction[] {
     
     // Parse transaction lines only when in the transaction section
     if (inTransactionSection) {
+      console.log('Trying to parse transaction line:', line);
       const transaction = parseTransactionLine(line);
       if (transaction) {
+        console.log('Successfully parsed transaction:', transaction);
         transactions.push(transaction);
+      } else {
+        console.log('Failed to parse line:', line);
       }
     }
   }
