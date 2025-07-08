@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import { supabaseTransactionStore } from '@/store/supabaseTransactionStore';
 import { transactionStore } from '@/store/transactionStore';
+import { Transaction } from '@/types/transaction';
 import { calculateExpenses, getProportionSettings, ProportionSettings } from '@/utils/calculationEngine';
 import { useAuth } from '@/contexts/AuthContext';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -18,11 +19,7 @@ import ActionItems from '@/components/dashboard/ActionItems';
 const Dashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [transactions, setTransactions] = useState(
-    isSupabaseConfigured && user 
-      ? supabaseTransactionStore.getTransactions()
-      : transactionStore.getTransactions()
-  );
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [proportions, setProportions] = useState<ProportionSettings>(getProportionSettings());
   const [showCalculationDetails, setShowCalculationDetails] = useState(false);
   const [migrationStatus, setMigrationStatus] = useState<'checking' | 'migrating' | 'complete' | 'error'>('checking');
@@ -31,11 +28,23 @@ const Dashboard = () => {
   const activeStore = isSupabaseConfigured && user ? supabaseTransactionStore : transactionStore;
 
   useEffect(() => {
-    const unsubscribe = activeStore.subscribe(() => {
-      setTransactions(activeStore.getTransactions());
-    });
+    // Force refresh transactions when component mounts
+    const refreshTransactions = async () => {
+      if (isSupabaseConfigured && user) {
+        await (activeStore as any).waitForInitialization?.();
+      }
+      const latestTransactions = activeStore.getTransactions();
+      console.log(`[Dashboard] Using ${latestTransactions.length} transactions for calculations`);
+      setTransactions(latestTransactions);
+    };
+
+    refreshTransactions();
+    
+    // Subscribe to store changes so dashboard updates when transactions change
+    const unsubscribe = activeStore.subscribe(refreshTransactions);
+    
     return unsubscribe;
-  }, [activeStore]);
+  }, [activeStore, user]);
 
   // Handle data migration when user signs in
   useEffect(() => {
@@ -105,7 +114,13 @@ const Dashboard = () => {
     return () => window.removeEventListener('focus', handleProportionRefresh);
   }, [user]);
 
+  // Add debug info to verify correct data is being used
   const calculations = calculateExpenses(transactions, proportions);
+  
+  console.log(`[Dashboard] Calculation input: ${transactions.length} transactions`);
+  console.log(`[Dashboard] Person1 should pay: ${calculations.person1ShouldPay}, actually paid: ${calculations.person1ActuallyPaid}`);
+  console.log(`[Dashboard] Final settlement: ${calculations.finalSettlementAmount} from ${calculations.settlementDirection}`);
+  
   const currentMonth = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   // Show migration status if in progress
