@@ -1,73 +1,54 @@
+
 import * as pdfjsLib from 'pdfjs-dist';
 import { ParsedTransaction } from '@/types/transaction';
 import { parseDate, parseAmount, parseOptionalField } from './dateParser';
 
-// Set up the worker for pdfjs
+// Set up the worker for pdfjs with matching version
 pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
 export async function parsePDF(file: File): Promise<{ transactions: ParsedTransaction[], detectedFields: string[] }> {
-  return new Promise((resolve, reject) => {
-    try {
-      console.log('Starting PDF parse for file:', file.name);
-      const reader = new FileReader();
-      
-      reader.onload = async (e) => {
-        try {
-          console.log('FileReader loaded successfully');
-          const arrayBuffer = e.target?.result as ArrayBuffer;
-          const typedArray = new Uint8Array(arrayBuffer);
-          
-          const pdf = await pdfjsLib.getDocument({ data: typedArray }).promise;
-          let text = '';
-          
-          // Extract text from all pages
-          for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-            const page = await pdf.getPage(pageNum);
-            const textContent = await page.getTextContent();
-            const pageText = textContent.items.map((item: any) => item.str).join(' ');
-            text += pageText + '\n';
-          }
-          
-          if (!text || text.trim().length === 0) {
-            reject(new Error('PDF file appears to be empty or contains no readable text'));
-            return;
-          }
-
-          console.log('PDF text extracted, length:', text.length);
-          console.log('First 500 characters:', text.substring(0, 500));
-
-          // Parse transactions from the extracted text
-          const transactions = parseTransactionsFromText(text);
-          
-          if (transactions.length === 0) {
-            reject(new Error('No transactions found in PDF. Please ensure it contains transaction data in a supported format.'));
-            return;
-          }
-
-          console.log('Parsed transactions:', transactions.length);
-          console.log('Sample transaction:', transactions[0]);
-          
-          // For PDFs, we typically detect location since bank statements often include this
-          const detectedFields = ['location'];
-          
-          resolve({ transactions, detectedFields });
-        } catch (error) {
-          console.error('Error processing PDF data:', error);
-          reject(new Error('Failed to parse PDF file: ' + (error as Error).message));
-        }
-      };
-
-      reader.onerror = () => {
-        console.error('FileReader error');
-        reject(new Error('Failed to read PDF file'));
-      };
-
-      reader.readAsArrayBuffer(file);
-    } catch (error) {
-      console.error('Error in parsePDF:', error);
-      reject(new Error('Failed to initialize PDF parsing: ' + (error as Error).message));
+  try {
+    console.log('Starting PDF parse for file:', file.name);
+    
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+    
+    let fullText = '';
+    
+    // Extract text from all pages
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map((item: any) => item.str).join(' ');
+      fullText += pageText + '\n';
     }
-  });
+    
+    if (!fullText || fullText.trim().length === 0) {
+      throw new Error('PDF file appears to be empty or contains no readable text');
+    }
+
+    console.log('PDF text extracted, length:', fullText.length);
+    console.log('First 500 characters:', fullText.substring(0, 500));
+
+    // Parse transactions from the extracted text
+    const transactions = parseTransactionsFromText(fullText);
+    
+    if (transactions.length === 0) {
+      throw new Error('No transactions found in PDF. Please ensure it contains transaction data in a supported format.');
+    }
+
+    console.log('Parsed transactions:', transactions.length);
+    console.log('Sample transaction:', transactions[0]);
+    
+    // For PDFs, we typically detect location since bank statements often include this
+    const detectedFields = ['location'];
+    
+    return { transactions, detectedFields };
+    
+  } catch (error) {
+    console.error('Error in parsePDF:', error);
+    throw new Error('Failed to parse PDF file: ' + (error as Error).message);
+  }
 }
 
 function parseTransactionsFromText(text: string): ParsedTransaction[] {
