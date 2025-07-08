@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { Transaction } from "@/types/transaction";
 import { categorizationRulesEngine } from "@/utils/categorizationRules";
 import { useCategoryNames } from "@/hooks/useCategoryNames";
-import { filterTransactionsForCategorization } from "@/utils/billPaymentFilter";
+import { filterTransactionsForCategorization, getBillPaymentTransactions } from "@/utils/billPaymentFilter";
 import ProgressCard from "./ProgressCard";
 import TransactionFilters from "./TransactionFilters";
 import TransactionCard from "./TransactionCard";
@@ -36,6 +35,7 @@ const TransactionCategorizer = ({
 }: TransactionCategorizerProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isAlreadyCategorizedExpanded, setIsAlreadyCategorizedExpanded] = useState(false);
+  const [isExcludedTransactionsExpanded, setIsExcludedTransactionsExpanded] = useState(false);
   const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(null);
   const { categoryNames } = useCategoryNames();
 
@@ -45,6 +45,16 @@ const TransactionCategorizer = ({
     
     // Then apply search filter
     return categorizableTransactions.filter(transaction =>
+      transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      transaction.cardName.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [transactions, searchTerm]);
+
+  const excludedTransactions = useMemo(() => {
+    // Get bill payment transactions and apply search filter
+    const billPayments = getBillPaymentTransactions(transactions);
+    
+    return billPayments.filter(transaction =>
       transaction.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
       transaction.cardName.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -293,8 +303,43 @@ const TransactionCategorizer = ({
             </Collapsible>
           )}
 
+          {/* Excluded Transactions Section */}
+          {excludedTransactions.length > 0 && (
+            <Collapsible open={isExcludedTransactionsExpanded} onOpenChange={setIsExcludedTransactionsExpanded}>
+              <Card className="bg-gray-100 border border-gray-300">
+                <CardContent className="p-4">
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" className="w-full justify-between p-0 h-auto">
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-lg font-semibold text-gray-600">
+                          🚫 Excluded Transactions ({excludedTransactions.length} filtered)
+                        </h2>
+                      </div>
+                      {isExcludedTransactionsExpanded ? (
+                        <ChevronUp className="w-4 h-4 text-gray-500" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4 text-gray-500" />
+                      )}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <p className="text-sm text-gray-500 mt-1">
+                    These transactions were automatically excluded as bill payments
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <CollapsibleContent className="space-y-2 mt-3">
+                {excludedTransactions.map((transaction) => (
+                  <div key={transaction.id} className="scale-95 transform opacity-60">
+                    <ExcludedTransactionCard transaction={transaction} />
+                  </div>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
+          )}
+
           {/* Empty state - no transactions match search */}
-          {filteredTransactions.length === 0 && searchTerm && (
+          {filteredTransactions.length === 0 && excludedTransactions.length === 0 && searchTerm && (
             <Card>
               <CardContent className="p-8 text-center">
                 <div className="text-gray-500">No transactions match your search.</div>
@@ -303,7 +348,7 @@ const TransactionCategorizer = ({
           )}
 
           {/* Empty state - no transactions at all */}
-          {filteredTransactions.length === 0 && !searchTerm && (
+          {filteredTransactions.length === 0 && excludedTransactions.length === 0 && !searchTerm && (
             <Card className="bg-blue-50 border border-blue-200">
               <CardContent className="p-8 text-center">
                 <h2 className="text-lg font-semibold text-blue-800 mb-2">Start categorizing your transactions</h2>
@@ -314,6 +359,48 @@ const TransactionCategorizer = ({
         </div>
       </div>
     </TooltipProvider>
+  );
+};
+
+// Excluded Transaction Card Component
+const ExcludedTransactionCard = ({ transaction }: { transaction: Transaction }) => {
+  return (
+    <Card className="bg-gray-50 border-gray-200">
+      <CardContent className="p-4">
+        <div className="flex items-center gap-4">
+          {/* Bill Payment Icon */}
+          <div className="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full">
+            <span className="text-gray-600 text-sm">💳</span>
+          </div>
+
+          {/* Transaction Details */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-medium text-gray-700 truncate">
+                {transaction.description}
+              </h3>
+              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-200 text-gray-700">
+                Bill Payment
+              </span>
+            </div>
+            <div className="flex items-center gap-4 text-sm text-gray-500">
+              <span>{transaction.date}</span>
+              <span>{transaction.cardName}</span>
+              {transaction.paidBy && (
+                <span className="capitalize">{transaction.paidBy}</span>
+              )}
+            </div>
+          </div>
+
+          {/* Amount */}
+          <div className="text-right">
+            <div className={`font-semibold ${transaction.amount < 0 ? 'text-red-600' : 'text-green-600'}`}>
+              {transaction.amount < 0 ? '-' : '+'}${Math.abs(transaction.amount).toFixed(2)}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 
