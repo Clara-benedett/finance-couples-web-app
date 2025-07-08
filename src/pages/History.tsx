@@ -24,15 +24,11 @@ const History = () => {
 
   useEffect(() => {
     const loadTransactions = async () => {
-      // Ensure store is initialized before getting transactions
       if (isSupabaseConfigured && user) {
-        // Wait a bit for supabase store initialization
-        setTimeout(() => {
-          setTransactions(activeStore.getTransactions());
-        }, 100);
-      } else {
-        setTransactions(activeStore.getTransactions());
+        // Wait for supabase store to be fully initialized
+        await (activeStore as any).waitForInitialization?.();
       }
+      setTransactions(activeStore.getTransactions());
     };
     
     loadTransactions();

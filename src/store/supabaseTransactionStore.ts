@@ -35,6 +35,7 @@ class SupabaseTransactionStore {
         this.loadFromLocalStorage();
       }
       this.isInitialized = true;
+      this.notifyListeners(); // Notify after initialization
     } catch (error) {
       console.error('Error initializing Supabase store:', error);
       this.loadFromLocalStorage();
@@ -237,6 +238,12 @@ class SupabaseTransactionStore {
 
   getTransactions(): Transaction[] {
     return [...this.transactions];
+  }
+
+  async waitForInitialization(): Promise<void> {
+    while (!this.isInitialized) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
   }
 
   getUnclassifiedTransactions(): Transaction[] {
