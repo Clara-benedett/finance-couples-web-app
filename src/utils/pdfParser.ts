@@ -55,14 +55,29 @@ function parseTransactionsFromText(text: string): ParsedTransaction[] {
   const transactions: ParsedTransaction[] = [];
   const lines = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
   
+  let inTransactionSection = false;
+  
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     
-    // Look for transaction patterns - this is a basic implementation
-    // that can be extended based on specific bank statement formats
-    const transaction = parseTransactionLine(line);
-    if (transaction) {
-      transactions.push(transaction);
+    // Check if we're entering the transaction section
+    if (line.includes('Transaction Summary') || line.includes('Trans Date')) {
+      inTransactionSection = true;
+      continue;
+    }
+    
+    // Check if we're leaving the transaction section
+    if (inTransactionSection && (line.includes('Fees Charged') || line.includes('Interest Charged') || line.includes('BiltProtect Summary'))) {
+      inTransactionSection = false;
+      continue;
+    }
+    
+    // Parse transaction lines only when in the transaction section
+    if (inTransactionSection) {
+      const transaction = parseTransactionLine(line);
+      if (transaction) {
+        transactions.push(transaction);
+      }
     }
   }
   
@@ -70,9 +85,36 @@ function parseTransactionsFromText(text: string): ParsedTransaction[] {
 }
 
 function parseTransactionLine(line: string): ParsedTransaction | null {
-  // Common patterns for bank statement transactions
-  // This is a basic implementation that looks for: Date Amount Description
+  // Skip header lines and empty lines
+  if (!line || line.includes('Trans Date') || line.includes('Post Date') || line.includes('Reference Number') || line.includes('Description') || line.includes('Amount')) {
+    return null;
+  }
+
+  // BILT Statement Pattern: MM/DD MM/DD ReferenceNumber Description $Amount
+  // Example: 05/17 05/19 920001300 TACOS RODRIGUEZ SAN FRANCISCO CA $13.91
+  const biltPattern = /^(\d{2}\/\d{2})\s+(\d{2}\/\d{2})\s+(\w+)\s+(.+?)\s+\$?([\d,]+\.?\d*)$/;
+  const biltMatch = line.match(biltPattern);
   
+  if (biltMatch) {
+    const [, transDate, postDate, refNumber, description, amountStr] = biltMatch;
+    const amount = parseAmount(amountStr);
+    
+    if (amount > 0) {
+      // For MM/DD format, assume current year
+      const currentYear = new Date().getFullYear();
+      const fullDate = `${transDate}/${currentYear}`;
+      
+      return {
+        date: parseDate(fullDate),
+        amount: amount,
+        description: description.trim(),
+        category: 'UNCLASSIFIED',
+        referenceNumber: refNumber,
+        location: parseOptionalField(extractLocation(description))
+      };
+    }
+  }
+
   // Pattern 1: MM/DD/YYYY or MM-DD-YYYY followed by amount and description
   const pattern1 = /(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{4})\s+([+-]?\$?[\d,]+\.?\d*)\s+(.+)/;
   const match1 = line.match(pattern1);
