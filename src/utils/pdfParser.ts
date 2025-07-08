@@ -1,6 +1,9 @@
-import pdf from 'pdf-parse';
+import * as pdfjsLib from 'pdfjs-dist';
 import { ParsedTransaction } from '@/types/transaction';
 import { parseDate, parseAmount, parseOptionalField } from './dateParser';
+
+// Set up the worker for pdfjs
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
 export async function parsePDF(file: File): Promise<{ transactions: ParsedTransaction[], detectedFields: string[] }> {
   return new Promise((resolve, reject) => {
@@ -12,11 +15,18 @@ export async function parsePDF(file: File): Promise<{ transactions: ParsedTransa
         try {
           console.log('FileReader loaded successfully');
           const arrayBuffer = e.target?.result as ArrayBuffer;
-          const uint8Array = new Uint8Array(arrayBuffer);
-          const buffer = Buffer.from(uint8Array);
+          const typedArray = new Uint8Array(arrayBuffer);
           
-          const pdfData = await pdf(buffer);
-          const text = pdfData.text;
+          const pdf = await pdfjsLib.getDocument({ data: typedArray }).promise;
+          let text = '';
+          
+          // Extract text from all pages
+          for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map((item: any) => item.str).join(' ');
+            text += pageText + '\n';
+          }
           
           if (!text || text.trim().length === 0) {
             reject(new Error('PDF file appears to be empty or contains no readable text'));
