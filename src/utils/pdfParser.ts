@@ -15,9 +15,10 @@ export async function parsePDF(file: File): Promise<{ transactions: ParsedTransa
           console.log('FileReader loaded PDF successfully');
           const arrayBuffer = e.target?.result as ArrayBuffer;
           
-          // Convert ArrayBuffer to Uint8Array for browser compatibility
+          // Convert ArrayBuffer to Buffer for pdf-parse compatibility
           const uint8Array = new Uint8Array(arrayBuffer);
-          const data = await pdf(uint8Array);
+          const buffer = Buffer.from(uint8Array);
+          const data = await pdf(buffer);
           
           if (!data.text) {
             reject(new Error('PDF file is empty or unreadable'));
