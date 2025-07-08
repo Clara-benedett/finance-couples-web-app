@@ -23,12 +23,26 @@ const History = () => {
   const activeStore = isSupabaseConfigured && user ? supabaseTransactionStore : transactionStore;
 
   useEffect(() => {
+    const loadTransactions = async () => {
+      // Ensure store is initialized before getting transactions
+      if (isSupabaseConfigured && user) {
+        // Wait a bit for supabase store initialization
+        setTimeout(() => {
+          setTransactions(activeStore.getTransactions());
+        }, 100);
+      } else {
+        setTransactions(activeStore.getTransactions());
+      }
+    };
+    
+    loadTransactions();
+    
     const unsubscribe = activeStore.subscribe(() => {
       setTransactions(activeStore.getTransactions());
     });
-    setTransactions(activeStore.getTransactions());
+    
     return unsubscribe;
-  }, [activeStore]);
+  }, [activeStore, user]);
 
   const expenses = transactions.map(t => ({
     id: t.id,

@@ -106,8 +106,9 @@ export const calculateExpenses = (
   const person2NetPosition = person2ShouldPay - person2ActuallyPaid;
 
   // Final settlement calculation
-  const finalSettlementAmount = Math.abs(person1NetPosition - person2NetPosition);
-  const settlementDirection = person1NetPosition > person2NetPosition ? 'person1ToPerson2' : 'person2ToPerson1';
+  // The net position already represents the correct amount owed
+  const finalSettlementAmount = Math.abs(person1NetPosition);
+  const settlementDirection = person1NetPosition > 0 ? 'person1ToPerson2' : 'person2ToPerson1';
 
   // Legacy compatibility fields
   const person1TotalOwed = person1ShouldPay;
