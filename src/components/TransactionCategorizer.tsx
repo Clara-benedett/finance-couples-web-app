@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,8 @@ interface TransactionCategorizerProps {
   onUpdateTransaction: (id: string, category: CategoryType) => void;
   onBulkUpdate: (ids: string[], category: CategoryType) => void;
   onRequestRuleSuggestion?: (merchantName: string, category: CategoryType, categoryDisplayName: string) => void;
+  selectedTransactions: Set<string>;
+  onSelectionChange: (selectedTransactions: Set<string>) => void;
   onDeleteSelected: () => void;
 }
 
@@ -26,10 +29,11 @@ const TransactionCategorizer = ({
   onUpdateTransaction, 
   onBulkUpdate,
   onRequestRuleSuggestion,
+  selectedTransactions,
+  onSelectionChange,
   onDeleteSelected
 }: TransactionCategorizerProps) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
   const [isAlreadyCategorizedExpanded, setIsAlreadyCategorizedExpanded] = useState(false);
   const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(null);
   const { categoryNames } = useCategoryNames();
@@ -100,7 +104,7 @@ const TransactionCategorizer = ({
   const handleBulkCategoryClick = (category: CategoryType) => {
     if (selectedTransactions.size > 0) {
       onBulkUpdate(Array.from(selectedTransactions), category);
-      setSelectedTransactions(new Set());
+      onSelectionChange(new Set());
     }
   };
 
@@ -136,7 +140,7 @@ const TransactionCategorizer = ({
         }
       }
       
-      setSelectedTransactions(newSelection);
+      onSelectionChange(newSelection);
     } else {
       // Single selection toggle
       const newSelection = new Set(selectedTransactions);
@@ -145,7 +149,7 @@ const TransactionCategorizer = ({
       } else {
         newSelection.add(transactionId);
       }
-      setSelectedTransactions(newSelection);
+      onSelectionChange(newSelection);
     }
     
     // Update last clicked index for future range selections
@@ -156,11 +160,11 @@ const TransactionCategorizer = ({
 
   const selectAllVisible = () => {
     const visibleIds = filteredTransactions.map(t => t.id);
-    setSelectedTransactions(new Set(visibleIds));
+    onSelectionChange(new Set(visibleIds));
   };
 
   const clearSelection = () => {
-    setSelectedTransactions(new Set());
+    onSelectionChange(new Set());
     setLastClickedIndex(null);
   };
 

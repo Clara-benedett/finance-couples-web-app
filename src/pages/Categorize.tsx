@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { transactionStore } from "@/store/transactionStore";
 import { Transaction } from "@/types/transaction";
@@ -98,11 +99,14 @@ const Categorize = () => {
   };
 
   const handleDeleteSelected = () => {
+    console.log('Delete selected called with:', selectedTransactions.size, 'transactions');
     setShowDeleteConfirmation(true);
   };
 
   const handleConfirmDelete = () => {
     const selectedIds = Array.from(selectedTransactions);
+    console.log('Confirming delete for transaction IDs:', selectedIds);
+    
     const success = transactionStore.deleteTransactions(selectedIds);
     
     if (success) {
@@ -225,6 +229,8 @@ const Categorize = () => {
       {/* Transaction Categorizer */}
       <TransactionCategorizer
         transactions={transactions}
+        selectedTransactions={selectedTransactions}
+        onSelectionChange={setSelectedTransactions}
         onUpdateTransaction={handleUpdateTransaction}
         onBulkUpdate={handleBulkUpdate}
         onRequestRuleSuggestion={handleRequestRuleSuggestion}
