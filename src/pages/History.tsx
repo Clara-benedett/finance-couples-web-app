@@ -6,39 +6,32 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Filter, Download, Users, User } from "lucide-react";
 import { useState, useEffect } from "react";
-import { useAuth } from '@/contexts/AuthContext';
-import { supabaseTransactionStore } from '@/store/supabaseTransactionStore';
-import { transactionStore } from '@/store/transactionStore';
-import { isSupabaseConfigured } from '@/lib/supabase';
+import { unifiedTransactionStore } from '@/store/unifiedTransactionStore';
 import { Transaction } from '@/types/transaction';
 
 
 const History = () => {
-  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterMonth, setFilterMonth] = useState<string>("all");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
 
-  const activeStore = isSupabaseConfigured && user ? supabaseTransactionStore : transactionStore;
-
   useEffect(() => {
     const loadTransactions = async () => {
-      if (isSupabaseConfigured && user) {
-        // Wait for supabase store to be fully initialized
-        await (activeStore as any).waitForInitialization?.();
-      }
-      setTransactions(activeStore.getTransactions());
+      const latestTransactions = await unifiedTransactionStore.getTransactions();
+      console.log(`[History] Loaded ${latestTransactions.length} transactions from unified store`);
+      setTransactions(latestTransactions);
     };
     
     loadTransactions();
     
-    const unsubscribe = activeStore.subscribe(() => {
-      setTransactions(activeStore.getTransactions());
+    const unsubscribe = unifiedTransactionStore.subscribe(async () => {
+      const latestTransactions = await unifiedTransactionStore.getTransactions();
+      setTransactions(latestTransactions);
     });
     
     return unsubscribe;
-  }, [activeStore, user]);
+  }, []);
 
   const expenses = transactions.map(t => ({
     id: t.id,

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { transactionStore } from "@/store/transactionStore";
+import { unifiedTransactionStore } from "@/store/unifiedTransactionStore";
 import { Transaction } from "@/types/transaction";
 import { useCategoryNames } from "@/hooks/useCategoryNames";
 import { categorizationRulesEngine } from "@/utils/categorizationRules";
@@ -31,26 +31,31 @@ const Categorize = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const updateTransactions = () => {
-      setTransactions(transactionStore.getTransactions());
+    const updateTransactions = async () => {
+      const allTransactions = await unifiedTransactionStore.getTransactions();
+      console.log(`[Categorize] Loaded ${allTransactions.length} transactions from unified store`);
+      setTransactions(allTransactions);
     };
 
     updateTransactions();
+
+    const applyRules = async () => {
+      const appliedCount = await unifiedTransactionStore.applyRulesToExistingTransactions();
+      if (appliedCount > 0) {
+        toast({
+          title: "Rules Applied",
+          description: `${appliedCount} transactions were automatically categorized.`,
+        });
+      }
+    };
     
-    // Auto-apply rules to existing transactions on page load
-    const appliedCount = transactionStore.applyRulesToExistingTransactions();
-    if (appliedCount > 0) {
-      toast({
-        title: "Auto-categorization applied",
-        description: `Applied existing rules to ${appliedCount} transactions`,
-      });
-    }
+    const unsubscribe = unifiedTransactionStore.subscribe(updateTransactions);
+    applyRules();
     
-    const unsubscribe = transactionStore.subscribe(updateTransactions);
     return unsubscribe;
   }, [toast]);
 
-  const handleUpdateTransaction = (id: string, category: CategoryType) => {
+  const handleUpdateTransaction = async (id: string, category: CategoryType) => {
     // Map the category types to the transaction store format
     const categoryMap: Record<CategoryType, string> = {
       person1: 'person1',
@@ -78,15 +83,17 @@ const Categorize = () => {
     }
 
     // Update transaction and clear autoAppliedRule flag when manually categorizing
-    transactionStore.updateTransaction(id, { 
+    await unifiedTransactionStore.updateTransaction(id, { 
       category: categoryMap[category],
       isClassified: category !== 'UNCLASSIFIED',
       autoAppliedRule: false // Clear auto-applied flag to indicate manual override
     });
   };
 
-  const handleBulkUpdate = (ids: string[], category: CategoryType) => {
-    ids.forEach(id => handleUpdateTransaction(id, category));
+  const handleBulkUpdate = async (ids: string[], category: CategoryType) => {
+    for (const id of ids) {
+      await handleUpdateTransaction(id, category);
+    }
   };
 
   const handleRequestRuleSuggestion = (merchantName: string, category: CategoryType, categoryDisplayName: string) => {
@@ -103,11 +110,11 @@ const Categorize = () => {
     setShowDeleteConfirmation(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     const selectedIds = Array.from(selectedTransactions);
     console.log('Confirming delete for transaction IDs:', selectedIds);
     
-    const success = transactionStore.deleteTransactions(selectedIds);
+    const success = await unifiedTransactionStore.deleteTransactions(selectedIds);
     
     if (success) {
       toast({
@@ -152,8 +159,8 @@ const Categorize = () => {
       t.description.toUpperCase().trim() === ruleSuggestion.merchantName.toUpperCase().trim()
     );
     
-    unclassifiedSameMerchant.forEach(transaction => {
-      transactionStore.updateTransaction(transaction.id, {
+    unclassifiedSameMerchant.forEach(async (transaction) => {
+      await unifiedTransactionStore.updateTransaction(transaction.id, {
         category: categoryMap[ruleSuggestion.category],
         isClassified: true,
         autoAppliedRule: true

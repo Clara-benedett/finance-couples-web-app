@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PlayCircle, RotateCcw } from "lucide-react";
 import { Transaction } from "@/types/transaction";
-import { transactionStore } from "@/store/transactionStore";
+import { unifiedTransactionStore } from "@/store/unifiedTransactionStore";
 import { calculateExpenses } from "@/utils/calculationEngine";
 
 const TestScenarios = () => {
@@ -90,16 +90,18 @@ const TestScenarios = () => {
     ];
   };
 
-  const runTestScenario = () => {
+  const runTestScenario = async () => {
     const sampleData = createSampleData();
     
     // Clear existing data and add sample data
-    transactionStore.clearTransactions();
-    transactionStore.addTransactions(sampleData);
+    await unifiedTransactionStore.clearAllData();
+    await unifiedTransactionStore.addTransactions(sampleData);
+    console.log(`[TestScenarios] Loaded ${sampleData.length} test transactions`);
   };
 
-  const clearTestData = () => {
-    transactionStore.clearTransactions();
+  const clearTestData = async () => {
+    await unifiedTransactionStore.clearAllData();
+    console.log(`[TestScenarios] Cleared all test data`);
   };
 
   // Calculate expected results for the test scenario

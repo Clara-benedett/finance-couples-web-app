@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { transactionStore } from "@/store/transactionStore";
+import { unifiedTransactionStore } from "@/store/unifiedTransactionStore";
 import { getCategoryNames } from "@/utils/categoryNames";
 import { DuplicateReviewDecision } from "@/types/duplicateDetection";
 import { UploadedFile, CardInfo, DuplicateReviewState } from "@/types/upload";
@@ -90,8 +90,9 @@ export const useUploadLogic = () => {
     // Save card classification rules
     saveCardClassificationRules(cardInfos);
 
-    // Add transactions to store
-    transactionStore.addTransactions(processedTransactions, true);
+    // Add transactions to unified store
+    await unifiedTransactionStore.addTransactions(processedTransactions, true);
+    console.log(`[Upload] Added ${processedTransactions.length} transactions to unified store`);
 
     // Update file statuses
     updateFileStatuses(fileUploads, processedTransactions, cardInfos, setUploadedFiles);
