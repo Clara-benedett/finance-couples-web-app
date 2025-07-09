@@ -106,7 +106,7 @@ const TestScenarios = () => {
 
   // Calculate expected results for the test scenario
   const sampleData = createSampleData();
-  const defaultProportions = { person1_percentage: 50, person2_percentage: 50 };
+  const defaultProportions = { person1Percentage: 50, person2Percentage: 50 };
   const testCalculations = calculateExpenses(sampleData, defaultProportions);
 
   const expectedResults = {
