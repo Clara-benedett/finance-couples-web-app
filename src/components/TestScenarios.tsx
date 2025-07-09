@@ -106,21 +106,22 @@ const TestScenarios = () => {
 
   // Calculate expected results for the test scenario
   const sampleData = createSampleData();
-  const testCalculations = calculateExpenses(sampleData);
+  const defaultProportions = { person1_percentage: 50, person2_percentage: 50 };
+  const testCalculations = calculateExpenses(sampleData, defaultProportions);
 
   const expectedResults = {
     person1Individual: 65, // 50 + 15
     person2Individual: 55, // 25 + 30
     sharedTotal: 300, // 100 + 80 + 120
-    person1ShareOfShared: 135, // 45% of 300
-    person2ShareOfShared: 165, // 55% of 300
-    person1ShouldPay: 200, // 65 + 135
-    person2ShouldPay: 220, // 55 + 165
+    person1ShareOfShared: 150, // 50% of 300
+    person2ShareOfShared: 150, // 50% of 300
+    person1ShouldPay: 215, // 65 + 150
+    person2ShouldPay: 205, // 55 + 150
     person1ActuallyPaid: 220, // 100 + 120 (from person1 card)
     person2ActuallyPaid: 110, // 80 + 30 (from person2 card)
-    person1NetPosition: -20, // 200 - 220
-    person2NetPosition: 110, // 220 - 110
-    finalSettlement: 65 // |(-20) - 110| / 2 = 65
+    person1NetPosition: 5, // 220 - 215
+    person2NetPosition: -95, // 110 - 205
+    finalSettlement: 50 // |5 - (-95)| / 2 = 50
   };
 
   return (
