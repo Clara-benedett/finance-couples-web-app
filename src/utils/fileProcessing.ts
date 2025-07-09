@@ -1,8 +1,8 @@
-
 import { parseFile } from "@/utils/fileParser";
 import { transactionStore } from "@/store/transactionStore";
 import { getCategoryNames } from "@/utils/categoryNames";
 import { cardClassificationEngine } from "@/utils/cardClassificationRules";
+import { cardClassificationService } from '@/services/cardClassificationService';
 import { UploadedFile, CardInfo } from "@/types/upload";
 import { Transaction } from "@/types/transaction";
 
@@ -93,6 +93,32 @@ export const processTransactions = (transactions: any[], cardInfos: CardInfo[]) 
   
   console.log(`[FileProcessing] Processed ${processedTransactions.length} transactions, ${totalAutoClassified} auto-classified`);
   return { processedTransactions, totalAutoClassified };
+};
+
+export const processTransactionsWithCardRules = async (transactions: Transaction[]): Promise<Transaction[]> => {
+  const processedTransactions = [];
+  
+  for (const transaction of transactions) {
+    let processedTransaction = { ...transaction };
+    
+    try {
+      // Check if we have a classification rule for this card
+      const classification = await cardClassificationService.getCardClassification(transaction.cardName);
+      
+      if (classification) {
+        processedTransaction.category = classification;
+        processedTransaction.autoAppliedRule = true;
+        console.log(`Applied card rule: ${transaction.cardName} → ${classification}`);
+      }
+    } catch (error) {
+      console.error('Error applying card classification rule:', error);
+      // Continue without the rule if there's an error
+    }
+    
+    processedTransactions.push(processedTransaction);
+  }
+  
+  return processedTransactions;
 };
 
 export const saveCardClassificationRules = (cardInfos: CardInfo[]) => {

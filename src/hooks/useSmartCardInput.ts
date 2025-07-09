@@ -1,6 +1,7 @@
 
 import { useState, useRef, useEffect } from 'react';
-import { cardClassificationEngine, CardClassificationRule } from "@/utils/cardClassificationRules";
+import { cardClassificationService, CardClassificationRule } from '@/services/cardClassificationService';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UseSmartCardInputProps {
   value: string;
@@ -12,27 +13,38 @@ export const useSmartCardInput = ({ value }: UseSmartCardInputProps) => {
   const [existingRule, setExistingRule] = useState<CardClassificationRule | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     console.log('useSmartCardInput: value changed to:', value);
     
-    if (value.length > 0) {
-      const suggestions = cardClassificationEngine.getSuggestions(value);
+    if (value.length > 0 && user) {
+      // Get suggestions from common templates
+      const suggestions = cardClassificationService.getSuggestions(value);
       setSuggestions(suggestions);
       setIsOpen(true);
       
       // Check for exact match to show the green checkmark indicator
-      const exact = cardClassificationEngine.getExactMatch(value);
-      setExistingRule(exact);
-      console.log('useSmartCardInput: existingRule set to:', exact);
+      const checkExistingRule = async () => {
+        try {
+          const exact = await cardClassificationService.getExactMatch(value);
+          setExistingRule(exact);
+          console.log('useSmartCardInput: existingRule set to:', exact);
+        } catch (error) {
+          console.error('Error checking existing rule:', error);
+          setExistingRule(null);
+        }
+      };
+      
+      checkExistingRule();
     } else {
       setSuggestions([]);
       setIsOpen(false);
       setExistingRule(null);
     }
-  }, [value]);
+  }, [value, user]);
 
-  const handleSuggestionClick = (suggestion: string, onChange: (value: string) => void) => {
+  const handleSuggestionClick = async (suggestion: string, onChange: (value: string) => void) => {
     console.log('useSmartCardInput: handleSuggestionClick called with:', suggestion);
     
     // Close the dropdown immediately
@@ -43,8 +55,15 @@ export const useSmartCardInput = ({ value }: UseSmartCardInputProps) => {
     onChange(suggestion);
     
     // Check if this suggestion has an existing rule for the indicator
-    const rule = cardClassificationEngine.getExactMatch(suggestion);
-    setExistingRule(rule);
+    if (user) {
+      try {
+        const rule = await cardClassificationService.getExactMatch(suggestion);
+        setExistingRule(rule);
+      } catch (error) {
+        console.error('Error checking rule for suggestion:', error);
+        setExistingRule(null);
+      }
+    }
   };
 
   const handleInputBlur = (e: React.FocusEvent) => {

@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      card_classification_rules: {
+        Row: {
+          card_name: string
+          classification: string
+          created_at: string
+          id: string
+          last_used: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          card_name: string
+          classification: string
+          created_at?: string
+          id?: string
+          last_used?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          card_name?: string
+          classification?: string
+          created_at?: string
+          id?: string
+          last_used?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       categorization_rules: {
         Row: {
           created_at: string

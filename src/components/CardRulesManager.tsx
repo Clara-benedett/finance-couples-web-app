@@ -2,9 +2,10 @@
 import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { cardClassificationEngine, CardClassificationRule } from "@/utils/cardClassificationRules";
+import { cardClassificationService, CardClassificationRule } from "@/services/cardClassificationService";
 import { useCategoryNames } from "@/hooks/useCategoryNames";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import CardRulesTable from "./CardRulesTable";
 import AddCardRuleDialog from "./AddCardRuleDialog";
 import EditCardRuleDialog from "./EditCardRuleDialog";
@@ -13,6 +14,7 @@ import MergeCardsDialog from "./MergeCardsDialog";
 
 const CardRulesManager = () => {
   const [rules, setRules] = useState<CardClassificationRule[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -24,67 +26,129 @@ const CardRulesManager = () => {
   
   const { categoryNames } = useCategoryNames();
   const { toast } = useToast();
+  const { user } = useAuth();
 
   useEffect(() => {
-    loadRules();
-  }, []);
+    if (user) {
+      loadRules();
+    }
+  }, [user]);
 
-  const loadRules = () => {
-    setRules(cardClassificationEngine.getAllRules());
+  const loadRules = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const rulesData = await cardClassificationService.getAllRules();
+      setRules(rulesData);
+    } catch (error) {
+      console.error('Error loading rules:', error);
+      toast({
+        title: "Error loading card rules",
+        description: "There was an error loading your card classification rules",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleAddRule = () => {
-    if (newCardName.trim()) {
-      cardClassificationEngine.saveCardClassification(newCardName.trim(), newClassification);
-      loadRules();
-      setShowAddDialog(false);
-      setNewCardName('');
-      setNewClassification('person1');
+  const handleAddRule = async () => {
+    if (!newCardName.trim()) return;
+
+    try {
+      const success = await cardClassificationService.saveCardClassification(newCardName.trim(), newClassification);
+      if (success) {
+        await loadRules();
+        setShowAddDialog(false);
+        setNewCardName('');
+        setNewClassification('person1');
+        toast({
+          title: "Card rule added",
+          description: `${newCardName} will be automatically classified as ${getCategoryDisplay(newClassification)}`,
+        });
+      }
+    } catch (error) {
+      console.error('Error adding rule:', error);
       toast({
-        title: "Card rule added",
-        description: `${newCardName} will be automatically classified as ${getCategoryDisplay(newClassification)}`,
+        title: "Error adding rule",
+        description: "There was an error adding the card rule",
+        variant: "destructive",
       });
     }
   };
 
-  const handleEditRule = () => {
-    if (editingRule && newCardName.trim()) {
-      cardClassificationEngine.updateCardName(editingRule.cardName, newCardName.trim());
-      cardClassificationEngine.saveCardClassification(newCardName.trim(), newClassification);
-      loadRules();
-      setShowEditDialog(false);
-      setEditingRule(null);
-      setNewCardName('');
+  const handleEditRule = async () => {
+    if (!editingRule || !newCardName.trim()) return;
+
+    try {
+      const success = await cardClassificationService.updateCardName(editingRule.card_name, newCardName.trim());
+      if (success) {
+        await cardClassificationService.saveCardClassification(newCardName.trim(), newClassification);
+        await loadRules();
+        setShowEditDialog(false);
+        setEditingRule(null);
+        setNewCardName('');
+        toast({
+          title: "Card rule updated",
+          description: `Rule updated successfully. Future transactions from this card will be classified as ${getCategoryDisplay(newClassification)}.`,
+        });
+      }
+    } catch (error) {
+      console.error('Error updating rule:', error);
       toast({
-        title: "Card rule updated",
-        description: `Rule updated successfully. Future transactions from this card will be classified as ${getCategoryDisplay(newClassification)}.`,
+        title: "Error updating rule",
+        description: "There was an error updating the card rule",
+        variant: "destructive",
       });
     }
   };
 
-  const handleDeleteRule = () => {
-    if (editingRule) {
-      cardClassificationEngine.deleteRule(editingRule.cardName);
-      loadRules();
-      setShowDeleteDialog(false);
-      setEditingRule(null);
+  const handleDeleteRule = async () => {
+    if (!editingRule) return;
+
+    try {
+      const success = await cardClassificationService.deleteRule(editingRule.card_name);
+      if (success) {
+        await loadRules();
+        setShowDeleteDialog(false);
+        setEditingRule(null);
+        toast({
+          title: "Card rule deleted",
+          description: `Rule for ${editingRule.card_name} has been removed`,
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting rule:', error);
       toast({
-        title: "Card rule deleted",
-        description: `Rule for ${editingRule.cardName} has been removed`,
+        title: "Error deleting rule",
+        description: "There was an error deleting the card rule",
+        variant: "destructive",
       });
     }
   };
 
-  const handleMergeCards = () => {
-    if (editingRule && mergeTarget.trim()) {
-      cardClassificationEngine.mergeCards(editingRule.cardName, mergeTarget.trim());
-      loadRules();
-      setShowMergeDialog(false);
-      setEditingRule(null);
-      setMergeTarget('');
+  const handleMergeCards = async () => {
+    if (!editingRule || !mergeTarget.trim()) return;
+
+    try {
+      const success = await cardClassificationService.mergeCards(editingRule.card_name, mergeTarget.trim());
+      if (success) {
+        await loadRules();
+        setShowMergeDialog(false);
+        setEditingRule(null);
+        setMergeTarget('');
+        toast({
+          title: "Cards merged",
+          description: `${editingRule.card_name} has been merged into ${mergeTarget}`,
+        });
+      }
+    } catch (error) {
+      console.error('Error merging cards:', error);
       toast({
-        title: "Cards merged",
-        description: `${editingRule.cardName} has been merged into ${mergeTarget}`,
+        title: "Error merging cards",
+        description: "There was an error merging the cards",
+        variant: "destructive",
       });
     }
   };
@@ -100,7 +164,7 @@ const CardRulesManager = () => {
 
   const openEditDialog = (rule: CardClassificationRule) => {
     setEditingRule(rule);
-    setNewCardName(rule.cardName);
+    setNewCardName(rule.card_name);
     setNewClassification(rule.classification as 'person1' | 'person2' | 'shared');
     setShowEditDialog(true);
   };
@@ -115,6 +179,23 @@ const CardRulesManager = () => {
     setMergeTarget('');
     setShowMergeDialog(true);
   };
+
+  if (!user) {
+    return (
+      <div className="text-center py-8 text-gray-500">
+        <p>Please log in to manage card classification rules.</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="text-center py-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+        <p className="mt-2 text-gray-600">Loading card rules...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
