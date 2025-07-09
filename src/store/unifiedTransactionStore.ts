@@ -33,46 +33,58 @@ class UnifiedTransactionStore {
       const previousUser = this.user;
       this.user = session?.user || null;
       
-      // Only reinitialize if user actually changed (not just token refresh)
+      // Only reinitialize if user actually changed and we have a user
       if (previousUser?.id !== this.user?.id) {
         console.log('[UNIFIED] User changed, reinitializing store...');
         this.isInitialized = false;
         this.transactions = [];
-        // Use setTimeout to avoid deadlock in auth callback
-        setTimeout(() => {
-          this.initialize();
-        }, 0);
+        
+        // Only initialize if we have a user
+        if (this.user) {
+          setTimeout(() => {
+            this.initialize();
+          }, 100);
+        }
       }
     });
   }
 
-  async initialize() {
-    if (this.isInitialized) return;
-    
+  async initialize(): Promise<void> {
+    if (this.isInitialized) {
+      console.log('[UNIFIED] Already initialized, skipping...');
+      return;
+    }
+
     console.log('[UNIFIED] Initializing unified transaction store...');
     
     try {
-      // Get current auth session first
-      const { data: { session } } = await supabase.auth.getSession();
-      this.user = session?.user || null;
+      // Get current user first and wait for auth to be ready
+      const { data: { user }, error } = await supabase.auth.getUser();
       
-      console.log('[UNIFIED] Current user:', this.user?.email || 'anonymous');
-
-      // Check if migration is needed
-      const migrationComplete = localStorage.getItem(MIGRATION_KEY);
-      
-      if (!migrationComplete) {
-        await this.migrateAllTransactionData();
-      } else {
-        await this.loadFromPrimarySource();
+      if (error) {
+        console.error('[UNIFIED] Auth error:', error);
+        throw error;
       }
       
+      this.user = user;
+      
+      if (!this.user) {
+        console.log('[UNIFIED] No authenticated user found');
+        this.isInitialized = true;
+        return;
+      }
+
+      console.log(`[UNIFIED] Initializing for user: ${this.user.email}`);
+
+      // Load from primary source (Supabase)
+      await this.loadFromPrimarySource();
+      
       this.isInitialized = true;
-      console.log(`[UNIFIED] Initialized with ${this.transactions.length} transactions`);
+      console.log('[UNIFIED] Store initialized successfully');
       this.notifyListeners();
     } catch (error) {
-      console.error('[UNIFIED] Initialization failed:', error);
-      // Fallback to localStorage
+      console.error('[UNIFIED] Failed to initialize store:', error);
+      // Fallback to local storage if available
       this.loadFromLocalStorage();
       this.isInitialized = true;
       this.notifyListeners();
@@ -83,6 +95,17 @@ class UnifiedTransactionStore {
     if (isSupabaseConfigured && this.user) {
       console.log('[UNIFIED] Loading from Supabase (primary)');
       await this.loadFromSupabase();
+      
+      // If Supabase is empty but localStorage has data, recover from localStorage
+      if (this.transactions.length === 0) {
+        console.log('[UNIFIED] Supabase empty, checking localStorage for recovery...');
+        const localData = this.loadFromLocalStorage();
+        if (localData.length > 0) {
+          console.log(`[UNIFIED] Found ${localData.length} transactions in localStorage, restoring...`);
+          this.transactions = localData;
+          await this.saveToSupabase(); // Restore to Supabase
+        }
+      }
     } else {
       console.log('[UNIFIED] Loading from localStorage (primary)');
       this.loadFromLocalStorage();

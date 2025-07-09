@@ -12,6 +12,7 @@ import ManualExpenseDialog from "@/components/ManualExpenseDialog";
 import ManualExpenseFAB from "@/components/ManualExpenseFAB";
 import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 type CategoryType = "person1" | "person2" | "shared" | "UNCLASSIFIED";
 
@@ -40,17 +41,19 @@ const Categorize = () => {
         setIsLoading(true);
         console.log('[Categorize] Loading transactions...');
         
-        // Add timeout to prevent infinite loading
-        const timeoutPromise = new Promise((_, reject) => {
-          setTimeout(() => reject(new Error('Timeout')), 10000);
-        });
+        // Ensure user is authenticated first
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.log('[Categorize] No authenticated user');
+          setTransactions([]);
+          return;
+        }
         
-        const loadPromise = (async () => {
-          await unifiedTransactionStore.waitForInitialization();
-          return await unifiedTransactionStore.getTransactions();
-        })();
+        console.log('[Categorize] User authenticated:', user.email);
         
-        const allTransactions = await Promise.race([loadPromise, timeoutPromise]) as Transaction[];
+        // Wait for store initialization with proper timeout
+        await unifiedTransactionStore.waitForInitialization();
+        const allTransactions = await unifiedTransactionStore.getTransactions();
         
         if (isMounted) {
           console.log(`[Categorize] Loaded ${allTransactions.length} transactions from unified store`);
