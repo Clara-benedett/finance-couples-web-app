@@ -31,35 +31,51 @@ const Categorize = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    let isMounted = true;
+    
     const updateTransactions = async () => {
+      if (!isMounted) return;
+      
       try {
         setIsLoading(true);
         console.log('[Categorize] Loading transactions...');
         
-        // Ensure store is properly initialized
-        await unifiedTransactionStore.waitForInitialization();
+        // Add timeout to prevent infinite loading
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error('Timeout')), 10000);
+        });
         
-        const allTransactions = await unifiedTransactionStore.getTransactions();
-        console.log(`[Categorize] Loaded ${allTransactions.length} transactions from unified store`);
-        setTransactions(allTransactions);
+        const loadPromise = (async () => {
+          await unifiedTransactionStore.waitForInitialization();
+          return await unifiedTransactionStore.getTransactions();
+        })();
+        
+        const allTransactions = await Promise.race([loadPromise, timeoutPromise]) as Transaction[];
+        
+        if (isMounted) {
+          console.log(`[Categorize] Loaded ${allTransactions.length} transactions from unified store`);
+          setTransactions(allTransactions);
+        }
       } catch (error) {
         console.error('[Categorize] Error loading transactions:', error);
-        toast({
-          title: "Error loading transactions",
-          description: "Please try refreshing the page.",
-          variant: "destructive",
-        });
+        if (isMounted) {
+          toast({
+            title: "Error loading transactions",
+            description: "Please try refreshing the page.",
+            variant: "destructive",
+          });
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
-
-    updateTransactions();
 
     const applyRules = async () => {
       try {
         const appliedCount = await unifiedTransactionStore.applyRulesToExistingTransactions();
-        if (appliedCount > 0) {
+        if (appliedCount > 0 && isMounted) {
           toast({
             title: "Rules Applied",
             description: `${appliedCount} transactions were automatically categorized.`,
@@ -70,10 +86,18 @@ const Categorize = () => {
       }
     };
     
-    const unsubscribe = unifiedTransactionStore.subscribe(updateTransactions);
-    applyRules();
+    updateTransactions();
+    const unsubscribe = unifiedTransactionStore.subscribe(() => {
+      if (isMounted) updateTransactions();
+    });
     
-    return unsubscribe;
+    // Apply rules after initial load
+    setTimeout(applyRules, 1000);
+    
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, [toast]);
 
   const handleUpdateTransaction = async (id: string, category: CategoryType) => {

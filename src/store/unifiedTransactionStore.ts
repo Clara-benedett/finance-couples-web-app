@@ -27,7 +27,7 @@ class UnifiedTransactionStore {
 
   private setupAuthListener() {
     // Set up auth state listener to reinitialize when user changes
-    this.authSubscription = supabase.auth.onAuthStateChange(async (event, session) => {
+    this.authSubscription = supabase.auth.onAuthStateChange((event, session) => {
       console.log('[UNIFIED] Auth state changed:', event, session?.user?.email || 'no user');
       
       const previousUser = this.user;
@@ -38,7 +38,10 @@ class UnifiedTransactionStore {
         console.log('[UNIFIED] User changed, reinitializing store...');
         this.isInitialized = false;
         this.transactions = [];
-        await this.initialize();
+        // Use setTimeout to avoid deadlock in auth callback
+        setTimeout(() => {
+          this.initialize();
+        }, 0);
       }
     });
   }
@@ -433,7 +436,7 @@ class UnifiedTransactionStore {
 
   async waitForInitialization(): Promise<void> {
     let attempts = 0;
-    const maxAttempts = 100; // 5 seconds max wait
+    const maxAttempts = 60; // 3 seconds max wait
     
     while (!this.isInitialized && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 50));
@@ -442,7 +445,16 @@ class UnifiedTransactionStore {
     
     if (!this.isInitialized) {
       console.warn('[UNIFIED] Initialization timeout, forcing initialization');
-      await this.initialize();
+      // Force initialize without waiting to break any potential deadlocks
+      this.isInitialized = true;
+      try {
+        await this.loadFromPrimarySource();
+        this.notifyListeners();
+      } catch (error) {
+        console.error('[UNIFIED] Force initialization failed:', error);
+        this.loadFromLocalStorage();
+        this.notifyListeners();
+      }
     }
   }
 
