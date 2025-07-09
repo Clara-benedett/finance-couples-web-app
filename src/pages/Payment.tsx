@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -147,9 +148,21 @@ const Payment = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Should Pay</span>
-                <span className="font-semibold">{formatCurrency(calculations.person1ShouldPay)}</span>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-gray-700">Should Pay</span>
+                  <span className="font-bold text-lg">{formatCurrency(calculations.person1ShouldPay)}</span>
+                </div>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Individual expenses:</span>
+                    <span className="font-medium">{formatCurrency(calculations.person1Individual)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Share of shared ({proportions.person1Percentage}%):</span>
+                    <span className="font-medium">{formatCurrency(calculations.person1ShareOfShared)}</span>
+                  </div>
+                </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Actually Paid</span>
@@ -181,9 +194,21 @@ const Payment = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Should Pay</span>
-                <span className="font-semibold">{formatCurrency(calculations.person2ShouldPay)}</span>
+              <div className="bg-gray-50 p-3 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-medium text-gray-700">Should Pay</span>
+                  <span className="font-bold text-lg">{formatCurrency(calculations.person2ShouldPay)}</span>
+                </div>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Individual expenses:</span>
+                    <span className="font-medium">{formatCurrency(calculations.person2Individual)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Share of shared ({proportions.person2Percentage}%):</span>
+                    <span className="font-medium">{formatCurrency(calculations.person2ShareOfShared)}</span>
+                  </div>
+                </div>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-gray-600">Actually Paid</span>
