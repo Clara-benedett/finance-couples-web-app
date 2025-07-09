@@ -4,6 +4,7 @@ import { transactionStore } from "@/store/transactionStore";
 import { getCategoryNames } from "@/utils/categoryNames";
 import { cardClassificationEngine } from "@/utils/cardClassificationRules";
 import { UploadedFile, CardInfo } from "@/types/upload";
+import { Transaction } from "@/types/transaction";
 
 export const generateId = () => Math.random().toString(36).substr(2, 9);
 
@@ -73,10 +74,10 @@ export const processTransactions = (transactions: any[], cardInfos: CardInfo[]) 
         date: t.date,
         amount: t.amount,
         description: t.description,
-        category: cardInfo.defaultCategory,
+        category: 'UNCLASSIFIED',
         cardName: cardInfo.name,
         paidBy: cardInfo.paidBy,
-        isClassified: cardInfo.defaultCategory !== 'UNCLASSIFIED',
+        isClassified: false,
         mccCode: t.mccCode,
         bankCategory: t.bankCategory,
         transactionType: t.transactionType,
@@ -87,11 +88,6 @@ export const processTransactions = (transactions: any[], cardInfos: CardInfo[]) 
       };
       
       processedTransactions.push(transaction);
-      
-      // Count auto-classified transactions
-      if (transaction.isClassified && cardInfo.defaultCategory !== 'UNCLASSIFIED') {
-        totalAutoClassified++;
-      }
     }
   }
   

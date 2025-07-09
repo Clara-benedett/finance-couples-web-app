@@ -24,10 +24,8 @@ export const MCC_EMOJI_MAP: { [key: string]: string } = {
   '5331': '🛍️', // Variety Stores
   '5399': '🛍️', // Miscellaneous General Merchandise
   '5732': '📱', // Electronics Stores
-  '5411': '🛒', // Supermarkets
   
   // Entertainment
-  '5813': '🍻', // Drinking Places
   '7832': '🎬', // Motion Picture Theaters
   '7933': '🎳', // Bowling Alleys
   
@@ -44,10 +42,6 @@ export const MCC_EMOJI_MAP: { [key: string]: string } = {
   // Financial
   '6011': '🏧', // ATM
   '6012': '🏧', // Financial Institutions
-  
-  // Gas Stations
-  '5541': '⛽', // Service Stations
-  '5542': '⛽', // Automated Fuel Dispensers
 };
 
 // Bank Category to Emoji mapping
@@ -105,38 +99,48 @@ export const BANK_CATEGORY_EMOJI_MAP: { [key: string]: string } = {
   'other': '💳',
 };
 
-// Merchant/Description patterns to Emoji mapping
+// Comprehensive merchant/keyword patterns based on real bank data
 export const MERCHANT_EMOJI_PATTERNS: Array<{ pattern: RegExp; emoji: string }> = [
-  // Transportation
-  { pattern: /uber|lyft/i, emoji: '🚗' },
-  { pattern: /shell|chevron|bp|exxon|mobil|texaco|citgo|sunoco|valero|marathon|speedway|wawa|sheetz/i, emoji: '⛽' },
-  { pattern: /southwest|delta|american|united|alaska|jetblue|spirit|frontier/i, emoji: '✈️' },
+  // Transportation & Gas Stations
+  { pattern: /uber|lyft|rideshare/i, emoji: '🚗' },
+  { pattern: /shell|chevron|bp|exxon|mobil|texaco|citgo|sunoco|valero|marathon|speedway|wawa|sheetz|arco|phillips 66/i, emoji: '⛽' },
+  { pattern: /southwest|delta|american|united|alaska|jetblue|spirit|frontier|airline/i, emoji: '✈️' },
+  { pattern: /parking|meter|garage/i, emoji: '🚗' },
   
-  // Restaurants & Food
-  { pattern: /starbucks|dunkin|coffee|cafe/i, emoji: '☕' },
-  { pattern: /mcdonalds|burger king|taco bell|kfc|subway|chipotle|panera|pizza|dominos|papa johns/i, emoji: '🍔' },
-  { pattern: /restaurant|dining|bistro|grill|kitchen|tavern|steakhouse/i, emoji: '🍽️' },
-  { pattern: /bar|brewery|pub|lounge/i, emoji: '🍻' },
+  // Coffee & Quick Service
+  { pattern: /starbucks|dunkin|coffee|cafe|peet|caribou/i, emoji: '☕' },
   
-  // Grocery & Shopping
-  { pattern: /safeway|kroger|walmart|target|costco|sams club|whole foods|trader joes|aldi/i, emoji: '🛒' },
-  { pattern: /amazon|ebay|etsy|shopping/i, emoji: '📦' },
-  { pattern: /home depot|lowes|menards/i, emoji: '🔨' },
-  { pattern: /best buy|apple store|electronics/i, emoji: '📱' },
-  { pattern: /macy|nordstrom|kohls|tjmaxx|marshall|clothing|apparel/i, emoji: '👕' },
+  // Fast Food & Restaurants
+  { pattern: /mcdonalds|burger king|taco bell|kfc|subway|chipotle|panera|pizza|dominos|papa johns|wendy|arbys|dairy queen/i, emoji: '🍔' },
+  { pattern: /restaurant|dining|bistro|grill|kitchen|tavern|steakhouse|diner|eatery/i, emoji: '🍽️' },
+  { pattern: /bar|brewery|pub|lounge|taphouse/i, emoji: '🍻' },
   
-  // Entertainment
-  { pattern: /netflix|hulu|spotify|apple music|disney|entertainment/i, emoji: '🎬' },
-  { pattern: /gym|fitness|yoga|sport/i, emoji: '💪' },
+  // Grocery & Food Shopping
+  { pattern: /safeway|kroger|walmart|target|costco|sams club|whole foods|trader joes|aldi|publix|wegmans|stop shop|giant|harris teeter/i, emoji: '🛒' },
+  { pattern: /grocery|supermarket|market|food store/i, emoji: '🛒' },
+  
+  // Online & General Shopping
+  { pattern: /amazon|ebay|etsy|paypal|stripe|square/i, emoji: '📦' },
+  { pattern: /home depot|lowes|menards|hardware/i, emoji: '🔨' },
+  { pattern: /best buy|apple store|electronics|computer|tech/i, emoji: '📱' },
+  { pattern: /macy|nordstrom|kohls|tjmaxx|marshall|clothing|apparel|fashion/i, emoji: '👕' },
+  
+  // Entertainment & Subscriptions
+  { pattern: /netflix|hulu|spotify|apple music|disney|amazon prime|subscription/i, emoji: '🎬' },
+  { pattern: /gym|fitness|yoga|sport|planet fitness|la fitness/i, emoji: '💪' },
+  { pattern: /movie|cinema|theater|amc|regal/i, emoji: '🎬' },
   
   // Health & Pharmacy
-  { pattern: /cvs|walgreens|rite aid|pharmacy|drugstore/i, emoji: '💊' },
-  { pattern: /hospital|medical|doctor|clinic|dentist/i, emoji: '🏥' },
+  { pattern: /cvs|walgreens|rite aid|pharmacy|drugstore|prescription/i, emoji: '💊' },
+  { pattern: /hospital|medical|doctor|clinic|dentist|healthcare/i, emoji: '🏥' },
   
   // Utilities & Services
-  { pattern: /electric|gas company|water|sewer|utility/i, emoji: '💡' },
-  { pattern: /internet|cable|phone|verizon|att|comcast|spectrum/i, emoji: '📡' },
-  { pattern: /bank|atm|fee|wells fargo|chase|bank of america|citibank/i, emoji: '🏧' },
+  { pattern: /electric|gas company|water|sewer|utility|pge|con ed/i, emoji: '💡' },
+  { pattern: /internet|cable|phone|verizon|att|comcast|spectrum|xfinity/i, emoji: '📡' },
+  { pattern: /bank|atm|fee|wells fargo|chase|bank of america|citibank|capital one/i, emoji: '🏧' },
+  
+  // Hotels & Travel
+  { pattern: /hotel|motel|marriott|hilton|hyatt|holiday inn|travel|booking/i, emoji: '🏨' },
   
   // Default fallback
   { pattern: /.*/, emoji: '💳' }
