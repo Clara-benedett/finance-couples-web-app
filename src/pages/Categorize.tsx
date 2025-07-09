@@ -15,6 +15,9 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 // Import emergency recovery function
 import "@/utils/emergencyRecovery";
+// Import data recovery and protection
+import "@/utils/dataRecovery";
+import "@/utils/dataProtection";
 
 type CategoryType = "person1" | "person2" | "shared" | "UNCLASSIFIED";
 

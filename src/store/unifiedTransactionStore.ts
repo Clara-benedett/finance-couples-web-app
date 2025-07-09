@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase';
 import { categorizationRulesEngine } from '@/utils/categorizationRules';
 import { findDuplicates } from '@/utils/duplicateDetection';
 import { isSupabaseConfigured } from '@/lib/supabase';
+import { dataProtection } from '@/utils/dataProtection';
 
 const STORAGE_KEY = 'expense_tracker_transactions';
 const VERSION_KEY = 'expense_tracker_version';
@@ -278,6 +279,11 @@ class UnifiedTransactionStore {
     if (!isSupabaseConfigured || !this.user) return;
 
     try {
+      // PROTECTION: Create backup before any database operations
+      if (this.transactions.length > 0) {
+        await dataProtection.createEmergencyBackup(this.transactions);
+      }
+
       // Clear existing data for this user
       await supabase
         .from('transactions')
@@ -294,12 +300,16 @@ class UnifiedTransactionStore {
 
         if (error) {
           console.error('[UNIFIED] Error saving to Supabase:', error);
+          // PROTECTION: Alert user of save failure
+          alert(`🚨 CRITICAL: Failed to save data to database! Error: ${error.message}`);
         } else {
-          console.log(`[UNIFIED] Saved ${this.transactions.length} transactions to Supabase`);
+          console.log(`[UNIFIED] Saved ${this.transactions.length} transactions to Supabase (with backup protection)`);
         }
       }
     } catch (error) {
       console.error('[UNIFIED] Supabase save failed:', error);
+      // PROTECTION: Alert user of save failure
+      alert(`🚨 CRITICAL: Failed to save data to database! Error: ${error}`);
     }
   }
 
@@ -413,6 +423,19 @@ class UnifiedTransactionStore {
   async clearAllData() {
     await this.waitForInitialization();
     
+    // PROTECTION: Create emergency backup before clearing
+    if (this.transactions.length > 0) {
+      console.log(`🛡️ [PROTECTION] Creating emergency backup before clearing ${this.transactions.length} transactions`);
+      await dataProtection.createEmergencyBackup(this.transactions);
+    }
+    
+    // PROTECTION: Require explicit confirmation for destructive operations
+    const canProceed = await dataProtection.safeClearDatabase();
+    if (!canProceed) {
+      console.log('🛡️ [PROTECTION] Clear operation cancelled by user');
+      return;
+    }
+    
     this.transactions = [];
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(VERSION_KEY);
@@ -426,7 +449,7 @@ class UnifiedTransactionStore {
     }
     
     this.notifyListeners();
-    console.log('[UNIFIED] All data cleared');
+    console.log('[UNIFIED] All data cleared (with backup protection)');
   }
 
   exportData() {
