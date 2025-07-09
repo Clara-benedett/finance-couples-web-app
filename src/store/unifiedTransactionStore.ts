@@ -509,3 +509,57 @@ export const unifiedTransactionStore = new UnifiedTransactionStore();
   console.log('🔍 [DEBUG] Unified Store Info:', info);
   return info;
 };
+
+// Emergency recovery function
+(window as any).emergencyRecover = async () => {
+  console.log('🚨 [RECOVERY] Starting emergency data recovery...');
+  
+  // Force load from localStorage
+  const localData = JSON.parse(localStorage.getItem('expense_tracker_transactions') || '[]');
+  console.log(`📦 [RECOVERY] Found ${localData.length} transactions in localStorage`);
+  
+  if (localData.length > 0) {
+    // Get current user
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      // Manually restore to database
+      const dbTransactions = localData.map(t => ({
+        id: t.id,
+        user_id: user.id,
+        date: t.date,
+        amount: t.amount,
+        description: t.description,
+        category: t.category,
+        card_name: t.cardName,
+        paid_by: t.paidBy,
+        is_classified: t.isClassified,
+        mcc_code: t.mccCode,
+        bank_category: t.bankCategory,
+        transaction_type: t.transactionType,
+        location: t.location,
+        reference_number: t.referenceNumber,
+        auto_applied_rule: t.autoAppliedRule,
+        is_manual_entry: t.isManualEntry,
+        payment_method: t.paymentMethod,
+      }));
+      
+      const { error } = await supabase.from('transactions').insert(dbTransactions);
+      
+      if (error) {
+        console.error('❌ [RECOVERY] Failed to restore data:', error);
+        return false;
+      } else {
+        console.log('✅ [RECOVERY] Successfully restored data to database!');
+        // Force reinitialize the store
+        unifiedTransactionStore.initialize();
+        return true;
+      }
+    } else {
+      console.error('❌ [RECOVERY] No authenticated user found');
+      return false;
+    }
+  } else {
+    console.log('📭 [RECOVERY] No data found in localStorage');
+    return false;
+  }
+};
