@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -241,7 +240,9 @@ const History = () => {
                   {/* MCC Emoji or Manual Entry Icon */}
                   <div className="flex-shrink-0 mt-1">
                     <TransactionMCCEmoji 
-                      mccCode={transaction.mccCode} 
+                      mccCode={transaction.mccCode}
+                      bankCategory={transaction.bankCategory}
+                      description={transaction.description}
                       isManualEntry={transaction.isManualEntry}
                     />
                   </div>

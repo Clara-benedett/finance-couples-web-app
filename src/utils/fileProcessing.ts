@@ -58,36 +58,44 @@ export const parseAllFiles = async (
 };
 
 export const processTransactions = (transactions: any[], cardInfos: CardInfo[]) => {
+  console.log(`[FileProcessing] Processing ${transactions.length} transactions`);
+  
+  const processedTransactions: Transaction[] = [];
   let totalAutoClassified = 0;
   
-  const processedTransactions = transactions.map(tx => {
-    const cardInfo = cardInfos.find(ci => ci.name === tx.cardName) || cardInfos[0];
-    let category = tx.category || 'UNCLASSIFIED';
-    let isClassified = false;
+  for (const cardInfo of cardInfos) {
+    const cardTransactions = transactions.filter(t => t.cardName === cardInfo.name);
+    console.log(`[FileProcessing] Processing ${cardTransactions.length} transactions for card: ${cardInfo.name}`);
     
-    if (cardInfo.autoClassification && cardInfo.autoClassification !== 'skip') {
-      category = cardInfo.autoClassification;
-      isClassified = true;
-      totalAutoClassified++;
+    for (const t of cardTransactions) {
+      const transaction: Transaction = {
+        id: Math.random().toString(36).substr(2, 9),
+        date: t.date,
+        amount: t.amount,
+        description: t.description,
+        category: cardInfo.defaultCategory,
+        cardName: cardInfo.name,
+        paidBy: cardInfo.paidBy,
+        isClassified: cardInfo.defaultCategory !== 'UNCLASSIFIED',
+        mccCode: t.mccCode,
+        bankCategory: t.bankCategory,
+        transactionType: t.transactionType,
+        location: t.location,
+        referenceNumber: t.referenceNumber,
+        autoAppliedRule: false,
+        isManualEntry: false
+      };
+      
+      processedTransactions.push(transaction);
+      
+      // Count auto-classified transactions
+      if (transaction.isClassified && cardInfo.defaultCategory !== 'UNCLASSIFIED') {
+        totalAutoClassified++;
+      }
     }
-    
-    return {
-      id: generateId(),
-      date: tx.date,
-      amount: tx.amount,
-      description: tx.description,
-      category,
-      cardName: cardInfo.name,
-      paidBy: cardInfo.paidBy,
-      isClassified,
-      mccCode: tx.mccCode,
-      transactionType: tx.transactionType,
-      location: tx.location,
-      referenceNumber: tx.referenceNumber,
-      autoAppliedRule: isClassified
-    };
-  });
-
+  }
+  
+  console.log(`[FileProcessing] Processed ${processedTransactions.length} transactions, ${totalAutoClassified} auto-classified`);
   return { processedTransactions, totalAutoClassified };
 };
 

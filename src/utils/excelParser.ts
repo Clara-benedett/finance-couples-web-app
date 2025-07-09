@@ -61,6 +61,9 @@ export async function parseExcel(file: File): Promise<{ transactions: ParsedTran
             };
 
             // Add extra fields if detected
+            if (extraFields.bankCategory !== undefined) {
+              transaction.bankCategory = parseOptionalField(row[extraFields.bankCategory]);
+            }
             if (extraFields.mccCode !== undefined) {
               transaction.mccCode = parseOptionalField(row[extraFields.mccCode]);
             }

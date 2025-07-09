@@ -1,3 +1,4 @@
+
 export interface Transaction {
   id: string;
   date: string;
@@ -8,6 +9,7 @@ export interface Transaction {
   paidBy: 'person1' | 'person2';
   isClassified: boolean;
   mccCode?: string;
+  bankCategory?: string;
   transactionType?: string;
   location?: string;
   referenceNumber?: string;
@@ -22,6 +24,7 @@ export interface ParsedTransaction {
   description: string;
   category?: string;
   mccCode?: string;
+  bankCategory?: string;
   transactionType?: string;
   location?: string;
   referenceNumber?: string;

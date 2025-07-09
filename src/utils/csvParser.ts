@@ -59,6 +59,9 @@ export async function parseCSV(file: File): Promise<{ transactions: ParsedTransa
               };
 
               // Add extra fields if detected
+              if (extraFields.bankCategory !== undefined) {
+                transaction.bankCategory = parseOptionalField(row[extraFields.bankCategory]);
+              }
               if (extraFields.mccCode !== undefined) {
                 transaction.mccCode = parseOptionalField(row[extraFields.mccCode]);
               }
