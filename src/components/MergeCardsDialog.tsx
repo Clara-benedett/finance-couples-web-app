@@ -34,7 +34,7 @@ const MergeCardsDialog = ({
         <DialogHeader>
           <DialogTitle>Merge Card Rules</DialogTitle>
           <DialogDescription>
-            Merge "{rule?.cardName}" into another card. The rule for "{rule?.cardName}" will be deleted.
+            Merge "{rule?.card_name}" into another card. The rule for "{rule?.card_name}" will be deleted.
           </DialogDescription>
         </DialogHeader>
         

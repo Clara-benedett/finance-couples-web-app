@@ -1,8 +1,7 @@
-
 import { cardClassificationService, CardClassificationRule } from '@/services/cardClassificationService';
 
 // Re-export the interface and common templates for backwards compatibility
-export { CardClassificationRule } from '@/services/cardClassificationService';
+export type { CardClassificationRule } from '@/services/cardClassificationService';
 
 export const COMMON_CARD_TEMPLATES = [
   'Chase Sapphire Preferred',

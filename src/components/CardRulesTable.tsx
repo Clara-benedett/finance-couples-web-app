@@ -63,8 +63,8 @@ const CardRulesTable = ({ rules, onEdit, onDelete, onMerge }: CardRulesTableProp
         </TableHeader>
         <TableBody>
           {rules.map((rule) => (
-            <TableRow key={rule.cardName}>
-              <TableCell className="font-medium">{rule.cardName}</TableCell>
+            <TableRow key={rule.card_name}>
+              <TableCell className="font-medium">{rule.card_name}</TableCell>
               <TableCell>
                 <div className="flex items-center gap-2">
                   {getCategoryIcon(rule.classification)}
@@ -72,7 +72,7 @@ const CardRulesTable = ({ rules, onEdit, onDelete, onMerge }: CardRulesTableProp
                 </div>
               </TableCell>
               <TableCell className="text-gray-500">
-                {new Date(rule.lastUsed).toLocaleDateString()}
+                {new Date(rule.last_used).toLocaleDateString()}
               </TableCell>
               <TableCell className="text-right">
                 <div className="flex items-center gap-1 justify-end">

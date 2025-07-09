@@ -30,7 +30,7 @@ const DeleteCardRuleDialog = ({
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Card Rule</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete the rule for "{rule?.cardName}"? 
+            Are you sure you want to delete the rule for "{rule?.card_name}"? 
             This action cannot be undone and future transactions from this card will not be automatically classified.
           </AlertDialogDescription>
         </AlertDialogHeader>

@@ -1,6 +1,5 @@
 
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
 
 export interface CardClassificationRule {
   id: string;
@@ -24,7 +23,10 @@ export class CardClassificationService {
       return [];
     }
 
-    return data || [];
+    return (data || []).map(rule => ({
+      ...rule,
+      classification: rule.classification as 'person1' | 'person2' | 'shared'
+    }));
   }
 
   async getCardClassification(cardName: string): Promise<'person1' | 'person2' | 'shared' | null> {
@@ -131,7 +133,10 @@ export class CardClassificationService {
       return null;
     }
 
-    return data;
+    return {
+      ...data,
+      classification: data.classification as 'person1' | 'person2' | 'shared'
+    };
   }
 
   async searchCards(query: string): Promise<CardClassificationRule[]> {
@@ -146,7 +151,10 @@ export class CardClassificationService {
       return [];
     }
 
-    return data || [];
+    return (data || []).map(rule => ({
+      ...rule,
+      classification: rule.classification as 'person1' | 'person2' | 'shared'
+    }));
   }
 
   async updateCardName(oldName: string, newName: string): Promise<boolean> {
@@ -185,7 +193,7 @@ export class CardClassificationService {
     }
 
     // Save the classification to the target card
-    const saved = await this.saveCardClassification(targetCardName, sourceRule.classification);
+    const saved = await this.saveCardClassification(targetCardName, sourceRule.classification as 'person1' | 'person2' | 'shared');
     if (!saved) {
       return false;
     }
