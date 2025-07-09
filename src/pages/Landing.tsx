@@ -1,6 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Upload, Zap, TrendingUp, Lock, CreditCard, RotateCcw } from "lucide-react";
+import { useEffect } from "react";
+import { supabase } from '@/integrations/supabase/client';
 
 const Landing = () => {
   const navigate = useNavigate();
@@ -8,6 +10,147 @@ const Landing = () => {
   const handleGetStarted = () => {
     navigate("/auth");
   };
+
+  // EMERGENCY DATA RECOVERY FUNCTIONS
+  useEffect(() => {
+    // Data recovery function
+    const checkAllStorage = () => {
+      console.log('🔍 [RECOVERY] Checking all storage locations...');
+      
+      // Check localStorage
+      console.log('📦 [RECOVERY] localStorage contents:');
+      Object.keys(localStorage).forEach(key => {
+        if (key.includes('transaction') || key.includes('expense') || key.includes('backup')) {
+          console.log(`  ${key}:`, localStorage.getItem(key));
+        }
+      });
+      
+      // Check sessionStorage
+      console.log('💾 [RECOVERY] sessionStorage contents:');
+      Object.keys(sessionStorage).forEach(key => {
+        if (key.includes('transaction') || key.includes('expense') || key.includes('backup')) {
+          console.log(`  ${key}:`, sessionStorage.getItem(key));
+        }
+      });
+      
+      // Try to find any transaction data
+      const possibleKeys = [
+        'expense_tracker_transactions',
+        'transactions_backup',
+        'emergency_backup',
+        'transaction_data'
+      ];
+      
+      for (const key of possibleKeys) {
+        const data = localStorage.getItem(key) || sessionStorage.getItem(key);
+        if (data) {
+          try {
+            const parsed = JSON.parse(data);
+            console.log(`✅ [RECOVERY] Found data in ${key}:`, parsed);
+            return parsed;
+          } catch (e) {
+            console.log(`❌ [RECOVERY] Failed to parse ${key}:`, e);
+          }
+        }
+      }
+      
+      console.log('📭 [RECOVERY] No transaction data found in storage');
+      return null;
+    };
+
+    // Emergency recovery function
+    const emergencyRecover = async () => {
+      console.log('🚨 [RECOVERY] Starting emergency data recovery...');
+      
+      try {
+        // Force load from localStorage
+        const localStorageData = localStorage.getItem('expense_tracker_transactions') || 
+                                sessionStorage.getItem('expense_tracker_transactions') ||
+                                localStorage.getItem('transactions_backup');
+        if (!localStorageData) {
+          console.log('📭 [RECOVERY] No data found in any storage location');
+          return false;
+        }
+
+        const localData = JSON.parse(localStorageData);
+        console.log(`📦 [RECOVERY] Found ${localData.length} transactions in storage`);
+        
+        if (localData.length === 0) {
+          console.log('📭 [RECOVERY] No transactions in storage data');
+          return false;
+        }
+
+        // Get current user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError) {
+          console.error('❌ [RECOVERY] Auth error:', userError);
+          return false;
+        }
+
+        if (!user) {
+          console.error('❌ [RECOVERY] No authenticated user found');
+          return false;
+        }
+
+        console.log('👤 [RECOVERY] Current user:', user.email);
+        console.log('🆔 [RECOVERY] User ID:', user.id);
+
+        // Map localStorage transactions to database format
+        const dbTransactions = localData.map((t: any) => ({
+          id: t.id,
+          user_id: user.id,
+          date: t.date,
+          amount: parseFloat(t.amount),
+          description: t.description,
+          category: t.category,
+          card_name: t.cardName,
+          paid_by: t.paidBy,
+          is_classified: t.isClassified || false,
+          mcc_code: t.mccCode,
+          bank_category: t.bankCategory,
+          transaction_type: t.transactionType,
+          location: t.location,
+          reference_number: t.referenceNumber,
+          auto_applied_rule: t.autoAppliedRule || false,
+          is_manual_entry: t.isManualEntry || false,
+          payment_method: t.paymentMethod,
+        }));
+
+        console.log(`💾 [RECOVERY] Uploading ${dbTransactions.length} transactions to database...`);
+        console.log('📄 [RECOVERY] Sample transaction:', dbTransactions[0]);
+
+        // Insert transactions into database
+        const { error: insertError } = await supabase
+          .from('transactions')
+          .insert(dbTransactions);
+
+        if (insertError) {
+          console.error('❌ [RECOVERY] Failed to restore data:', insertError);
+          return false;
+        } else {
+          console.log('✅ [RECOVERY] Successfully restored data to database!');
+          console.log('🔄 [RECOVERY] Refreshing page to show data...');
+          
+          // Small delay then refresh
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+          
+          return true;
+        }
+      } catch (error) {
+        console.error('❌ [RECOVERY] Recovery failed with error:', error);
+        return false;
+      }
+    };
+
+    // Make functions globally available
+    (window as any).checkAllStorage = checkAllStorage;
+    (window as any).emergencyRecover = emergencyRecover;
+    
+    console.log('🛠️ [RECOVERY] Recovery functions loaded. Use checkAllStorage() and emergencyRecover() in console.');
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-background">
