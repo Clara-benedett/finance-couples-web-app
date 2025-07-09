@@ -510,8 +510,10 @@ export const unifiedTransactionStore = new UnifiedTransactionStore();
   return info;
 };
 
-// Emergency recovery function
+// Emergency recovery function - now properly importing supabase
 (window as any).emergencyRecover = async () => {
+  const { supabase } = await import('@/lib/supabase');
+  
   console.log('🚨 [RECOVERY] Starting emergency data recovery...');
   
   // Force load from localStorage
@@ -521,6 +523,8 @@ export const unifiedTransactionStore = new UnifiedTransactionStore();
   if (localData.length > 0) {
     // Get current user
     const { data: { user } } = await supabase.auth.getUser();
+    console.log('👤 [RECOVERY] Current user:', user?.email);
+    
     if (user) {
       // Manually restore to database
       const dbTransactions = localData.map(t => ({
@@ -543,6 +547,8 @@ export const unifiedTransactionStore = new UnifiedTransactionStore();
         payment_method: t.paymentMethod,
       }));
       
+      console.log(`💾 [RECOVERY] Uploading ${dbTransactions.length} transactions to database...`);
+      
       const { error } = await supabase.from('transactions').insert(dbTransactions);
       
       if (error) {
@@ -551,7 +557,8 @@ export const unifiedTransactionStore = new UnifiedTransactionStore();
       } else {
         console.log('✅ [RECOVERY] Successfully restored data to database!');
         // Force reinitialize the store
-        unifiedTransactionStore.initialize();
+        await unifiedTransactionStore.initialize();
+        window.location.reload(); // Refresh page to show data
         return true;
       }
     } else {
