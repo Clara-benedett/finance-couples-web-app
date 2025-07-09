@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Filter, Download, Users, User, Zap, Hand } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Search, Filter, Download, Users, User, Zap, Hand, History as HistoryIcon, CheckCircle, Calendar, DollarSign } from "lucide-react";
 import { useState, useEffect } from "react";
 import { unifiedTransactionStore } from '@/store/unifiedTransactionStore';
 import { Transaction } from '@/types/transaction';
@@ -100,12 +101,21 @@ const History = () => {
       <div>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Expense History</h1>
         <p className="text-gray-600">
-          View and analyze your past expenses and spending patterns
+          View and analyze your past expenses, spending patterns, and settlement history
         </p>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Tabs for different sections */}
+      <Tabs defaultValue="transactions" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="transactions">Transaction History</TabsTrigger>
+          <TabsTrigger value="settlements">Settlement History</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="transactions" className="space-y-6 mt-6">
+
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">Total Expenses</CardTitle>
@@ -153,8 +163,8 @@ const History = () => {
         </Card>
       </div>
 
-      {/* Filters */}
-      <Card>
+          {/* Filters */}
+          <Card>
         <CardHeader>
           <CardTitle className="text-lg text-gray-900">Filters</CardTitle>
         </CardHeader>
@@ -221,8 +231,8 @@ const History = () => {
         </CardContent>
       </Card>
 
-      {/* Enhanced Transactions List */}
-      <Card>
+          {/* Enhanced Transactions List */}
+          <Card>
         <CardHeader>
           <CardTitle className="text-lg text-gray-900">Transaction Details</CardTitle>
           <CardDescription>
@@ -313,8 +323,132 @@ const History = () => {
               </div>
             )}
           </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+        
+        </TabsContent>
+
+        <TabsContent value="settlements" className="space-y-6 mt-6">
+          {/* Settlement History Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">Settlement History</h2>
+              <p className="text-sm text-gray-600">Track your payment cycles and verification checkpoints</p>
+            </div>
+            <Button variant="outline" className="flex items-center gap-2">
+              <Download className="w-4 h-4" />
+              Export Records
+            </Button>
+          </div>
+
+          {/* Settlement Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                  <DollarSign className="w-4 h-4" />
+                  Total Settlements
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-gray-900">$0.00</div>
+                <p className="text-xs text-gray-500 mt-1">0 payment cycles</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                  <Calendar className="w-4 h-4" />
+                  This Month
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">$0.00</div>
+                <p className="text-xs text-gray-500 mt-1">No settlements yet</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4" />
+                  Verified
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">100%</div>
+                <p className="text-xs text-gray-500 mt-1">All settlements verified</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Settlement Records */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <HistoryIcon className="w-5 h-5" />
+                Settlement Records
+              </CardTitle>
+              <CardDescription>
+                Previous payment cycles and verification history
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <HistoryIcon className="w-8 h-8 text-gray-400" />
+                </div>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No settlement history yet</h3>
+                <p className="text-gray-600 mb-4">
+                  Your payment cycles and verification checkpoints will appear here after your first settlement.
+                </p>
+                <Button variant="outline" onClick={() => window.location.href = '/app/categorize'}>
+                  Start Categorizing Expenses
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Verification Checkpoints */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5" />
+                Verification Checkpoints
+              </CardTitle>
+              <CardDescription>
+                Automated checks and approval history for settlements
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm font-medium">Transaction Categorization</span>
+                  </div>
+                  <Badge variant="secondary">Ready</Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                    <span className="text-sm font-medium">Calculation Review</span>
+                  </div>
+                  <Badge variant="outline">Pending</Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 bg-gray-300 rounded-full"></div>
+                    <span className="text-sm font-medium">Payment Verification</span>
+                  </div>
+                  <Badge variant="outline">Pending</Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

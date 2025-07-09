@@ -1,9 +1,10 @@
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, ArrowRight } from "lucide-react";
 import { Transaction } from "@/types/transaction";
 import { categorizationRulesEngine } from "@/utils/categorizationRules";
 import { useCategoryNames } from "@/hooks/useCategoryNames";
@@ -38,6 +39,7 @@ const TransactionCategorizer = ({
   const [isExcludedTransactionsExpanded, setIsExcludedTransactionsExpanded] = useState(false);
   const [lastClickedIndex, setLastClickedIndex] = useState<number | null>(null);
   const { categoryNames } = useCategoryNames();
+  const navigate = useNavigate();
 
   const filteredTransactions = useMemo(() => {
     // First filter out bill payments from categorization
@@ -245,7 +247,14 @@ const TransactionCategorizer = ({
               <CardContent className="p-8 text-center">
                 <div className="text-4xl mb-4">🎉</div>
                 <h2 className="text-xl font-semibold text-green-800 mb-2">All transactions categorized!</h2>
-                <p className="text-green-700">Great job organizing your expenses!</p>
+                <p className="text-green-700 mb-6">Great job organizing your expenses!</p>
+                <Button
+                  onClick={() => navigate('/app/review')}
+                  className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                >
+                  Review & Verify Expenses
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
               </CardContent>
             </Card>
           )}

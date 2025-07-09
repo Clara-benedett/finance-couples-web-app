@@ -11,6 +11,8 @@ import { AppLayout } from "@/components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Upload from "./pages/Upload";
 import Categorize from "./pages/Categorize";
+import Review from "./pages/Review";
+import Payment from "./pages/Payment";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
 import Landing from "./pages/Landing";
@@ -38,6 +40,8 @@ const App = () => {
                 <Route index element={<Dashboard />} />
                 <Route path="upload" element={<Upload />} />
                 <Route path="categorize" element={<Categorize />} />
+                <Route path="review" element={<Review />} />
+                <Route path="payment" element={<Payment />} />
                 <Route path="history" element={<History />} />
                 <Route path="settings" element={<Settings />} />
               </Route>
