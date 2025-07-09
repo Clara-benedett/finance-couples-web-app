@@ -40,7 +40,7 @@ const Dashboard = () => {
     return unsubscribe;
   }, []);
 
-  // Load proportions from Supabase - this is the key fix
+  // Load proportions from Supabase and listen for changes
   useEffect(() => {
     const loadProportions = async () => {
       if (user) {
@@ -49,10 +49,13 @@ const Dashboard = () => {
           const settings = await supabaseTransactionStore.getProportionSettings();
           console.log('[Dashboard] Loaded proportions from Supabase:', settings);
           
-          setProportions({
+          const newProportions = {
             person1Percentage: settings.person1_percentage,
             person2Percentage: settings.person2_percentage,
-          });
+          };
+          
+          setProportions(newProportions);
+          console.log('[Dashboard] Updated proportions state:', newProportions);
         } catch (error) {
           console.error('[Dashboard] Error loading proportions:', error);
           // Fallback to default only if there's an error
@@ -69,16 +72,53 @@ const Dashboard = () => {
 
     loadProportions();
 
-    // Listen for storage events to refresh proportions when they change in other tabs
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'supabase.auth.token') {
-        // Auth state changed, reload proportions
+    // Listen for custom storage events when proportions change
+    const handleProportionChange = (event: StorageEvent) => {
+      if (event.key === 'proportionSettings') {
+        console.log('[Dashboard] Proportion settings changed, reloading...');
         loadProportions();
       }
     };
+
+    // Listen for focus events to reload proportions when user comes back to dashboard
+    const handleFocus = () => {
+      console.log('[Dashboard] Window focused, reloading proportions...');
+      loadProportions();
+    };
+
+    window.addEventListener('storage', handleProportionChange);
+    window.addEventListener('focus', handleFocus);
     
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleProportionChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, [user]);
+
+  // Force refresh proportions when navigating back to dashboard
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user) {
+        console.log('[Dashboard] Page became visible, reloading proportions...');
+        const loadProportions = async () => {
+          try {
+            const settings = await supabaseTransactionStore.getProportionSettings();
+            const newProportions = {
+              person1Percentage: settings.person1_percentage,
+              person2Percentage: settings.person2_percentage,
+            };
+            setProportions(newProportions);
+            console.log('[Dashboard] Refreshed proportions on visibility change:', newProportions);
+          } catch (error) {
+            console.error('[Dashboard] Error refreshing proportions:', error);
+          }
+        };
+        loadProportions();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [user]);
 
   // Add debug info to verify correct data is being used

@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Settings, Users } from "lucide-react";
 import { useCategoryNames } from "@/hooks/useCategoryNames";
-import { ProportionSettings, saveProportionSettings } from '@/utils/calculationEngine';
+import { ProportionSettings } from '@/utils/calculationEngine';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabaseTransactionStore } from '@/store/supabaseTransactionStore';
 import { isSupabaseConfigured } from '@/lib/supabase';
@@ -62,20 +62,30 @@ const ProportionSettingsComponent = ({ proportions, onUpdate, onClose }: Proport
         
         if (success) {
           console.log('[ProportionSettings] Successfully saved to Supabase');
-          // Trigger a storage event to notify other components
+          
+          // Trigger multiple events to ensure Dashboard gets notified
           window.dispatchEvent(new StorageEvent('storage', {
             key: 'proportionSettings',
             newValue: JSON.stringify(localProportions)
           }));
+          
+          // Also trigger a custom event for more reliable communication
+          window.dispatchEvent(new CustomEvent('proportionSettingsChanged', {
+            detail: localProportions
+          }));
+          
+          // Force a page refresh event to ensure Dashboard reloads
+          window.dispatchEvent(new Event('focus'));
+          
           onUpdate(localProportions);
+          console.log('[ProportionSettings] All events dispatched for:', localProportions);
         } else {
           console.error('[ProportionSettings] Failed to save to Supabase');
           throw new Error('Failed to save settings');
         }
       } else {
-        console.log('[ProportionSettings] Saving to localStorage (fallback)');
-        saveProportionSettings(localProportions);
-        onUpdate(localProportions);
+        console.log('[ProportionSettings] No Supabase config, using localStorage fallback');
+        throw new Error('Supabase not configured');
       }
       
       if (onClose) onClose();
