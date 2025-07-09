@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,7 @@ interface ProportionSettingsProps {
 const ProportionSettingsComponent = ({ proportions, onUpdate, onClose }: ProportionSettingsProps) => {
   const { user } = useAuth();
   const [localProportions, setLocalProportions] = useState(proportions);
+  const [saving, setSaving] = useState(false);
   const { categoryNames } = useCategoryNames();
 
   const handleSliderChange = (value: number[]) => {
@@ -49,16 +51,40 @@ const ProportionSettingsComponent = ({ proportions, onUpdate, onClose }: Proport
   };
 
   const handleSave = async () => {
-    if (isSupabaseConfigured && user) {
-      await supabaseTransactionStore.saveProportionSettings({
-        person1_percentage: localProportions.person1Percentage,
-        person2_percentage: localProportions.person2Percentage,
-      });
-    } else {
-      saveProportionSettings(localProportions);
+    setSaving(true);
+    try {
+      if (isSupabaseConfigured && user) {
+        console.log('[ProportionSettings] Saving to Supabase:', localProportions);
+        const success = await supabaseTransactionStore.saveProportionSettings({
+          person1_percentage: localProportions.person1Percentage,
+          person2_percentage: localProportions.person2Percentage,
+        });
+        
+        if (success) {
+          console.log('[ProportionSettings] Successfully saved to Supabase');
+          // Trigger a storage event to notify other components
+          window.dispatchEvent(new StorageEvent('storage', {
+            key: 'proportionSettings',
+            newValue: JSON.stringify(localProportions)
+          }));
+          onUpdate(localProportions);
+        } else {
+          console.error('[ProportionSettings] Failed to save to Supabase');
+          throw new Error('Failed to save settings');
+        }
+      } else {
+        console.log('[ProportionSettings] Saving to localStorage (fallback)');
+        saveProportionSettings(localProportions);
+        onUpdate(localProportions);
+      }
+      
+      if (onClose) onClose();
+    } catch (error) {
+      console.error('[ProportionSettings] Error saving:', error);
+      // You might want to show a toast notification here
+    } finally {
+      setSaving(false);
     }
-    onUpdate(localProportions);
-    if (onClose) onClose();
   };
 
   return (
@@ -85,6 +111,7 @@ const ProportionSettingsComponent = ({ proportions, onUpdate, onClose }: Proport
               min={0}
               step={1}
               className="w-full"
+              disabled={saving}
             />
           </div>
           <div className="flex justify-between text-sm text-gray-600">
@@ -107,6 +134,7 @@ const ProportionSettingsComponent = ({ proportions, onUpdate, onClose }: Proport
               max="100"
               value={localProportions.person1Percentage}
               onChange={(e) => handleInputChange('person1Percentage', e.target.value)}
+              disabled={saving}
             />
           </div>
           
@@ -122,21 +150,23 @@ const ProportionSettingsComponent = ({ proportions, onUpdate, onClose }: Proport
               max="100"
               value={localProportions.person2Percentage}
               onChange={(e) => handleInputChange('person2Percentage', e.target.value)}
+              disabled={saving}
             />
           </div>
         </div>
 
         <div className="flex justify-end gap-2 pt-4">
           {onClose && (
-            <Button variant="outline" onClick={onClose}>
+            <Button variant="outline" onClick={onClose} disabled={saving}>
               Cancel
             </Button>
           )}
           <Button 
             onClick={handleSave}
             className="bg-purple-600 hover:bg-purple-700"
+            disabled={saving}
           >
-            Save Settings
+            {saving ? 'Saving...' : 'Save Settings'}
           </Button>
         </div>
       </CardContent>

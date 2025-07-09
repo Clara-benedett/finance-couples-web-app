@@ -1,3 +1,4 @@
+
 import { Transaction } from '@/types/transaction';
 import { getCategoryNames } from './categoryNames';
 
@@ -69,9 +70,12 @@ export const saveProportionSettings = (proportions: ProportionSettings): void =>
 
 export const calculateExpenses = (
   transactions: Transaction[],
-  proportions?: ProportionSettings
+  proportions: ProportionSettings // Make this required instead of optional
 ): CalculationResults => {
-  const props = proportions || getProportionSettings();
+  // Use the provided proportions directly - no fallback to localStorage
+  const props = proportions;
+  
+  console.log(`[CalculationEngine] Using proportions: ${props.person1Percentage}/${props.person2Percentage}`);
   
   // Categorize transactions by expense category
   const person1Transactions = transactions.filter(t => t.category === 'person1');
