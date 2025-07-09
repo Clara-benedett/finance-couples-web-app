@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { unifiedTransactionStore } from "@/store/unifiedTransactionStore";
 import { Transaction } from "@/types/transaction";
@@ -18,6 +17,7 @@ type CategoryType = "person1" | "person2" | "shared" | "UNCLASSIFIED";
 
 const Categorize = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [showCategoryEdit, setShowCategoryEdit] = useState(false);
   const [showManualExpense, setShowManualExpense] = useState(false);
   const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set());
@@ -32,20 +32,41 @@ const Categorize = () => {
 
   useEffect(() => {
     const updateTransactions = async () => {
-      const allTransactions = await unifiedTransactionStore.getTransactions();
-      console.log(`[Categorize] Loaded ${allTransactions.length} transactions from unified store`);
-      setTransactions(allTransactions);
+      try {
+        setIsLoading(true);
+        console.log('[Categorize] Loading transactions...');
+        
+        // Ensure store is properly initialized
+        await unifiedTransactionStore.waitForInitialization();
+        
+        const allTransactions = await unifiedTransactionStore.getTransactions();
+        console.log(`[Categorize] Loaded ${allTransactions.length} transactions from unified store`);
+        setTransactions(allTransactions);
+      } catch (error) {
+        console.error('[Categorize] Error loading transactions:', error);
+        toast({
+          title: "Error loading transactions",
+          description: "Please try refreshing the page.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     updateTransactions();
 
     const applyRules = async () => {
-      const appliedCount = await unifiedTransactionStore.applyRulesToExistingTransactions();
-      if (appliedCount > 0) {
-        toast({
-          title: "Rules Applied",
-          description: `${appliedCount} transactions were automatically categorized.`,
-        });
+      try {
+        const appliedCount = await unifiedTransactionStore.applyRulesToExistingTransactions();
+        if (appliedCount > 0) {
+          toast({
+            title: "Rules Applied",
+            description: `${appliedCount} transactions were automatically categorized.`,
+          });
+        }
+      } catch (error) {
+        console.error('[Categorize] Error applying rules:', error);
       }
     };
     
@@ -191,6 +212,21 @@ const Categorize = () => {
     // The hook will automatically update when database changes
     setShowCategoryEdit(false);
   };
+
+  // Show loading state while transactions are being loaded
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <CategorizeHeader onEditCategories={() => setShowCategoryEdit(true)} />
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading transactions...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (transactions.length === 0) {
     return <EmptyTransactionsState />;

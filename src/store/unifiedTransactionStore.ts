@@ -1,3 +1,4 @@
+
 import { Transaction } from '@/types/transaction';
 import { supabase } from '@/lib/supabase';
 import { categorizationRulesEngine } from '@/utils/categorizationRules';
@@ -18,9 +19,28 @@ class UnifiedTransactionStore {
   private listeners: (() => void)[] = [];
   private isInitialized = false;
   private user: any = null;
+  private authSubscription: any = null;
 
   constructor() {
-    this.initialize();
+    this.setupAuthListener();
+  }
+
+  private setupAuthListener() {
+    // Set up auth state listener to reinitialize when user changes
+    this.authSubscription = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[UNIFIED] Auth state changed:', event, session?.user?.email || 'no user');
+      
+      const previousUser = this.user;
+      this.user = session?.user || null;
+      
+      // Only reinitialize if user actually changed (not just token refresh)
+      if (previousUser?.id !== this.user?.id) {
+        console.log('[UNIFIED] User changed, reinitializing store...');
+        this.isInitialized = false;
+        this.transactions = [];
+        await this.initialize();
+      }
+    });
   }
 
   async initialize() {
@@ -29,11 +49,11 @@ class UnifiedTransactionStore {
     console.log('[UNIFIED] Initializing unified transaction store...');
     
     try {
-      // Get current user for Supabase operations
-      if (isSupabaseConfigured) {
-        const { data: { user } } = await supabase.auth.getUser();
-        this.user = user;
-      }
+      // Get current auth session first
+      const { data: { session } } = await supabase.auth.getSession();
+      this.user = session?.user || null;
+      
+      console.log('[UNIFIED] Current user:', this.user?.email || 'anonymous');
 
       // Check if migration is needed
       const migrationComplete = localStorage.getItem(MIGRATION_KEY);
@@ -52,6 +72,7 @@ class UnifiedTransactionStore {
       // Fallback to localStorage
       this.loadFromLocalStorage();
       this.isInitialized = true;
+      this.notifyListeners();
     }
   }
 
@@ -83,9 +104,14 @@ class UnifiedTransactionStore {
   }
 
   private async loadFromSupabase(): Promise<Transaction[]> {
-    if (!isSupabaseConfigured || !this.user) return [];
+    if (!isSupabaseConfigured || !this.user) {
+      console.log('[UNIFIED] Cannot load from Supabase - no user or not configured');
+      return [];
+    }
 
     try {
+      console.log('[UNIFIED] Fetching transactions from Supabase for user:', this.user.email);
+      
       const { data, error } = await supabase
         .from('transactions')
         .select('*')
@@ -94,6 +120,8 @@ class UnifiedTransactionStore {
 
       if (error) {
         console.error('[UNIFIED] Error loading from Supabase:', error);
+        // Fallback to localStorage if Supabase fails
+        this.loadFromLocalStorage();
         return [];
       }
 
@@ -103,6 +131,8 @@ class UnifiedTransactionStore {
       return transactions;
     } catch (error) {
       console.error('[UNIFIED] Supabase load failed:', error);
+      // Fallback to localStorage
+      this.loadFromLocalStorage();
       return [];
     }
   }
@@ -402,8 +432,17 @@ class UnifiedTransactionStore {
   }
 
   async waitForInitialization(): Promise<void> {
-    while (!this.isInitialized) {
+    let attempts = 0;
+    const maxAttempts = 100; // 5 seconds max wait
+    
+    while (!this.isInitialized && attempts < maxAttempts) {
       await new Promise(resolve => setTimeout(resolve, 50));
+      attempts++;
+    }
+    
+    if (!this.isInitialized) {
+      console.warn('[UNIFIED] Initialization timeout, forcing initialization');
+      await this.initialize();
     }
   }
 
@@ -417,6 +456,13 @@ class UnifiedTransactionStore {
       sampleTransaction: this.transactions[0],
       user: this.user?.email || 'anonymous'
     };
+  }
+
+  // Cleanup method
+  destroy() {
+    if (this.authSubscription) {
+      this.authSubscription.unsubscribe();
+    }
   }
 }
 
