@@ -18,7 +18,7 @@ const CategoryButtons = ({
   isForBulk = false, 
   isDisabled = false 
 }: CategoryButtonsProps) => {
-  const { categoryNames } = useCategoryNames();
+  const { categoryNames, loading } = useCategoryNames();
 
   const getCategoryButtonClass = (category: CategoryType, currentCategory: string) => {
     const baseClass = "relative overflow-hidden transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-lg active:scale-95 min-w-[100px] touch-manipulation rounded-full";
@@ -57,19 +57,23 @@ const CategoryButtons = ({
     const buttonClass = getCategoryButtonClass(category, currentCategory);
     
     let label = '';
-    switch (category) {
-      case 'person1':
-        label = categoryNames.person1;
-        break;
-      case 'person2':
-        label = categoryNames.person2;
-        break;
-      case 'shared':
-        label = categoryNames.shared;
-        break;
-      case 'UNCLASSIFIED':
-        label = 'Unclassified';
-        break;
+    if (loading) {
+      label = category === 'UNCLASSIFIED' ? 'Unclassified' : 'Loading...';
+    } else {
+      switch (category) {
+        case 'person1':
+          label = categoryNames.person1;
+          break;
+        case 'person2':
+          label = categoryNames.person2;
+          break;
+        case 'shared':
+          label = categoryNames.shared;
+          break;
+        case 'UNCLASSIFIED':
+          label = 'Unclassified';
+          break;
+      }
     }
 
     return (

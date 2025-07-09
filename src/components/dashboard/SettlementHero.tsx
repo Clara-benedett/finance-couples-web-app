@@ -12,7 +12,7 @@ interface SettlementHeroProps {
 }
 
 const SettlementHero = ({ calculations, proportions, currentMonth }: SettlementHeroProps) => {
-  const { categoryNames } = useCategoryNames();
+  const { categoryNames, loading } = useCategoryNames();
   const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
 
   return (
@@ -24,12 +24,18 @@ const SettlementHero = ({ calculations, proportions, currentMonth }: SettlementH
             <div className="text-5xl font-bold text-orange-600 mb-3">
               {formatCurrency(calculations.finalSettlementAmount)}
             </div>
-            <p className="text-xl text-orange-800 font-medium">
-              {calculations.settlementDirection === 'person1ToPerson2'
-                ? `${categoryNames.person1} owes ${categoryNames.person2}`
-                : `${categoryNames.person2} owes ${categoryNames.person1}`
-              }
-            </p>
+            {loading ? (
+              <p className="text-xl text-orange-800 font-medium">
+                Loading...
+              </p>
+            ) : (
+              <p className="text-xl text-orange-800 font-medium">
+                {calculations.settlementDirection === 'person1ToPerson2'
+                  ? `${categoryNames.person1} owes ${categoryNames.person2}`
+                  : `${categoryNames.person2} owes ${categoryNames.person1}`
+                }
+              </p>
+            )}
           </div>
           
           <div className="flex items-center justify-center gap-4 text-sm text-orange-700">

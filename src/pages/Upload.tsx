@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useCategoryNames } from "@/hooks/useCategoryNames";
 import CategorySetup from "@/components/CategorySetup";
@@ -15,7 +14,7 @@ import { useUploadLogic } from "@/hooks/useUploadLogic";
 import { CardInfo } from "@/types/upload";
 
 const Upload = () => {
-  const { categoryNames } = useCategoryNames();
+  const { categoryNames, loading: categoryNamesLoading } = useCategoryNames();
   const [showCardNameDialog, setShowCardNameDialog] = useState(false);
   const [showCategorySetup, setShowCategorySetup] = useState(false);
   const [showManualExpense, setShowManualExpense] = useState(false);
@@ -93,7 +92,7 @@ const Upload = () => {
     <div className="space-y-4">
       <UploadHeader onEditCategories={handleEditCategories} />
 
-      <CategoryDisplay categoryNames={categoryNames} />
+      <CategoryDisplay categoryNames={categoryNames} loading={categoryNamesLoading} />
 
       {/* File Upload Section */}
       <div className="space-y-3">
