@@ -11,7 +11,7 @@ const FormatInstructions = () => {
           File Format Requirements
         </CardTitle>
         <CardDescription>
-          Your CSV or Excel file must contain these columns (column names can vary):
+          Your CSV, Excel, or PDF file must contain these columns (column names can vary):
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-0">

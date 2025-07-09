@@ -2,7 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, AlertCircle, FileText, File } from "lucide-react";
+import { CheckCircle, AlertCircle, FileText, File, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface UploadedFile {
@@ -99,27 +99,35 @@ const UploadProgress = ({ uploadedFiles }: UploadProgressProps) => {
         </div>
         
         {successfulUploads.length > 0 && (
-          <div className="mt-6 p-4 bg-green-50 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-green-900">
-                  {totalTransactions} transactions ready for categorization
-                </h4>
-                <div className="text-sm text-green-700 space-y-1">
-                  <p>Files processed successfully. Ready to categorize expenses.</p>
-                  {totalAutoClassified > 0 && (
-                    <p className="text-purple-700">
-                      🏷️ {totalAutoClassified} transactions were automatically classified by card rules
-                    </p>
-                  )}
+          <div className="mt-6 p-6 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border border-green-200">
+            <div className="flex flex-col space-y-4">
+              <div className="text-center">
+                <div className="flex items-center justify-center mb-2">
+                  <CheckCircle className="w-6 h-6 text-green-600 mr-2" />
+                  <h3 className="text-xl font-semibold text-green-900">
+                    Upload Complete!
+                  </h3>
                 </div>
+                <p className="text-green-700 mb-1">
+                  {totalTransactions} transactions ready for categorization
+                </p>
+                {totalAutoClassified > 0 && (
+                  <p className="text-purple-700 text-sm">
+                    🏷️ {totalAutoClassified} transactions were automatically classified
+                  </p>
+                )}
               </div>
-              <Button 
-                onClick={() => navigate('/app/categorize')}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                Categorize Expenses
-              </Button>
+              
+              <div className="flex justify-center">
+                <Button 
+                  onClick={() => navigate('/app/categorize')}
+                  className="bg-green-600 hover:bg-green-700 text-white font-medium px-8 py-3 text-lg flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200"
+                  size="lg"
+                >
+                  Categorize Expenses
+                  <ArrowRight className="w-5 h-5" />
+                </Button>
+              </div>
             </div>
           </div>
         )}

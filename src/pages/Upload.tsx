@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useCategoryNames } from "@/hooks/useCategoryNames";
 import CategorySetup from "@/components/CategorySetup";
@@ -105,6 +106,9 @@ const Upload = () => {
           onFileSelection={handleFileSelectionWithDialog}
         />
         
+        {/* Upload Progress - moved up to be more visible */}
+        <UploadProgress uploadedFiles={uploadedFiles} />
+        
         <FormatInstructions />
       </div>
 
@@ -112,8 +116,6 @@ const Upload = () => {
       <ManualEntryCard
         onAddManualExpense={() => setShowManualExpense(true)}
       />
-
-      <UploadProgress uploadedFiles={uploadedFiles} />
 
       <ManualExpenseDialog
         open={showManualExpense}

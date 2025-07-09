@@ -12,7 +12,7 @@ const UploadHeader = ({ onEditCategories }: UploadHeaderProps) => {
       <div>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Upload Expense Files</h1>
         <p className="text-gray-600">
-          Upload CSV or Excel files, or add manual expenses
+          Upload CSV, Excel, or PDF files, or add manual expenses
         </p>
       </div>
       <Button

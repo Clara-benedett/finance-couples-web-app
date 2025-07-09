@@ -38,12 +38,13 @@ export const setCategoryNames = (names: CategoryNames): void => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(names));
 };
 
-export const getCategoryDisplayName = (category: string): string => {
+export const getCategoryDisplayName = (category: string, categoryNames?: CategoryNames): string => {
   if (category === 'UNCLASSIFIED' || !category) {
     return 'Unclassified';
   }
   
-  const names = getCategoryNames();
+  // Use provided categoryNames or fallback to getCategoryNames()
+  const names = categoryNames || getCategoryNames();
   
   switch (category) {
     case 'person1':
