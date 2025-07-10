@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase';
 import { Transaction } from '@/types/transaction';
 import { categorizationRulesEngine } from '@/utils/categorizationRules';
@@ -99,6 +98,8 @@ class SupabaseTransactionStore {
       autoAppliedRule: dbTransaction.auto_applied_rule,
       isManualEntry: dbTransaction.is_manual_entry,
       paymentMethod: dbTransaction.payment_method,
+      cardMember: dbTransaction.card_member,
+      accountNumber: dbTransaction.account_number,
     };
   }
 
@@ -120,6 +121,8 @@ class SupabaseTransactionStore {
       auto_applied_rule: transaction.autoAppliedRule,
       is_manual_entry: transaction.isManualEntry,
       payment_method: transaction.paymentMethod,
+      card_member: transaction.cardMember,
+      account_number: transaction.accountNumber,
     };
   }
 

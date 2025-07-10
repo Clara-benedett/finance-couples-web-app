@@ -16,6 +16,8 @@ export interface Transaction {
   autoAppliedRule?: boolean;
   isManualEntry?: boolean;
   paymentMethod?: string;
+  cardMember?: string;
+  accountNumber?: string;
 }
 
 export interface ParsedTransaction {
@@ -28,4 +30,6 @@ export interface ParsedTransaction {
   transactionType?: string;
   location?: string;
   referenceNumber?: string;
+  cardMember?: string;
+  accountNumber?: string;
 }

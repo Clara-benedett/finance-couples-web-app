@@ -1,100 +1,95 @@
-
 import Papa from 'papaparse';
 import { ParsedTransaction } from '@/types/transaction';
-import { parseDate, parseAmount, parseOptionalField } from './dateParser';
-import { COLUMN_MAPPINGS, findDataStartRow, findColumnIndex, detectExtraFields } from './columnMapper';
+import { findColumn, detectExtraFields } from './columnMapper';
+import { parseDate } from './dateParser';
 
-export async function parseCSV(file: File): Promise<{ transactions: ParsedTransaction[], detectedFields: string[] }> {
-  return new Promise((resolve, reject) => {
-    try {
-      console.log('Starting CSV parse for file:', file.name);
-      Papa.parse(file, {
-        header: false, // Parse as array to handle dynamic header detection
-        skipEmptyLines: true,
-        complete: (results) => {
-          try {
-            console.log('Papa.parse completed successfully');
-            const data = results.data as any[][];
-            
-            if (data.length === 0) {
-              reject(new Error('CSV file is empty'));
-              return;
-            }
-            
-            console.log('CSV data loaded, total rows:', data.length);
-            console.log('First few rows of raw CSV data:', data.slice(0, 3));
-            
-            const { startRow, headers } = findDataStartRow(data);
-            
-            console.log('CSV Headers found:', headers);
-            console.log('Looking for columns:', COLUMN_MAPPINGS);
-            
-            const dateIndex = findColumnIndex(headers, COLUMN_MAPPINGS.date);
-            const amountIndex = findColumnIndex(headers, COLUMN_MAPPINGS.amount);
-            const descIndex = findColumnIndex(headers, COLUMN_MAPPINGS.description);
+function parseOptionalField(value: any): string | undefined {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+  const strValue = String(value).trim();
+  return strValue === '' ? undefined : strValue;
+}
 
-            console.log('Column indices found:', { dateIndex, amountIndex, descIndex });
+function parseAmount(value: any): number {
+  const cleanedValue = String(value).replace(/[^0-9.-]+/g, '');
+  const parsedAmount = parseFloat(cleanedValue);
+  return isNaN(parsedAmount) ? 0 : parsedAmount;
+}
 
-            if (dateIndex === -1 || amountIndex === -1 || descIndex === -1) {
-              reject(new Error(`Required columns not found. Found headers: ${headers.join(', ')}. Please ensure your CSV has Date, Amount, and Description columns.`));
-              return;
-            }
-
-            // Detect extra fields
-            const extraFields = detectExtraFields(headers);
-            const detectedFields = Object.keys(extraFields);
-            
-            console.log('Extra fields detected:', extraFields);
-
-            // Skip the header row and process data
-            const dataRows = data.slice(startRow + 1);
-            console.log('Date column values from first 5 rows:', dataRows.slice(0, 5).map(row => row[dateIndex]));
-            
-            const transactions: ParsedTransaction[] = dataRows.map(row => {
-              const transaction: ParsedTransaction = {
-                date: parseDate(row[dateIndex]),
-                amount: parseAmount(row[amountIndex]),
-                description: String(row[descIndex] || 'Unknown'),
-                category: 'UNCLASSIFIED'
-              };
-
-              // Add extra fields if detected
-              if (extraFields.bankCategory !== undefined) {
-                transaction.bankCategory = parseOptionalField(row[extraFields.bankCategory]);
-              }
-              if (extraFields.mccCode !== undefined) {
-                transaction.mccCode = parseOptionalField(row[extraFields.mccCode]);
-              }
-              if (extraFields.transactionType !== undefined) {
-                transaction.transactionType = parseOptionalField(row[extraFields.transactionType]);
-              }
-              if (extraFields.location !== undefined) {
-                transaction.location = parseOptionalField(row[extraFields.location]);
-              }
-              if (extraFields.referenceNumber !== undefined) {
-                transaction.referenceNumber = parseOptionalField(row[extraFields.referenceNumber]);
-              }
-
-              return transaction;
-            }).filter(t => t.amount > 0);
-
-            console.log('Parsed transactions:', transactions.length);
-            console.log('Sample transaction with extra fields:', transactions[0]);
-            
-            resolve({ transactions, detectedFields });
-          } catch (error) {
-            console.error('Error processing CSV data:', error);
-            reject(new Error('Failed to parse CSV file: ' + (error as Error).message));
-          }
-        },
-        error: (error) => {
-          console.error('Papa.parse error:', error);
-          reject(new Error(`CSV parsing error: ${error.message}`));
-        }
-      });
-    } catch (error) {
-      console.error('Error in parseCSV:', error);
-      reject(new Error('Failed to initialize CSV parsing: ' + (error as Error).message));
-    }
+export function parseCSV(csvContent: string): { 
+  transactions: ParsedTransaction[], 
+  detectedFields: string[] 
+} {
+  const result = Papa.parse(csvContent, {
+    header: true,
+    skipEmptyLines: true,
+    transformHeader: (header: string) => header.trim()
   });
+
+  if (result.errors.length > 0) {
+    console.warn('CSV parsing errors:', result.errors);
+  }
+
+  const data = result.data as any[];
+  const headers = Object.keys(data[0] || {});
+  
+  // Detect extra fields
+  const detectedFields = detectExtraFields(headers);
+  
+  // Find column mappings
+  const dateColumn = findColumn(headers, 'date');
+  const amountColumn = findColumn(headers, 'amount');
+  const descriptionColumn = findColumn(headers, 'description');
+  const categoryColumn = findColumn(headers, 'category');
+  const mccColumn = findColumn(headers, 'mccCode');
+  const bankCategoryColumn = findColumn(headers, 'bankCategory');
+  const transactionTypeColumn = findColumn(headers, 'transactionType');
+  const locationColumn = findColumn(headers, 'location');
+  const referenceNumberColumn = findColumn(headers, 'referenceNumber');
+  const cardMemberColumn = findColumn(headers, 'cardMember');
+  const accountNumberColumn = findColumn(headers, 'accountNumber');
+
+  const transactions: ParsedTransaction[] = data
+    .filter(row => row && typeof row === 'object')
+    .map(row => {
+      const transaction: ParsedTransaction = {
+        date: parseDate(row[dateColumn] || ''),
+        amount: parseAmount(row[amountColumn]),
+        description: (row[descriptionColumn] || '').toString().trim(),
+        category: parseOptionalField(row[categoryColumn])
+      };
+
+      // Add optional fields if they exist
+      if (mccColumn && row[mccColumn]) {
+        transaction.mccCode = parseOptionalField(row[mccColumn]);
+      }
+      if (bankCategoryColumn && row[bankCategoryColumn]) {
+        transaction.bankCategory = parseOptionalField(row[bankCategoryColumn]);
+      }
+      if (transactionTypeColumn && row[transactionTypeColumn]) {
+        transaction.transactionType = parseOptionalField(row[transactionTypeColumn]);
+      }
+      if (locationColumn && row[locationColumn]) {
+        transaction.location = parseOptionalField(row[locationColumn]);
+      }
+      if (referenceNumberColumn && row[referenceNumberColumn]) {
+        transaction.referenceNumber = parseOptionalField(row[referenceNumberColumn]);
+      }
+      if (cardMemberColumn && row[cardMemberColumn]) {
+        transaction.cardMember = parseOptionalField(row[cardMemberColumn]);
+      }
+      if (accountNumberColumn && row[accountNumberColumn]) {
+        transaction.accountNumber = parseOptionalField(row[accountNumberColumn]);
+      }
+
+      return transaction;
+    })
+    .filter(transaction => 
+      transaction.date && 
+      !isNaN(transaction.amount) && 
+      transaction.description
+    );
+
+  return { transactions, detectedFields };
 }

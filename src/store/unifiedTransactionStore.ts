@@ -1,4 +1,3 @@
-
 import { Transaction } from '@/types/transaction';
 import { supabase } from '@/lib/supabase';
 import { categorizationRulesEngine } from '@/utils/categorizationRules';
@@ -182,6 +181,8 @@ class UnifiedTransactionStore {
       autoAppliedRule: dbTransaction.auto_applied_rule,
       isManualEntry: dbTransaction.is_manual_entry,
       paymentMethod: dbTransaction.payment_method,
+      cardMember: dbTransaction.card_member,
+      accountNumber: dbTransaction.account_number,
     };
   }
 
@@ -204,6 +205,8 @@ class UnifiedTransactionStore {
       auto_applied_rule: transaction.autoAppliedRule,
       is_manual_entry: transaction.isManualEntry,
       payment_method: transaction.paymentMethod,
+      card_member: transaction.cardMember,
+      account_number: transaction.accountNumber,
     };
   }
 
@@ -568,6 +571,8 @@ export const unifiedTransactionStore = new UnifiedTransactionStore();
         auto_applied_rule: t.autoAppliedRule,
         is_manual_entry: t.isManualEntry,
         payment_method: t.paymentMethod,
+        card_member: t.cardMember,
+        account_number: t.accountNumber,
       }));
       
       console.log(`💾 [RECOVERY] Uploading ${dbTransactions.length} transactions to database...`);

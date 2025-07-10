@@ -143,8 +143,10 @@ export type Database = {
       }
       transactions: {
         Row: {
+          account_number: string | null
           amount: number
           auto_applied_rule: boolean | null
+          card_member: string | null
           card_name: string
           category: string
           created_at: string
@@ -163,8 +165,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          account_number?: string | null
           amount: number
           auto_applied_rule?: boolean | null
+          card_member?: string | null
           card_name: string
           category: string
           created_at?: string
@@ -183,8 +187,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          account_number?: string | null
           amount?: number
           auto_applied_rule?: boolean | null
+          card_member?: string | null
           card_name?: string
           category?: string
           created_at?: string
