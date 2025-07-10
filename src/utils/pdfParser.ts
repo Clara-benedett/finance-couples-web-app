@@ -171,13 +171,20 @@ function parseTransactionLine(line: string): ParsedTransaction | null {
       const currentYear = new Date().getFullYear();
       const fullDate = `${transDate}/${currentYear}`;
       
+      // Clean up the description by removing any reference number patterns at the beginning
+      let cleanDescription = description.trim();
+      
+      // Remove reference numbers that might be at the start of description
+      // Pattern: alphanumeric codes followed by space, typically 8-15 characters
+      cleanDescription = cleanDescription.replace(/^[A-Z0-9]{8,15}\s+/, '');
+      
       return {
         date: parseDate(fullDate),
         amount: amount,
-        description: description.trim(),
+        description: cleanDescription,
         category: 'UNCLASSIFIED',
         referenceNumber: refNumber,
-        location: parseOptionalField(extractLocation(description))
+        location: parseOptionalField(extractLocation(cleanDescription))
       };
     }
   }
