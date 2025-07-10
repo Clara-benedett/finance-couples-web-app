@@ -13,11 +13,6 @@ import ManualExpenseFAB from "@/components/ManualExpenseFAB";
 import DeleteConfirmationDialog from "@/components/DeleteConfirmationDialog";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-// Import emergency recovery function
-import "@/utils/emergencyRecovery";
-// Import data recovery and protection
-import "@/utils/dataRecovery";
-import "@/utils/dataProtection";
 
 type CategoryType = "person1" | "person2" | "shared" | "UNCLASSIFIED";
 
@@ -39,7 +34,9 @@ const Categorize = () => {
   useEffect(() => {
     let isMounted = true;
     
-    // IMMEDIATE DATA RECOVERY FUNCTIONS - Add to window
+    // 🚨 EMERGENCY RECOVERY FUNCTIONS - LOADED IMMEDIATELY
+    console.log('🛠️ [RECOVERY] Loading emergency recovery functions...');
+    
     (window as any).checkAllStorage = () => {
       console.log('🔍 CHECKING ALL STORAGE LOCATIONS...');
       
@@ -162,6 +159,8 @@ const Categorize = () => {
         return false;
       }
     };
+    
+    console.log('🛠️ [RECOVERY] Recovery functions loaded. Use checkAllStorage() and emergencyRecover() in console.');
     
     const updateTransactions = async () => {
       if (!isMounted) return;
