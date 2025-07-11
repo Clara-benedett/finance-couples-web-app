@@ -43,8 +43,10 @@ export class DataProtectionSystem {
     // 3. Create backup history (rotating)
     this.addToBackupHistory(backupData);
     
-    // 4. Download backup file immediately
-    this.downloadBackupFile(backupData);
+    // 4. Download backup file only in debug mode
+    if ((window as any).DEBUG_MODE) {
+      this.downloadBackupFile(backupData);
+    }
     
     console.log('✅ [PROTECTION] Emergency backups created in multiple locations');
   }
@@ -196,7 +198,6 @@ Type "I UNDERSTAND THE RISK" to continue:`;
       paidBy: dbTransaction.paid_by,
       isClassified: dbTransaction.is_classified,
       mccCode: dbTransaction.mcc_code,
-      bankCategory: dbTransaction.bank_category,
       transactionType: dbTransaction.transaction_type,
       location: dbTransaction.location,
       referenceNumber: dbTransaction.reference_number,

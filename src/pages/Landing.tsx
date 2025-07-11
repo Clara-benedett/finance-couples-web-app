@@ -108,7 +108,6 @@ const Landing = () => {
           paid_by: t.paidBy,
           is_classified: t.isClassified || false,
           mcc_code: t.mccCode,
-          bank_category: t.bankCategory,
           transaction_type: t.transactionType,
           location: t.location,
           reference_number: t.referenceNumber,
