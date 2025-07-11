@@ -39,11 +39,15 @@ class UnifiedTransactionStore {
         this.isInitialized = false;
         this.transactions = [];
         
-        // Only initialize if we have a user
+        // Only initialize if we have a user - this prevents database operations when logged out
         if (this.user) {
           setTimeout(() => {
             this.initialize();
           }, 100);
+        } else {
+          // When user logs out, just mark as initialized to prevent operations
+          this.isInitialized = true;
+          this.notifyListeners();
         }
       }
     });
@@ -69,8 +73,10 @@ class UnifiedTransactionStore {
       this.user = user;
       
       if (!this.user) {
-        console.log('[UNIFIED] No authenticated user found');
+        console.log('[UNIFIED] No authenticated user found - skipping database operations');
+        this.transactions = []; // Clear any data when not logged in
         this.isInitialized = true;
+        this.notifyListeners();
         return;
       }
 
@@ -281,7 +287,11 @@ class UnifiedTransactionStore {
   }
 
   private async saveToSupabase() {
-    if (!isSupabaseConfigured || !this.user) return;
+    // Multiple guards to ensure we never operate without proper authentication
+    if (!isSupabaseConfigured || !this.user?.id) {
+      console.log('[UNIFIED] Skipping Supabase operations - not configured or no user');
+      return;
+    }
 
     try {
       // PROTECTION: Create backup before any database operations
@@ -302,16 +312,16 @@ class UnifiedTransactionStore {
 
         if (error) {
           console.error('[UNIFIED] Error saving to Supabase:', error);
-          // PROTECTION: Alert user of save failure
-          alert(`🚨 CRITICAL: Failed to save data to database! Error: ${error.message}`);
+          // Silent error handling - no more scary popups for users
+          return false;
         } else {
           console.log(`[UNIFIED] Saved ${this.transactions.length} transactions to Supabase (with backup protection)`);
         }
       }
     } catch (error) {
       console.error('[UNIFIED] Supabase save failed:', error);
-      // PROTECTION: Alert user of save failure
-      alert(`🚨 CRITICAL: Failed to save data to database! Error: ${error}`);
+      // Silent error handling - no more scary popups
+      return false;
     }
   }
 
