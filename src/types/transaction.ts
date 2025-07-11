@@ -18,6 +18,8 @@ export interface Transaction {
   paymentMethod?: string;
   cardMember?: string;
   accountNumber?: string;
+  isPaid?: boolean;
+  markedPaidAt?: string;
 }
 
 export interface ParsedTransaction {

@@ -155,7 +155,9 @@ export type Database = {
           id: string
           is_classified: boolean | null
           is_manual_entry: boolean | null
+          is_paid: boolean | null
           location: string | null
+          marked_paid_at: string | null
           mcc_code: string | null
           paid_by: string
           payment_method: string | null
@@ -177,7 +179,9 @@ export type Database = {
           id: string
           is_classified?: boolean | null
           is_manual_entry?: boolean | null
+          is_paid?: boolean | null
           location?: string | null
+          marked_paid_at?: string | null
           mcc_code?: string | null
           paid_by: string
           payment_method?: string | null
@@ -199,7 +203,9 @@ export type Database = {
           id?: string
           is_classified?: boolean | null
           is_manual_entry?: boolean | null
+          is_paid?: boolean | null
           location?: string | null
+          marked_paid_at?: string | null
           mcc_code?: string | null
           paid_by?: string
           payment_method?: string | null

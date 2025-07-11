@@ -100,6 +100,8 @@ class SupabaseTransactionStore {
       paymentMethod: dbTransaction.payment_method,
       cardMember: dbTransaction.card_member,
       accountNumber: dbTransaction.account_number,
+      isPaid: dbTransaction.is_paid,
+      markedPaidAt: dbTransaction.marked_paid_at,
     };
   }
 
@@ -123,6 +125,8 @@ class SupabaseTransactionStore {
       payment_method: transaction.paymentMethod,
       card_member: transaction.cardMember,
       account_number: transaction.accountNumber,
+      is_paid: transaction.isPaid,
+      marked_paid_at: transaction.markedPaidAt,
     };
   }
 
@@ -377,6 +381,68 @@ class SupabaseTransactionStore {
     }
     
     return appliedCount;
+  }
+
+  async markTransactionsAsPaid(): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    this.user = user;
+    
+    if (!user) {
+      console.warn('No authenticated user - cannot mark transactions as paid');
+      return false;
+    }
+
+    try {
+      // Get all unpaid transactions
+      const unpaidTransactions = this.transactions.filter(t => !t.isPaid);
+      
+      if (unpaidTransactions.length === 0) {
+        console.log('No unpaid transactions to mark as paid');
+        return true;
+      }
+
+      const settleTimestamp = new Date().toISOString();
+      
+      // Update all unpaid transactions to paid with the same timestamp
+      const { error } = await supabase
+        .from('transactions')
+        .update({
+          is_paid: true,
+          marked_paid_at: settleTimestamp,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', user.id)
+        .eq('is_paid', false);
+
+      if (error) {
+        console.error('Error marking transactions as paid:', error);
+        return false;
+      }
+
+      // Update local state
+      this.transactions = this.transactions.map(t => 
+        !t.isPaid ? {
+          ...t,
+          isPaid: true,
+          markedPaidAt: settleTimestamp
+        } : t
+      );
+      
+      this.notifyListeners();
+      console.log(`Marked ${unpaidTransactions.length} transactions as paid`);
+      return true;
+    } catch (error) {
+      console.error('Error marking transactions as paid:', error);
+      return false;
+    }
+  }
+
+  getUnpaidTransactions(): Transaction[] {
+    return this.transactions.filter(t => !t.isPaid);
+  }
+
+  getPaidTransactions(): Transaction[] {
+    return this.transactions.filter(t => t.isPaid);
   }
 
   // Method to migrate localStorage data to database

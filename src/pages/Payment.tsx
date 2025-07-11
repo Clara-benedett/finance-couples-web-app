@@ -42,8 +42,9 @@ const Payment = () => {
         
         setProportions(proportionsForCalculation);
 
-        // Calculate expenses
-        const calculationResults = calculateExpenses(allTransactions, proportionsForCalculation);
+        // Calculate expenses for unpaid transactions only
+        const unpaidTransactions = allTransactions.filter(t => !t.isPaid);
+        const calculationResults = calculateExpenses(unpaidTransactions, proportionsForCalculation);
         setCalculations(calculationResults);
       } catch (error) {
         console.error('Error loading payment data:', error);
@@ -60,12 +61,31 @@ const Payment = () => {
     loadData();
   }, [toast]);
 
-  const handleMarkAsPaid = () => {
-    toast({
-      title: "Payment Marked as Paid",
-      description: "Settlement has been recorded successfully.",
-    });
-    navigate('/app');
+  const handleMarkAsPaid = async () => {
+    try {
+      const success = await supabaseTransactionStore.markTransactionsAsPaid();
+      
+      if (success) {
+        toast({
+          title: "Payment Marked as Paid",
+          description: "Settlement has been recorded successfully.",
+        });
+        navigate('/app');
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to mark transactions as paid. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error marking transactions as paid:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark transactions as paid. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleRecalculate = () => {

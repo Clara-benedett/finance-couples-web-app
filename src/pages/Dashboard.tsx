@@ -122,9 +122,11 @@ const Dashboard = () => {
   }, [user]);
 
   // Add debug info to verify correct data is being used
-  const calculations = calculateExpenses(transactions, proportions);
+  // Only include unpaid transactions in calculations
+  const unpaidTransactions = transactions.filter(t => !t.isPaid);
+  const calculations = calculateExpenses(unpaidTransactions, proportions);
   
-  console.log(`[Dashboard] Calculation input: ${transactions.length} transactions`);
+  console.log(`[Dashboard] Calculation input: ${unpaidTransactions.length} unpaid transactions (${transactions.length} total)`);
   console.log(`[Dashboard] Current proportions: ${proportions.person1Percentage}/${proportions.person2Percentage}`);
   console.log(`[Dashboard] Person1 should pay: ${calculations.person1ShouldPay}, actually paid: ${calculations.person1ActuallyPaid}`);
   console.log(`[Dashboard] Final settlement: ${calculations.finalSettlementAmount} from ${calculations.settlementDirection}`);

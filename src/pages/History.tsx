@@ -47,6 +47,25 @@ const History = () => {
     return matchesSearch && matchesCategory && matchesMonth;
   });
 
+  // Separate paid and unpaid transactions
+  const paidTransactions = transactions.filter(t => t.isPaid);
+  const unpaidTransactions = transactions.filter(t => !t.isPaid);
+  
+  // Group paid transactions by settlement date for settlement history
+  const settlementGroups = paidTransactions.reduce((groups: { [key: string]: Transaction[] }, transaction) => {
+    if (transaction.markedPaidAt) {
+      const settlementDate = new Date(transaction.markedPaidAt).toISOString().split('T')[0];
+      if (!groups[settlementDate]) {
+        groups[settlementDate] = [];
+      }
+      groups[settlementDate].push(transaction);
+    }
+    return groups;
+  }, {});
+
+  const totalSettlements = Object.keys(settlementGroups).length;
+  const totalSettlementAmount = paidTransactions.reduce((sum, t) => sum + t.amount, 0);
+
   const totalAmount = filteredTransactions.reduce((sum, t) => sum + t.amount, 0);
   const sharedAmount = filteredTransactions.filter(t => t.category === "shared").reduce((sum, t) => sum + t.amount, 0);
   const personalAmount = filteredTransactions.filter(t => t.category === "person1" || t.category === "person2").reduce((sum, t) => sum + t.amount, 0);
@@ -303,13 +322,24 @@ const History = () => {
                   </div>
                 </div>
                 
-                {/* Right side - Categories and Payment Info */}
-                <div className="flex flex-col items-end space-y-2 ml-4">
-                  <div className="flex items-center space-x-2">
-                    {getCategoryBadge(transaction)}
-                  </div>
-                  {getPaidByBadge(transaction)}
-                </div>
+                     {/* Right side - Categories and Payment Info */}
+                 <div className="flex flex-col items-end space-y-2 ml-4">
+                   <div className="flex items-center space-x-2">
+                     {getCategoryBadge(transaction)}
+                     {transaction.isPaid && (
+                       <Badge variant="default" className="bg-green-600 text-white flex items-center">
+                         <CheckCircle className="w-3 h-3 mr-1" />
+                         PAID
+                       </Badge>
+                     )}
+                   </div>
+                   {getPaidByBadge(transaction)}
+                   {transaction.isPaid && transaction.markedPaidAt && (
+                     <span className="text-xs text-gray-500">
+                       Paid: {new Date(transaction.markedPaidAt).toLocaleDateString()}
+                     </span>
+                   )}
+                 </div>
               </div>
             ))}
             
@@ -350,10 +380,10 @@ const History = () => {
                   Total Settlements
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-gray-900">$0.00</div>
-                <p className="text-xs text-gray-500 mt-1">0 payment cycles</p>
-              </CardContent>
+               <CardContent>
+                 <div className="text-2xl font-bold text-gray-900">${totalSettlementAmount.toFixed(2)}</div>
+                 <p className="text-xs text-gray-500 mt-1">{totalSettlements} payment cycles</p>
+               </CardContent>
             </Card>
 
             <Card>
@@ -394,20 +424,61 @@ const History = () => {
                 Previous payment cycles and verification history
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="text-center py-12">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <HistoryIcon className="w-8 h-8 text-gray-400" />
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No settlement history yet</h3>
-                <p className="text-gray-600 mb-4">
-                  Your payment cycles and verification checkpoints will appear here after your first settlement.
-                </p>
-                <Button variant="outline" onClick={() => window.location.href = '/app/categorize'}>
-                  Start Categorizing Expenses
-                </Button>
-              </div>
-            </CardContent>
+             <CardContent>
+               {totalSettlements === 0 ? (
+                 <div className="text-center py-12">
+                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                     <HistoryIcon className="w-8 h-8 text-gray-400" />
+                   </div>
+                   <h3 className="text-lg font-medium text-gray-900 mb-2">No settlement history yet</h3>
+                   <p className="text-gray-600 mb-4">
+                     Your payment cycles and verification checkpoints will appear here after your first settlement.
+                   </p>
+                   <Button variant="outline" onClick={() => window.location.href = '/app/categorize'}>
+                     Start Categorizing Expenses
+                   </Button>
+                 </div>
+               ) : (
+                 <div className="space-y-4">
+                   {Object.entries(settlementGroups)
+                     .sort(([a], [b]) => new Date(b).getTime() - new Date(a).getTime())
+                     .map(([settlementDate, settlementTransactions]) => {
+                       const totalAmount = settlementTransactions.reduce((sum, t) => sum + t.amount, 0);
+                       return (
+                         <div key={settlementDate} className="border rounded-lg p-4 bg-green-50 border-green-200">
+                           <div className="flex items-center justify-between mb-3">
+                             <div className="flex items-center gap-2">
+                               <CheckCircle className="w-5 h-5 text-green-600" />
+                               <h3 className="font-medium text-gray-900">
+                                 Settlement - {new Date(settlementDate).toLocaleDateString()}
+                               </h3>
+                             </div>
+                             <Badge variant="default" className="bg-green-600">
+                               ${totalAmount.toFixed(2)}
+                             </Badge>
+                           </div>
+                           <p className="text-sm text-gray-600 mb-3">
+                             {settlementTransactions.length} transactions marked as paid
+                           </p>
+                           <div className="space-y-2">
+                             {settlementTransactions.slice(0, 3).map(transaction => (
+                               <div key={transaction.id} className="flex items-center justify-between text-sm">
+                                 <span className="text-gray-700">{transaction.description}</span>
+                                 <span className="font-medium">${transaction.amount.toFixed(2)}</span>
+                               </div>
+                             ))}
+                             {settlementTransactions.length > 3 && (
+                               <p className="text-xs text-gray-500">
+                                 ...and {settlementTransactions.length - 3} more transactions
+                               </p>
+                             )}
+                           </div>
+                         </div>
+                       );
+                     })}
+                 </div>
+               )}
+             </CardContent>
           </Card>
 
           {/* Verification Checkpoints */}

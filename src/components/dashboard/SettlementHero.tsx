@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle, RefreshCw, Calendar } from "lucide-react";
 import { CalculationResults } from "@/utils/calculationEngine";
 import { useCategoryNames } from "@/hooks/useCategoryNames";
+import { supabaseTransactionStore } from "@/store/supabaseTransactionStore";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 interface SettlementHeroProps {
   calculations: CalculationResults;
@@ -13,7 +16,37 @@ interface SettlementHeroProps {
 
 const SettlementHero = ({ calculations, proportions, currentMonth }: SettlementHeroProps) => {
   const { categoryNames, loading } = useCategoryNames();
+  const { toast } = useToast();
+  const navigate = useNavigate();
   const formatCurrency = (amount: number) => `$${amount.toFixed(2)}`;
+
+  const handleMarkAsPaid = async () => {
+    try {
+      const success = await supabaseTransactionStore.markTransactionsAsPaid();
+      
+      if (success) {
+        toast({
+          title: "Payment Marked as Paid",
+          description: "Settlement has been recorded successfully.",
+        });
+        // Refresh the page to update calculations
+        window.location.reload();
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to mark transactions as paid. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error marking transactions as paid:', error);
+      toast({
+        title: "Error",
+        description: "Failed to mark transactions as paid. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200 border-2 shadow-lg">
@@ -46,6 +79,7 @@ const SettlementHero = ({ calculations, proportions, currentMonth }: SettlementH
             <Button 
               className="bg-orange-600 hover:bg-orange-700 text-white"
               size="lg"
+              onClick={handleMarkAsPaid}
             >
               <CheckCircle className="w-5 h-5 mr-2" />
               Mark as Paid

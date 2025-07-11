@@ -182,6 +182,8 @@ class UnifiedTransactionStore {
       paymentMethod: dbTransaction.payment_method,
       cardMember: dbTransaction.card_member,
       accountNumber: dbTransaction.account_number,
+      isPaid: dbTransaction.is_paid,
+      markedPaidAt: dbTransaction.marked_paid_at,
     };
   }
 
@@ -205,6 +207,8 @@ class UnifiedTransactionStore {
       payment_method: transaction.paymentMethod,
       card_member: transaction.cardMember,
       account_number: transaction.accountNumber,
+      is_paid: transaction.isPaid,
+      marked_paid_at: transaction.markedPaidAt,
     };
   }
 
@@ -570,6 +574,8 @@ export const unifiedTransactionStore = new UnifiedTransactionStore();
         payment_method: t.paymentMethod,
         card_member: t.cardMember,
         account_number: t.accountNumber,
+        is_paid: t.isPaid || false,
+        marked_paid_at: t.markedPaidAt,
       }));
       
       console.log(`💾 [RECOVERY] Uploading ${dbTransactions.length} transactions to database...`);
