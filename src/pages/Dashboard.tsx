@@ -24,11 +24,23 @@ const Dashboard = () => {
   const [showCalculationDetails, setShowCalculationDetails] = useState(false);
   const { isDebugMode, toggleDebugMode } = useDebugMode();
 
+  // Force refresh transactions when component mounts or becomes visible
   useEffect(() => {
-    // Force refresh transactions when component mounts
     const refreshTransactions = async () => {
+      console.log('[Dashboard] Refreshing transactions...');
+      
+      // Force reload from database by reinitializing the store
+      if (user) {
+        try {
+          await unifiedTransactionStore.initialize();
+        } catch (error) {
+          console.error('[Dashboard] Error reinitializing store:', error);
+        }
+      }
+      
       const latestTransactions = await unifiedTransactionStore.getTransactions();
-      console.log(`[Dashboard] Using ${latestTransactions.length} transactions for calculations`);
+      console.log(`[Dashboard] Loaded ${latestTransactions.length} transactions for calculations`);
+      console.log(`[Dashboard] Unpaid transactions: ${latestTransactions.filter(t => !t.isPaid).length}`);
       setTransactions(latestTransactions);
     };
 
@@ -38,7 +50,30 @@ const Dashboard = () => {
     const unsubscribe = unifiedTransactionStore.subscribe(refreshTransactions);
     
     return unsubscribe;
-  }, []);
+  }, [user]);
+
+  // Also refresh when window gains focus (user returns from payment screen)
+  useEffect(() => {
+    const handleFocus = async () => {
+      console.log('[Dashboard] Window gained focus, refreshing transactions...');
+      
+      // Force reload from database
+      if (user) {
+        try {
+          await unifiedTransactionStore.initialize();
+        } catch (error) {
+          console.error('[Dashboard] Error reinitializing store on focus:', error);
+        }
+      }
+      
+      const latestTransactions = await unifiedTransactionStore.getTransactions();
+      console.log(`[Dashboard] Focus refresh: ${latestTransactions.length} total, ${latestTransactions.filter(t => !t.isPaid).length} unpaid`);
+      setTransactions(latestTransactions);
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [user]);
 
   // Load proportions from Supabase and listen for changes
   useEffect(() => {
@@ -80,18 +115,10 @@ const Dashboard = () => {
       }
     };
 
-    // Listen for focus events to reload proportions when user comes back to dashboard
-    const handleFocus = () => {
-      console.log('[Dashboard] Window focused, reloading proportions...');
-      loadProportions();
-    };
-
     window.addEventListener('storage', handleProportionChange);
-    window.addEventListener('focus', handleFocus);
     
     return () => {
       window.removeEventListener('storage', handleProportionChange);
-      window.removeEventListener('focus', handleFocus);
     };
   }, [user]);
 

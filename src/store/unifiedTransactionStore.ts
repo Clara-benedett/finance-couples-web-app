@@ -54,12 +54,11 @@ class UnifiedTransactionStore {
   }
 
   async initialize(): Promise<void> {
-    if (this.isInitialized) {
-      console.log('[UNIFIED] Already initialized, skipping...');
-      return;
-    }
-
-    console.log('[UNIFIED] Initializing unified transaction store...');
+    console.log('[UNIFIED] Initialize called, current state:', {
+      isInitialized: this.isInitialized,
+      hasUser: !!this.user,
+      userEmail: this.user?.email
+    });
     
     try {
       // Get current user first and wait for auth to be ready
@@ -82,11 +81,11 @@ class UnifiedTransactionStore {
 
       console.log(`[UNIFIED] Initializing for user: ${this.user.email}`);
 
-      // Load from primary source (Supabase)
+      // Always load fresh from database to ensure we have latest data
       await this.loadFromPrimarySource();
       
       this.isInitialized = true;
-      console.log('[UNIFIED] Store initialized successfully');
+      console.log(`[UNIFIED] Store initialized successfully with ${this.transactions.length} transactions`);
       this.notifyListeners();
     } catch (error) {
       console.error('[UNIFIED] Failed to initialize store:', error);
@@ -160,6 +159,8 @@ class UnifiedTransactionStore {
       const transactions = data?.map(this.mapDatabaseToTransaction) || [];
       this.transactions = transactions;
       console.log(`[UNIFIED] Loaded ${transactions.length} transactions from Supabase`);
+      console.log(`[UNIFIED] Paid transactions: ${transactions.filter(t => t.isPaid).length}`);
+      console.log(`[UNIFIED] Unpaid transactions: ${transactions.filter(t => !t.isPaid).length}`);
       return transactions;
     } catch (error) {
       console.error('[UNIFIED] Supabase load failed:', error);
