@@ -28,7 +28,7 @@ interface AmexTransaction {
   accountNumber?: string;
 }
 
-export async function parseAmexPDF(file: File): Promise<{ 
+export async function parsePDF(file: File): Promise<{ 
   transactions: ParsedTransaction[], 
   detectedFields: string[] 
 }> {
@@ -81,10 +81,13 @@ export async function parseAmexPDF(file: File): Promise<{
       detectedFields
     };
   } catch (error) {
-    console.error('Error parsing AMEX PDF:', error);
-    throw new Error('Failed to parse AMEX PDF file');
+    console.error('Error parsing PDF:', error);
+    throw new Error('Failed to parse PDF file');
   }
 }
+
+// Keep the parseAmexPDF function for backward compatibility
+export const parseAmexPDF = parsePDF;
 
 function parseAmexTransactions(text: string): AmexTransaction[] {
   const transactions: AmexTransaction[] = [];
