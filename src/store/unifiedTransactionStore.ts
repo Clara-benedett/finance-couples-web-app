@@ -289,19 +289,16 @@ class UnifiedTransactionStore {
         await dataProtection.createEmergencyBackup(this.transactions);
       }
 
-      // Clear existing data for this user
-      await supabase
-        .from('transactions')
-        .delete()
-        .eq('user_id', this.user.id);
-
-      // Insert all transactions
+      // Use UPSERT instead of DELETE + INSERT to prevent constraint violations
       if (this.transactions.length > 0) {
         const dbTransactions = this.transactions.map(t => this.mapTransactionToDatabase(t));
         
         const { error } = await supabase
           .from('transactions')
-          .insert(dbTransactions);
+          .upsert(dbTransactions, { 
+            onConflict: 'id',
+            ignoreDuplicates: false 
+          });
 
         if (error) {
           console.error('[UNIFIED] Error saving to Supabase:', error);
