@@ -30,7 +30,7 @@ const Categorize = () => {
   const { initializeRecoveryFunctions } = useEmergencyRecovery();
   
   // Load transactions
-  const { transactions, isLoading } = useTransactionLoader();
+  const { transactions, isLoading, loadError, retryLoading } = useTransactionLoader();
   
   // Transaction handlers
   const {
@@ -95,7 +95,13 @@ const Categorize = () => {
   }
 
   if (transactions.length === 0) {
-    return <EmptyTransactionsState />;
+    return (
+      <EmptyTransactionsState 
+        loadError={loadError}
+        isLoading={isLoading}
+        retryLoading={retryLoading}
+      />
+    );
   }
 
   return (

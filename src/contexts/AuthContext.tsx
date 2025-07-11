@@ -8,9 +8,11 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isSupabaseConfigured: boolean;
+  authError: string | null;
   signIn: (email: string, password: string) => Promise<{ error?: any }>;
   signUp: (email: string, password: string) => Promise<{ error?: any }>;
   signOut: () => Promise<void>;
+  retryAuth: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -27,23 +29,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('[AUTH] State change:', event, session?.user?.email || 'no user');
         setSession(session);
         setUser(session?.user ?? null);
+        setAuthError(null); // Clear any previous auth errors
         setLoading(false);
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // THEN check for existing session with error handling
+    supabase.auth.getSession()
+      .then(({ data: { session }, error }) => {
+        if (error) {
+          console.error('[AUTH] Session error:', error);
+          setAuthError('Failed to restore session. Please try logging in again.');
+        }
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error('[AUTH] Failed to get session:', error);
+        setAuthError('Authentication connection failed. Please check your internet connection.');
+        setLoading(false);
+      });
 
     return () => subscription.unsubscribe();
   }, []);
@@ -70,7 +85,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signOut = async () => {
+    setAuthError(null);
     await supabase.auth.signOut();
+  };
+
+  const retryAuth = async () => {
+    console.log('[AUTH] Retrying authentication...');
+    setLoading(true);
+    setAuthError(null);
+    
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      
+      setSession(session);
+      setUser(session?.user ?? null);
+    } catch (error) {
+      console.error('[AUTH] Retry failed:', error);
+      setAuthError('Failed to reconnect. Please try logging in again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const value = {
@@ -78,9 +113,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     session,
     loading,
     isSupabaseConfigured: true,
+    authError,
     signIn,
     signUp,
     signOut,
+    retryAuth,
   };
 
   return (
